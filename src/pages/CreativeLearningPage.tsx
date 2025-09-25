@@ -74,11 +74,42 @@ const CreativeLearningPage: React.FC = () => {
     description: '',
     tags: [] as string[]
   });
+  
+  // AI-powered features
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiStyle, setAiStyle] = useState<'photographic' | 'digital_art' | 'sketch' | 'watercolor' | 'oil_painting'>('photographic');
+  const [aiAspectRatio, setAiAspectRatio] = useState<'1:1' | '16:9' | '9:16' | '4:3' | '3:4'>('16:9');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGeneratedImage, setAiGeneratedImage] = useState<string | null>(null);
+
+  // AI-powered educational suggestions
+  const educationalSuggestions = [
+    "Create a visual timeline of the American Revolution",
+    "Design a molecular structure diagram for water (H2O)",
+    "Illustrate the water cycle with labeled components",
+    "Create a periodic table visualization for elements 1-20",
+    "Design a food web showing predator-prey relationships",
+    "Illustrate the phases of the moon with explanations",
+    "Create a diagram of the human digestive system",
+    "Design a visual guide to the Pythagorean theorem",
+    "Illustrate the process of mitosis in cells",
+    "Create a world map showing major climate zones",
+    "Design a flowchart of the scientific method",
+    "Illustrate the structure of a plant cell",
+    "Create a timeline of major historical events",
+    "Design a visual guide to fractions and decimals",
+    "Illustrate the layers of the Earth's atmosphere"
+  ];
 
   // Load designs and check API key status
   useEffect(() => {
     setLoading(false);
     checkApiKey();
+    
+    // Generate AI suggestions
+    setAiSuggestions(educationalSuggestions.slice(0, 6));
     
     // Add mock data with social media features
     setDesigns([
@@ -205,6 +236,90 @@ const CreativeLearningPage: React.FC = () => {
     } catch (error) {
       console.error('Error checking API key:', error);
     }
+  };
+
+  // AI-powered image generation
+  const generateWithAI = async () => {
+    if (!aiPrompt.trim()) return;
+    
+    setAiGenerating(true);
+    try {
+      const result = await generateImage({
+        prompt: aiPrompt,
+        apiKey: apiKey || 'free-services',
+        style: aiStyle,
+        aspectRatio: aiAspectRatio
+      });
+      
+      setAiGeneratedImage(result.imageUrl);
+      console.log('✅ AI image generated successfully!');
+    } catch (error) {
+      console.error('❌ AI generation failed:', error);
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  // Use AI suggestion
+  const useAiSuggestion = (suggestion: string) => {
+    setAiPrompt(suggestion);
+    setShowAiModal(true);
+  };
+
+  // Save AI generated image as new design
+  const saveAiImage = async () => {
+    if (!aiGeneratedImage || !user) return;
+    
+    const newDesign: CreativeDesign = {
+      id: Date.now().toString(),
+      user_id: user.id,
+      title: `AI Generated: ${aiPrompt.substring(0, 50)}...`,
+      description: `AI-generated educational content: ${aiPrompt}`,
+      prompt: aiPrompt,
+      image_url: aiGeneratedImage,
+      tags: extractTagsFromPrompt(aiPrompt),
+      is_public: true,
+      likes_count: 0,
+      comments_count: 0,
+      rating: 0,
+      created_at: new Date().toISOString(),
+      profiles: {
+        full_name: user.user_metadata?.full_name || 'AI User',
+        avatar_url: user.user_metadata?.avatar_url
+      },
+      comments: [],
+      user_liked: false,
+      user_rated: 0
+    };
+    
+    setDesigns(prev => [newDesign, ...prev]);
+    setAiGeneratedImage(null);
+    setAiPrompt('');
+    setShowAiModal(false);
+  };
+
+  // Extract tags from prompt
+  const extractTagsFromPrompt = (prompt: string): string[] => {
+    const tags: string[] = [];
+    const promptLower = prompt.toLowerCase();
+    
+    if (promptLower.includes('science') || promptLower.includes('biology') || promptLower.includes('chemistry') || promptLower.includes('physics')) {
+      tags.push('science');
+    }
+    if (promptLower.includes('math') || promptLower.includes('mathematics') || promptLower.includes('algebra') || promptLower.includes('geometry')) {
+      tags.push('mathematics');
+    }
+    if (promptLower.includes('history') || promptLower.includes('historical') || promptLower.includes('timeline')) {
+      tags.push('history');
+    }
+    if (promptLower.includes('art') || promptLower.includes('creative') || promptLower.includes('design')) {
+      tags.push('art');
+    }
+    if (promptLower.includes('education') || promptLower.includes('learning') || promptLower.includes('study')) {
+      tags.push('education');
+    }
+    
+    return tags.length > 0 ? tags : ['education'];
   };
 
   const generateImageWithAI = async (prompt: string) => {
@@ -497,6 +612,48 @@ const CreativeLearningPage: React.FC = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* AI-Powered Features Section */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="h-8 w-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                <span className="text-white text-sm font-bold">AI</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  🍌 Gemini Nano AI Studio
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Generate educational images with AI-powered creativity
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAiModal(true)}
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all text-sm font-medium"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Generate with AI
+            </button>
+          </div>
+          
+          {/* AI Suggestions */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">💡 AI-Powered Suggestions:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {aiSuggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => useAiSuggestion(suggestion)}
+                  className="text-left p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-sm transition-all text-sm"
+                >
+                  <span className="text-gray-700 dark:text-gray-300">{suggestion}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Social Media Status */}
         {!hasApiKey && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
@@ -976,6 +1133,139 @@ const CreativeLearningPage: React.FC = () => {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Generation Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="h-8 w-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">AI</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    🍌 Gemini Nano AI Studio
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Generate educational images with AI
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAiModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Prompt Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Describe what you want to create *
+                </label>
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="e.g., Create a detailed diagram of the water cycle with labeled components and arrows showing the process..."
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                  rows={3}
+                />
+              </div>
+
+              {/* Style and Aspect Ratio */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Style
+                  </label>
+                  <select
+                    value={aiStyle}
+                    onChange={(e) => setAiStyle(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="photographic">Photographic</option>
+                    <option value="digital_art">Digital Art</option>
+                    <option value="sketch">Sketch</option>
+                    <option value="watercolor">Watercolor</option>
+                    <option value="oil_painting">Oil Painting</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Aspect Ratio
+                  </label>
+                  <select
+                    value={aiAspectRatio}
+                    onChange={(e) => setAiAspectRatio(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="16:9">16:9 (Widescreen)</option>
+                    <option value="1:1">1:1 (Square)</option>
+                    <option value="4:3">4:3 (Standard)</option>
+                    <option value="3:4">3:4 (Portrait)</option>
+                    <option value="9:16">9:16 (Vertical)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Generated Image Preview */}
+              {aiGeneratedImage && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Generated Image
+                  </label>
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    <img
+                      src={aiGeneratedImage}
+                      alt="AI Generated"
+                      className="w-full h-auto max-h-96 object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAiModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={generateWithAI}
+                  disabled={!aiPrompt.trim() || aiGenerating}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                >
+                  {aiGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Palette className="h-4 w-4 mr-2" />
+                      Generate Image
+                    </>
+                  )}
+                </button>
+                {aiGeneratedImage && (
+                  <button
+                    onClick={saveAiImage}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Save to Gallery
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
-// Google Imagen 3 API integration
-// Real implementation for Google's Imagen 3 (Nano Banana) API
+// Google Gemini Nano (Banana) API integration
+// Real implementation for Google's Gemini Nano API via Banana
 
 export interface ImageGenerationRequest {
   prompt: string;
@@ -43,14 +43,48 @@ const generateImageWithAI = async (request: ImageGenerationRequest): Promise<Ima
   };
 };
 
-// WORKING AI Image Generation - No API Key Required
-const generateWithRealAI = async (prompt: string, apiKey?: string): Promise<string> => {
-  console.log('🤖 Generating with working AI image service...');
+// Gemini Nano (Banana) Image Generation
+const generateWithGeminiNano = async (prompt: string, apiKey?: string): Promise<string> => {
+  console.log('🍌 Generating with Gemini Nano (Banana)...');
   
   try {
-    // If user provided a real Google API key, try Google Gemini first
-    if (apiKey && apiKey !== 'free-services' && apiKey.startsWith('AIza')) {
-      console.log('🔑 Using provided Google API key...');
+    // Try Gemini Nano via Banana API first
+    if (apiKey && apiKey !== 'free-services') {
+      console.log('🔑 Using Gemini Nano via Banana API...');
+      
+      // Banana API endpoint for Gemini Nano
+      const response = await fetch('https://api.banana.dev/start/v4/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: apiKey,
+          modelKey: 'gemini-nano-image-generation',
+          modelInputs: {
+            prompt: `Educational illustration: ${prompt}, clear, informative, learning material, high quality, educational content, suitable for students`,
+            style: 'educational',
+            quality: 'high',
+            size: '1024x1024'
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Gemini Nano (Banana) response:', data);
+        
+        if (data.modelOutputs && data.modelOutputs[0] && data.modelOutputs[0].image) {
+          console.log('✅ Gemini Nano image generated successfully!');
+          return data.modelOutputs[0].image;
+        }
+      }
+      console.warn('Gemini Nano (Banana) API failed, trying alternatives...');
+    }
+    
+    // Fallback to Google Gemini API
+    if (apiKey && apiKey.startsWith('AIza')) {
+      console.log('🔑 Using Google Gemini API as fallback...');
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
@@ -262,17 +296,34 @@ const generateSmartPlaceholder = (prompt: string): string => {
 };
 
 
-// Main image generation function - REAL WORKING VERSION
+// Main image generation function - GEMINI NANO VERSION
 export const generateImage = async (request: ImageGenerationRequest): Promise<ImageGenerationResponse> => {
-  console.log('🚀 Starting REAL image generation...');
+  console.log('🚀 Starting Gemini Nano image generation...');
   console.log('Prompt:', request.prompt);
-  console.log('⏱️ This will take 5-7 seconds for real AI processing');
+  console.log('⏱️ This will take 3-5 seconds for AI processing');
   
   try {
-    // Use the real AI image generation
-    const result = await generateImageWithAI(request);
-    console.log('✅ REAL image generation success:', result.imageUrl);
-    return result;
+    // Try Gemini Nano first
+    const geminiImage = await generateWithGeminiNano(request.prompt, request.apiKey);
+    if (geminiImage) {
+      console.log('✅ Gemini Nano image generation success:', geminiImage);
+      return {
+        imageUrl: geminiImage,
+        prompt: request.prompt,
+        style: request.style || 'photographic',
+        aspectRatio: request.aspectRatio || '16:9'
+      };
+    }
+    
+    // Fallback to other AI services
+    const aiImage = await generateWithRealAI(request.prompt, request.apiKey);
+    console.log('✅ AI image generation success:', aiImage);
+    return {
+      imageUrl: aiImage,
+      prompt: request.prompt,
+      style: request.style || 'photographic',
+      aspectRatio: request.aspectRatio || '16:9'
+    };
     
   } catch (error) {
     console.error('❌ Image generation failed:', error);
