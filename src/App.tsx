@@ -16,6 +16,7 @@ import TestPage from './pages/TestPage';
 import TestVideoPage from './pages/TestVideoPage';
 import CreativeLearningPage from './pages/CreativeLearningPage';
 import SettingsPage from './pages/SettingsPage';
+import CourseCreationPage from './pages/CourseCreationPage';
 
 function App() {
   return (
@@ -86,10 +87,27 @@ function App() {
               } 
             />
             <Route 
-              path="/settings" 
+              path="/test-settings" 
+              element={
+                <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                    Test Settings Route
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    This is a test route to verify routing works.
+                  </p>
+                </div>
+              }
+            />
+            <Route 
+              path="/api-settings" 
+              element={<SettingsPage />}
+            />
+            <Route 
+              path="/create-course" 
               element={
                 <ProtectedRoute>
-                  <SettingsPage />
+                  <CourseCreationPage />
                 </ProtectedRoute>
               } 
             />

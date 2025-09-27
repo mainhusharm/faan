@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { BookOpen, User, LogOut, Home, Info, BookMarked, TestTube, Zap, GraduationCap, Moon, Sun, Palette, Settings } from 'lucide-react';
+import { BookOpen, User, LogOut, Home, Info, BookMarked, TestTube, Zap, GraduationCap, Moon, Sun, Palette, Settings, Users, Plus, ChevronDown } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     try {
@@ -17,6 +19,20 @@ const Navbar: React.FC = () => {
       console.error('Error signing out:', error);
     }
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-slate-200 dark:border-gray-700 sticky top-0 z-50 transition-colors duration-300">
@@ -95,29 +111,70 @@ const Navbar: React.FC = () => {
             {user ? (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-emerald-600 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700 dark:text-gray-300">
-                    {profile?.full_name || user.email}
-                  </span>
                   <span className="bg-gradient-to-r from-indigo-100 to-emerald-100 dark:from-indigo-900 dark:to-emerald-900 text-indigo-800 dark:text-indigo-200 text-xs font-medium px-3 py-1 rounded-full">
                     {profile?.points || 0} pts
                   </span>
                 </div>
-                <Link
-                  to="/settings"
-                  className="text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-gray-800"
-                  title="Settings"
-                >
-                  <Settings className="h-5 w-5" />
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="text-slate-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-lg transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
+                
+                {/* Profile Dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center space-x-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-gray-800"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-emerald-600 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium">
+                      {profile?.full_name || user.email}
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {profile?.full_name || user.email}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {profile?.points || 0} points
+                        </p>
+                      </div>
+                      
+                      <div className="py-2">
+                        <Link
+                          to="/create-course"
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <Plus className="h-4 w-4 text-indigo-600" />
+                          <span>Create Course</span>
+                        </Link>
+                        
+                        <Link
+                          to="/settings"
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span>Settings</span>
+                        </Link>
+                        
+                        <button
+                          onClick={() => {
+                            setIsProfileDropdownOpen(false);
+                            handleSignOut();
+                          }}
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex space-x-2">

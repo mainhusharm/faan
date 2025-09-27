@@ -1,573 +1,795 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { generateImage } from '../lib/imageGeneration';
+import { useNavigate } from 'react-router-dom';
 import { 
   Palette, 
-  Heart, 
+  Download, 
   Share2, 
+  Heart, 
   MessageCircle,
-  MoreHorizontal,
-  Star,
-  Send,
-  Search,
+  MoreVertical,
+  XCircle,
+  Wand2,
+  Sparkles,
+  Edit3,
+  RefreshCw,
+  Sliders,
+  Cpu,
+  X,
   Plus,
-  Loader2,
-  User,
-  Clock,
-  XCircle
+  Trophy,
+  Star,
+  Flame,
+  Play,
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
-
-interface Comment {
-  id: string;
-  user_id: string;
-  content: string;
-  created_at: string;
-  user_name: string;
-  user_avatar?: string;
-}
-
-interface CreativeDesign {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string;
-  prompt: string;
-  image_url: string;
-  tags: string[];
-  is_public: boolean;
-  likes_count: number;
-  comments_count: number;
-  rating: number;
-  created_at: string;
-  profiles?: {
-    full_name: string;
-    avatar_url?: string;
-  };
-  comments?: Comment[];
-  user_liked?: boolean;
-  user_rated?: number;
-}
-
+import { generateImage } from '../lib/imageGeneration';
 
 const CreativeLearningPage: React.FC = () => {
-  const { user } = useAuth();
-  const [designs, setDesigns] = useState<CreativeDesign[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newDesign, setNewDesign] = useState({
-    title: '',
-    description: '',
-    prompt: '',
-    tags: [] as string[],
-    isPublic: true
-  });
-  const [expandedComments, setExpandedComments] = useState<{ [key: string]: boolean }>({});
-  const [newComments, setNewComments] = useState<{ [key: string]: string }>({});
-  const [editingPost, setEditingPost] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({
-    title: '',
-    description: '',
-    tags: [] as string[]
-  });
+  const navigate = useNavigate();
   
-  // AI-powered features
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  // Social Learning state
+  const [posts, setPosts] = useState<any[]>([]);
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [currentQuiz, setCurrentQuiz] = useState<any>(null);
+  const [userPoints, setUserPoints] = useState(0);
+  const [userLevel, setUserLevel] = useState(1);
+  const [userStreak, setUserStreak] = useState(0);
+  
+  // Post creation state
+  const [postTitle, setPostTitle] = useState('');
+  const [postContent, setPostContent] = useState('');
+  const [postImage, setPostImage] = useState<string | null>(null);
+  const [postTags, setPostTags] = useState('');
+  const [postType, setPostType] = useState<'image' | 'quiz' | 'lesson'>('image');
+  
+  // AI Image generation state (additional)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  
+  // Quiz state
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<{[key: string]: string}>({});
+  const [quizScore, setQuizScore] = useState(0);
+  const [showQuizResults, setShowQuizResults] = useState(false);
+
+  // AI state
+  const [geminiService, setGeminiService] = useState<GeminiImageService | null>(null);
+  const [geminiAvailable, setGeminiAvailable] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiStyle, setAiStyle] = useState<'photographic' | 'digital_art' | 'sketch' | 'watercolor' | 'oil_painting'>('photographic');
-  const [aiAspectRatio, setAiAspectRatio] = useState<'1:1' | '16:9' | '9:16' | '4:3' | '3:4'>('16:9');
+  const [aiAspectRatio, setAiAspectRatio] = useState<'16:9' | '1:1' | '9:16' | '4:3' | '3:4'>('16:9');
+  
+  // Comment system state
+  const [showComments, setShowComments] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiGeneratedImage, setAiGeneratedImage] = useState<string | null>(null);
 
-  // AI-powered educational suggestions
+  // Sample posts data
+  const samplePosts = [
+    {
+      id: 1,
+      author: "Dr. Sarah Chen",
+      authorAvatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
+      title: "Photosynthesis Made Simple! 🌱",
+      content: "Just created this visual guide to help students understand how plants make their own food. The process is fascinating!",
+      image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&h=400&fit=crop",
+      type: "lesson",
+      tags: ["biology", "photosynthesis", "plants", "science"],
+      likes: 42,
+      comments: 8,
+      shares: 12,
+      points: 150,
+      createdAt: "2 hours ago",
+      isLiked: false,
+      quiz: {
+        id: "quiz1",
+        questions: [
+          {
+            id: "q1",
+            question: "What gas do plants absorb from the atmosphere during photosynthesis?",
+            options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
+            correct: "Carbon Dioxide",
+            points: 10
+          },
+          {
+            id: "q2", 
+            question: "What is the main product of photosynthesis?",
+            options: ["Water", "Glucose", "Oxygen", "Chlorophyll"],
+            correct: "Glucose",
+            points: 10
+          }
+        ]
+      }
+    },
+    {
+      id: 2,
+      author: "Prof. Michael Rodriguez",
+      authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+      title: "Math Challenge: Calculus Derivatives 📐",
+      content: "Test your calculus skills with this derivative problem. First correct answer gets bonus points!",
+      image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=400&fit=crop",
+      type: "quiz",
+      tags: ["mathematics", "calculus", "derivatives", "challenge"],
+      likes: 28,
+      comments: 15,
+      shares: 5,
+      points: 200,
+      createdAt: "4 hours ago",
+      isLiked: true,
+      quiz: {
+        id: "quiz2",
+        questions: [
+          {
+            id: "q1",
+            question: "What is the derivative of x²?",
+            options: ["x", "2x", "x²", "2x²"],
+            correct: "2x",
+            points: 20
+          }
+        ]
+      }
+    }
+  ];
+
+  // Creative tools state
+  const [designs, setDesigns] = useState<any[]>([]);
+  const [editingImage, setEditingImage] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [imageEdits, setImageEdits] = useState({
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    blur: 0
+  });
+
+  // Educational suggestions for AI
   const educationalSuggestions = [
     "Create a visual timeline of the American Revolution",
     "Design a molecular structure diagram for water (H2O)",
     "Illustrate the water cycle with labeled components",
-    "Create a periodic table visualization for elements 1-20",
-    "Design a food web showing predator-prey relationships",
-    "Illustrate the phases of the moon with explanations",
+    "Make a colorful periodic table with element properties",
     "Create a diagram of the human digestive system",
-    "Design a visual guide to the Pythagorean theorem",
-    "Illustrate the process of mitosis in cells",
-    "Create a world map showing major climate zones",
+    "Design a map showing the spread of the Roman Empire",
+    "Illustrate the process of photosynthesis step by step",
+    "Create a visual representation of the solar system",
     "Design a flowchart of the scientific method",
-    "Illustrate the structure of a plant cell",
-    "Create a timeline of major historical events",
-    "Design a visual guide to fractions and decimals",
-    "Illustrate the layers of the Earth's atmosphere"
+    "Make an infographic about renewable energy sources"
   ];
 
-  // Load designs and check API key status
+
+  // Initialize posts and user data
   useEffect(() => {
-    setLoading(false);
-    checkApiKey();
+    setPosts(samplePosts);
+    // Load user data from localStorage
+    const savedPoints = localStorage.getItem('userPoints');
+    const savedLevel = localStorage.getItem('userLevel');
+    const savedStreak = localStorage.getItem('userStreak');
     
-    // Generate AI suggestions
-    setAiSuggestions(educationalSuggestions.slice(0, 6));
-    
-    // Add mock data with social media features
-    setDesigns([
-      {
-        id: '1',
-        user_id: 'user1',
-        title: 'Photosynthesis Process Diagram',
-        description: 'A comprehensive visual guide showing how plants convert sunlight into energy. Perfect for biology students!',
-        prompt: 'Create a detailed scientific diagram of photosynthesis',
-        image_url: 'https://via.placeholder.com/800x600/4F46E5/FFFFFF?text=Photosynthesis+Process',
-        tags: ['biology', 'photosynthesis', 'plants', 'science'],
-        is_public: true,
-        likes_count: 124,
-        comments_count: 8,
-        rating: 4.8,
-        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        profiles: { 
-          full_name: 'Sarah Chen',
-          avatar_url: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100'
-        },
-        comments: [
-          {
-            id: 'c1',
-            user_id: 'user2',
-            content: 'This is amazing! Really helped me understand the process better. Thanks for sharing!',
-            created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-            user_name: 'Alex Kim'
-          },
-          {
-            id: 'c2',
-            user_id: 'user3',
-            content: 'Could you make one for cellular respiration too?',
-            created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-            user_name: 'Maria Garcia'
-          }
-        ],
-        user_liked: false,
-        user_rated: 0
-      },
-      {
-        id: '2',
-        user_id: 'user2',
-        title: 'Quadratic Formula Visual Guide',
-        description: 'Interactive visual explanation of the quadratic formula with step-by-step examples. Great for math students!',
-        prompt: 'Create a math infographic for quadratic formula',
-        image_url: 'https://via.placeholder.com/800x600/059669/FFFFFF?text=Quadratic+Formula',
-        tags: ['mathematics', 'algebra', 'formula', 'education'],
-        is_public: true,
-        likes_count: 89,
-        comments_count: 5,
-        rating: 4.6,
-        created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-        profiles: { 
-          full_name: 'Alex Kim',
-          avatar_url: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100'
-        },
-        comments: [
-          {
-            id: 'c3',
-            user_id: 'user1',
-            content: 'Love the visual approach! Much easier to remember this way.',
-            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            user_name: 'Sarah Chen'
-          }
-        ],
-        user_liked: true,
-        user_rated: 5
-      },
-      {
-        id: '3',
-        user_id: 'user3',
-        title: 'World War II Timeline',
-        description: 'Comprehensive timeline of major events during WWII with key dates and locations. Perfect for history class!',
-        prompt: 'Create a historical timeline infographic',
-        image_url: 'https://via.placeholder.com/800x600/DC2626/FFFFFF?text=WWII+Timeline',
-        tags: ['history', 'timeline', 'education', 'world-war-2'],
-        is_public: true,
-        likes_count: 156,
-        comments_count: 12,
-        rating: 4.9,
-        created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
-        profiles: { 
-          full_name: 'Maria Garcia',
-          avatar_url: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=100'
-        },
-        comments: [
-          {
-            id: 'c4',
-            user_id: 'user1',
-            content: 'This is incredibly detailed! Thank you for sharing.',
-            created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-            user_name: 'Sarah Chen'
-          },
-          {
-            id: 'c5',
-            user_id: 'user2',
-            content: 'Could you add more details about the Pacific theater?',
-            created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-            user_name: 'Alex Kim'
-          }
-        ],
-        user_liked: false,
-        user_rated: 0
-      }
-    ]);
+    if (savedPoints) setUserPoints(parseInt(savedPoints));
+    if (savedLevel) setUserLevel(parseInt(savedLevel));
+    if (savedStreak) setUserStreak(parseInt(savedStreak));
   }, []);
 
-  const checkApiKey = async () => {
-    if (!user) return;
+  // Initialize posts, user data, and Gemini service
+  useEffect(() => {
+    setPosts(samplePosts);
+    // Load user data from localStorage
+    const savedPoints = localStorage.getItem('userPoints');
+    const savedLevel = localStorage.getItem('userLevel');
+    const savedStreak = localStorage.getItem('userStreak');
     
-    try {
-      // Check for Google Gemini API key in localStorage
-      const savedApiKey = localStorage.getItem('google_gemini_api_key');
-      if (savedApiKey) {
-        setApiKey(savedApiKey);
-        setHasApiKey(true);
-        console.log('✅ Google Gemini API key found - using for image generation');
-      } else {
-        // No API key - still allow generation with free services
-        setApiKey('');
-        setHasApiKey(true);
-        console.log('✅ AI image generation enabled - using free services');
-      }
-    } catch (error) {
-      console.error('Error checking API key:', error);
-    }
-  };
+    if (savedPoints) setUserPoints(parseInt(savedPoints));
+    if (savedLevel) setUserLevel(parseInt(savedLevel));
+    if (savedStreak) setUserStreak(parseInt(savedStreak));
 
-  // AI-powered image generation
+    // Initialize AI Image service
+    const initGeminiService = async () => {
+      const service = GeminiImageService.getInstance();
+      const userApiKeysService = UserApiKeysService.getInstance();
+      
+      const initialized = await service.initialize();
+      
+      if (initialized) {
+        setGeminiService(service);
+        
+        // Check if user has API key
+        const hasApiKey = await userApiKeysService.hasApiKey('openai');
+        setGeminiAvailable(hasApiKey);
+        
+        if (hasApiKey) {
+          setApiError(null);
+          console.log('🤖 AI Image Service initialized with user API key!');
+          console.log('✅ Ready to generate high-quality educational images!');
+        } else {
+          console.log('⚠️ No user API key found - will use free fallback services');
+          setApiError(null); // No error, just using fallbacks
+        }
+      } else {
+        console.log('⚠️ AI Image Service not available');
+        setApiError('Service initialization failed');
+      }
+    };
+    
+    initGeminiService();
+  }, []);
+
+
+  // AI Generation functions
   const generateWithAI = async () => {
     if (!aiPrompt.trim()) return;
     
     setAiGenerating(true);
+    setApiError(null);
     try {
-      const result = await generateImage({
+      const response = await generateImage({
         prompt: aiPrompt,
-        apiKey: apiKey || 'free-services',
         style: aiStyle,
         aspectRatio: aiAspectRatio
       });
-      
-      setAiGeneratedImage(result.imageUrl);
-      console.log('✅ AI image generated successfully!');
+      setAiGeneratedImage(response.imageUrl);
     } catch (error) {
-      console.error('❌ AI generation failed:', error);
+      console.error('AI generation failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Check for specific API errors
+      if (errorMessage.includes('API_RATE_LIMIT') || errorMessage.includes('quota') || errorMessage.includes('limit') || errorMessage.includes('rate')) {
+        setApiError('🚫 API Rate Limit Reached! Please try again later or use fallback services.');
+      } else if (errorMessage.includes('API_BILLING') || errorMessage.includes('billing') || errorMessage.includes('payment')) {
+        setApiError('💳 Billing limit reached. Please check your Google Cloud billing.');
+      } else if (errorMessage.includes('API_INVALID_KEY') || errorMessage.includes('invalid') || errorMessage.includes('unauthorized')) {
+        setApiError('🔑 Invalid API key. Please check your Gemini API key.');
+      } else {
+        setApiError(`❌ Generation failed: ${errorMessage}`);
+      }
     } finally {
       setAiGenerating(false);
     }
   };
 
-  // Use AI suggestion
   const useAiSuggestion = (suggestion: string) => {
     setAiPrompt(suggestion);
     setShowAiModal(true);
   };
 
-  // Save AI generated image as new design
-  const saveAiImage = async () => {
-    if (!aiGeneratedImage || !user) return;
-    
-    const newDesign: CreativeDesign = {
-      id: Date.now().toString(),
-      user_id: user.id,
-      title: `AI Generated: ${aiPrompt.substring(0, 50)}...`,
-      description: `AI-generated educational content: ${aiPrompt}`,
-      prompt: aiPrompt,
-      image_url: aiGeneratedImage,
-      tags: extractTagsFromPrompt(aiPrompt),
-      is_public: true,
-      likes_count: 0,
-      comments_count: 0,
-      rating: 0,
-      created_at: new Date().toISOString(),
-      profiles: {
-        full_name: user.user_metadata?.full_name || 'AI User',
-        avatar_url: user.user_metadata?.avatar_url
-      },
-      comments: [],
-      user_liked: false,
-      user_rated: 0
+  const addQuizQuestion = () => {
+    const newQuestion = {
+      id: `q${quizQuestions.length + 1}`,
+      question: '',
+      options: ['', '', '', ''],
+      correct: '',
+      points: 10
     };
-    
-    setDesigns(prev => [newDesign, ...prev]);
-    setAiGeneratedImage(null);
-    setAiPrompt('');
-    setShowAiModal(false);
+    setQuizQuestions([...quizQuestions, newQuestion]);
   };
 
-  // Extract tags from prompt
-  const extractTagsFromPrompt = (prompt: string): string[] => {
-    const tags: string[] = [];
-    const promptLower = prompt.toLowerCase();
-    
-    if (promptLower.includes('science') || promptLower.includes('biology') || promptLower.includes('chemistry') || promptLower.includes('physics')) {
-      tags.push('science');
+  const updateQuizQuestion = (index: number, field: string, value: any) => {
+    const updated = [...quizQuestions];
+    if (field === 'options') {
+      updated[index].options = value;
+    } else {
+      updated[index][field] = value;
     }
-    if (promptLower.includes('math') || promptLower.includes('mathematics') || promptLower.includes('algebra') || promptLower.includes('geometry')) {
-      tags.push('mathematics');
-    }
-    if (promptLower.includes('history') || promptLower.includes('historical') || promptLower.includes('timeline')) {
-      tags.push('history');
-    }
-    if (promptLower.includes('art') || promptLower.includes('creative') || promptLower.includes('design')) {
-      tags.push('art');
-    }
-    if (promptLower.includes('education') || promptLower.includes('learning') || promptLower.includes('study')) {
-      tags.push('education');
-    }
-    
-    return tags.length > 0 ? tags : ['education'];
+    setQuizQuestions(updated);
   };
 
-  const generateImageWithAI = async (prompt: string) => {
-    if (!hasApiKey) {
-      setShowApiKeyModal(true);
+
+  // AI Image Generation Functions
+  const generateAIImage = async () => {
+    if (!aiPrompt.trim()) {
       return;
     }
 
-    setGenerating(true);
-    try {
-      console.log('🎨 Generating image with REAL AI system for prompt:', prompt);
-      console.log('⚡ Generating image immediately...');
-      
-      const result = await generateImage({
-        prompt,
-        apiKey: apiKey || 'free-services',
-        style: 'photographic',
-        aspectRatio: '16:9'
-      });
-      
-      console.log('Generated image URL:', result.imageUrl);
-      
-      // Validate the image URL
-      if (!result.imageUrl || result.imageUrl.includes('placeholder')) {
-        console.warn('Generated image appears to be a placeholder');
+    setIsGeneratingImage(true);
+    
+    // Simple timeout to show loading state
+    setTimeout(() => {
+      try {
+        console.log('🎨 Generating image for:', aiPrompt);
+        
+        // Use Pollinations AI - simple and reliable
+        const encodedPrompt = encodeURIComponent(`educational illustration: ${aiPrompt}, clear, informative, learning material`);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=600&seed=${Date.now()}`;
+        
+        console.log('✅ Image URL:', imageUrl);
+        
+        setGeneratedImageUrl(imageUrl);
+        setPostImage(imageUrl);
+        setIsGeneratingImage(false);
+      } catch (error) {
+        console.error('Error generating image:', error);
+        setIsGeneratingImage(false);
       }
-      
-      return result.imageUrl;
-    } catch (error) {
-      console.error('Error generating image:', error);
-      
-      // Show user-friendly error message
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('Image generation error details:', errorMessage);
-      
-      // Return a more descriptive fallback
-      const encodedPrompt = encodeURIComponent(prompt.substring(0, 50));
-      return `https://via.placeholder.com/800x600/7C3AED/FFFFFF?text=${encodedPrompt}`;
-    } finally {
-      setGenerating(false);
+    }, 1000); // 1 second delay to show loading
+  };
+
+  const useGeneratedImage = () => {
+    if (generatedImageUrl) {
+      setPostImage(generatedImageUrl);
+      setShowAiModal(false);
+      setAiPrompt('');
+      setGeneratedImageUrl(null);
     }
   };
 
-  const createDesign = async () => {
-    if (!user || !newDesign.title || !newDesign.prompt) return;
-
-    try {
-      const imageUrl = await generateImageWithAI(newDesign.prompt) || 'https://via.placeholder.com/800x600/7C3AED/FFFFFF?text=Generated+Image';
-      
-      const newDesignData: CreativeDesign = {
-        id: Date.now().toString(),
-        user_id: user.id,
-        title: newDesign.title,
-        description: newDesign.description,
-        prompt: newDesign.prompt,
-        image_url: imageUrl,
-        tags: newDesign.tags,
-        is_public: newDesign.isPublic,
-        likes_count: 0,
-        comments_count: 0,
-        rating: 0,
-        created_at: new Date().toISOString(),
-        profiles: { 
-          full_name: 'You',
-          avatar_url: undefined
-        },
-        comments: [],
-        user_liked: false,
-        user_rated: 0
-      };
-
-      setDesigns(prev => [newDesignData, ...prev]);
-      setShowCreateModal(false);
-      setNewDesign({
-        title: '',
-        description: '',
-        prompt: '',
-        tags: [],
-        isPublic: true
-      });
-    } catch (error) {
-      console.error('Error creating design:', error);
-    }
-  };
-
-  const toggleLike = async (designId: string) => {
-    if (!user) return;
-
-    setDesigns(prev => prev.map(design => {
-      if (design.id === designId) {
-        const isLiked = design.user_liked;
+  // Social Learning Functions
+  const handleLikePost = (postId: number) => {
+    setPosts(posts.map(post => {
+      if (post.id === postId) {
+        const newLikes = post.isLiked ? post.likes - 1 : post.likes + 1;
+        const newPoints = post.isLiked ? userPoints - 5 : userPoints + 5;
+        setUserPoints(newPoints);
+        localStorage.setItem('userPoints', newPoints.toString());
         return {
-          ...design,
-          user_liked: !isLiked,
-          likes_count: isLiked ? design.likes_count - 1 : design.likes_count + 1
+          ...post,
+          likes: newLikes,
+          isLiked: !post.isLiked
         };
       }
-      return design;
+      return post;
     }));
   };
 
-  const addComment = (designId: string) => {
-    const comment = newComments[designId];
-    if (!comment.trim()) return;
+  const handleSharePost = (postId: number) => {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
 
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      user_id: user?.id || 'current-user',
-      content: comment,
-      created_at: new Date().toISOString(),
-      user_name: 'You'
+    // Create shareable link
+    const shareUrl = `${window.location.origin}/creative-learning?post=${postId}`;
+    const shareText = `Check out this educational post: "${post.title}"`;
+    
+    // Try to use Web Share API if available
+    if (navigator.share) {
+      navigator.share({
+        title: post.title,
+        text: shareText,
+        url: shareUrl
+      }).then(() => {
+        // Increment share count on successful share
+        incrementShareCount(postId);
+        console.log('Post shared successfully via Web Share API!');
+      }).catch((error) => {
+        console.log('Web Share cancelled or failed:', error);
+        // Fallback to clipboard
+        fallbackShare(shareUrl, shareText, postId);
+      });
+    } else {
+      // Fallback to clipboard
+      fallbackShare(shareUrl, shareText, postId);
+    }
+  };
+
+  const fallbackShare = async (shareUrl: string, shareText: string, postId: number) => {
+    try {
+      // Copy to clipboard
+      await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+      
+      // Show success message
+      alert('Post link copied to clipboard! You can now share it anywhere.');
+      
+      // Increment share count
+      incrementShareCount(postId);
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      // Final fallback - show the link
+      alert(`Share this post:\n${shareText}\n${shareUrl}`);
+      incrementShareCount(postId);
+    }
+  };
+
+  const incrementShareCount = (postId: number) => {
+    setPosts(posts.map(post => {
+      if (post.id === postId) {
+        const newShares = post.shares + 1;
+        const newPoints = userPoints + 10;
+        setUserPoints(newPoints);
+        localStorage.setItem('userPoints', newPoints.toString());
+        return { ...post, shares: newShares };
+      }
+      return post;
+    }));
+  };
+
+  const handleCommentPost = (postId: number) => {
+    // Toggle comment section visibility
+    setShowComments(showComments === postId ? null : postId);
+  };
+
+  const submitComment = (postId: number) => {
+    if (!commentText.trim()) return;
+    
+    setPosts(posts.map(post => {
+      if (post.id === postId) {
+        const newComments = post.comments + 1;
+        const newPoints = userPoints + 3;
+        setUserPoints(newPoints);
+        localStorage.setItem('userPoints', newPoints.toString());
+        
+        // Add comment to post
+        const newComment = {
+          id: Date.now(),
+          text: commentText,
+          author: 'You',
+          timestamp: new Date().toISOString(),
+          likes: 0
+        };
+        
+        return { 
+          ...post, 
+          comments: newComments,
+          commentList: [...(post.commentList || []), newComment]
+        };
+      }
+      return post;
+    }));
+    
+    setCommentText('');
+    console.log('Comment added successfully!');
+  };
+
+  const startQuiz = (post: any) => {
+    setCurrentQuiz(post.quiz);
+    setQuizQuestions(post.quiz.questions);
+    setCurrentQuestionIndex(0);
+    setQuizAnswers({});
+    setQuizScore(0);
+    setShowQuizResults(false);
+    setShowQuizModal(true);
+  };
+
+  const handleQuizAnswer = (questionId: string, answer: string) => {
+    setQuizAnswers({ ...quizAnswers, [questionId]: answer });
+  };
+
+  const submitQuiz = () => {
+    let score = 0;
+    let earnedPoints = 0;
+    
+    quizQuestions.forEach(question => {
+      if (quizAnswers[question.id] === question.correct) {
+        score += 1;
+        earnedPoints += question.points;
+      }
+    });
+    
+    setQuizScore(score);
+    setUserPoints(userPoints + earnedPoints);
+    localStorage.setItem('userPoints', (userPoints + earnedPoints).toString());
+    setShowQuizResults(true);
+  };
+
+  const createPost = async () => {
+    if (!postTitle.trim() || !postContent.trim()) return;
+    
+    const newPost = {
+      id: Date.now(),
+      author: "You",
+      authorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+      title: postTitle,
+      content: postContent,
+      image: postImage,
+      type: postType,
+      tags: postTags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      points: postType === 'quiz' ? 200 : 100,
+      createdAt: "Just now",
+      isLiked: false,
+      quiz: postType === 'quiz' ? {
+        id: `quiz_${Date.now()}`,
+        questions: quizQuestions
+      } : null
     };
-
-    setDesigns(prev => prev.map(design => {
-      if (design.id === designId) {
-        return {
-          ...design,
-          comments: [...(design.comments || []), newComment],
-          comments_count: design.comments_count + 1
-        };
-      }
-      return design;
-    }));
-
-    setNewComments(prev => ({ ...prev, [designId]: '' }));
+    
+    setPosts([newPost, ...posts]);
+    setPostTitle('');
+    setPostContent('');
+    setPostImage(null);
+    setPostTags('');
+    setPostType('image');
+    setQuizQuestions([]);
+    setShowCreatePostModal(false);
+    
+    // Award points for creating post
+    const newPoints = userPoints + (postType === 'quiz' ? 50 : 25);
+    setUserPoints(newPoints);
+    localStorage.setItem('userPoints', newPoints.toString());
   };
 
-  // Post management functions
-  const startEditPost = (design: CreativeDesign) => {
-    setEditingPost(design.id);
-    setEditForm({
-      title: design.title,
-      description: design.description,
-      tags: design.tags
-    });
+  const saveAiImage = () => {
+    if (aiGeneratedImage) {
+      const newDesign = {
+        id: Date.now(),
+        title: aiPrompt,
+        description: `AI-generated: ${aiPrompt}`,
+        imageUrl: aiGeneratedImage,
+        tags: extractTagsFromPrompt(aiPrompt),
+        likes: 0,
+        comments: 0,
+        isLiked: false,
+        author: 'AI Assistant',
+        createdAt: new Date().toISOString()
+      };
+      
+      setDesigns(prev => [newDesign, ...prev]);
+      setAiGeneratedImage(null);
+      setAiPrompt('');
+      setShowAiModal(false);
+    }
   };
 
-  const cancelEditPost = () => {
-    setEditingPost(null);
-    setEditForm({
-      title: '',
-      description: '',
-      tags: []
-    });
+  const extractTagsFromPrompt = (prompt: string): string[] => {
+    const commonTags = ['education', 'learning', 'visual', 'diagram', 'infographic'];
+    const words = prompt.toLowerCase().split(' ');
+    return [...new Set([...commonTags, ...words.filter(word => word.length > 3)])];
   };
 
-  const saveEditPost = () => {
-    if (!editingPost) return;
 
+  const toggleLike = (id: number) => {
     setDesigns(prev => prev.map(design => 
-      design.id === editingPost 
+      design.id === id 
         ? { 
-            ...design, 
-            title: editForm.title,
-            description: editForm.description,
-            tags: editForm.tags
+          ...design,
+            isLiked: !design.isLiked,
+            likes: design.isLiked ? design.likes - 1 : design.likes + 1
           }
         : design
     ));
-
-    setEditingPost(null);
-    setEditForm({
-      title: '',
-      description: '',
-      tags: []
-    });
   };
 
-  const deletePost = (designId: string) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      setDesigns(prev => prev.filter(design => design.id !== designId));
-    }
-  };
-
-  const regenerateImage = async (designId: string, prompt: string) => {
-    if (!hasApiKey) {
-      setShowApiKeyModal(true);
-      return;
-    }
-
-    setGenerating(true);
-    try {
-      const imageUrl = await generateImageWithAI(prompt);
-      if (imageUrl) {
-        setDesigns(prev => prev.map(design => 
-          design.id === designId 
-            ? { ...design, image_url: imageUrl }
-            : design
-        ));
-      }
-    } catch (error) {
-      console.error('Error regenerating image:', error);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const rateDesign = (designId: string, rating: number) => {
-    if (!user) return;
-
-    setDesigns(prev => prev.map(design => {
-      if (design.id === designId) {
-        const currentRating = design.user_rated || 0;
-        const newRating = currentRating === rating ? 0 : rating;
-        return {
-          ...design,
-          user_rated: newRating
-        };
-      }
-      return design;
-    }));
-  };
-
-  const toggleComments = (designId: string) => {
-    setExpandedComments(prev => ({
-      ...prev,
-      [designId]: !prev[designId]
-    }));
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d ago`;
-    return date.toLocaleDateString();
-  };
-
-  const filteredDesigns = designs.filter(design => {
-    const matchesSearch = design.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         design.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         design.prompt.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
-
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+  // Nano Banana Image Editor Modal
+  const NanoBananaEditor = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+            <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <span className="text-2xl">🤖</span>
+            </div>
+              <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Gemini 2.5 Flash Image Editor
+              </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                Powered by Google's Gemini 2.5 Flash Image API
+                </p>
+              </div>
+            </div>
+              <button
+            onClick={() => setShowEditModal(false)}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+            <XCircle className="h-6 w-6" />
+              </button>
       </div>
-    );
-  }
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Image Preview */}
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+              {editingImage ? (
+                <img
+                  src={editingImage}
+                  alt="Editing"
+                  className="w-full h-auto rounded-lg"
+                  style={{
+                    filter: `brightness(${imageEdits.brightness}%) contrast(${imageEdits.contrast}%) saturate(${imageEdits.saturation}%) blur(${imageEdits.blur}px)`
+                  }}
+                        />
+                      ) : (
+                <div className="text-center py-12">
+                  <Upload className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500">Upload an image to edit</p>
+                </div>
+                      )}
+                    </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-3 gap-2">
+                        <button
+                onClick={async () => {
+                  if (editingImage && geminiService) {
+                    try {
+                      setApiError(null);
+                      const enhanced = await geminiService.editImage(editingImage, 'Enhance this image for educational purposes with better clarity and contrast');
+                      setEditingImage(enhanced.imageUrl);
+                    } catch (error) {
+                      console.error('Enhancement failed:', error);
+                      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                      if (errorMessage.includes('API_RATE_LIMIT') || errorMessage.includes('quota') || errorMessage.includes('limit')) {
+                        setApiError('🚫 API Rate Limit Reached! Please try again later.');
+                      } else {
+                        setApiError(`❌ Enhancement failed: ${errorMessage}`);
+                      }
+                    }
+                  }
+                }}
+                className="flex flex-col items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              >
+                <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400 mb-1" />
+                <span className="text-xs text-blue-700 dark:text-blue-300">Enhance</span>
+                        </button>
+                        <button
+                onClick={async () => {
+                  if (editingImage && geminiService) {
+                    try {
+                      setApiError(null);
+                      const filtered = await geminiService.editImage(editingImage, 'Apply an educational filter to make this image more suitable for learning materials');
+                      setEditingImage(filtered.imageUrl);
+                    } catch (error) {
+                      console.error('Filtering failed:', error);
+                      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                      if (errorMessage.includes('API_RATE_LIMIT') || errorMessage.includes('quota') || errorMessage.includes('limit')) {
+                        setApiError('🚫 API Rate Limit Reached! Please try again later.');
+                      } else {
+                        setApiError(`❌ Filtering failed: ${errorMessage}`);
+                      }
+                    }
+                  }
+                }}
+                className="flex flex-col items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+              >
+                <Wand2 className="h-5 w-5 text-purple-600 dark:text-purple-400 mb-1" />
+                <span className="text-xs text-purple-700 dark:text-purple-300">Filter</span>
+                        </button>
+              <button
+                onClick={async () => {
+                  if (editingImage && geminiService) {
+                    try {
+                      setApiError(null);
+                      const stylized = await geminiService.editImage(editingImage, 'Convert this image to a stylized educational diagram with clear visual elements');
+                      setEditingImage(stylized.imageUrl);
+                    } catch (error) {
+                      console.error('Stylization failed:', error);
+                      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                      if (errorMessage.includes('API_RATE_LIMIT') || errorMessage.includes('quota') || errorMessage.includes('limit')) {
+                        setApiError('🚫 API Rate Limit Reached! Please try again later.');
+                      } else {
+                        setApiError(`❌ Stylization failed: ${errorMessage}`);
+                      }
+                    }
+                  }
+                }}
+                className="flex flex-col items-center p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors"
+              >
+                <Edit3 className="h-5 w-5 text-pink-600 dark:text-pink-400 mb-1" />
+                <span className="text-xs text-pink-700 dark:text-pink-300">Stylize</span>
+                    </button>
+                </div>
+              </div>
+
+          {/* Editing Controls */}
+          <div className="space-y-6">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                <Sliders className="h-4 w-4 inline mr-2" />
+                Adjustments
+              </h4>
+              
+                  <div className="space-y-4">
+                    <div>
+                  <label className="text-xs text-gray-600 dark:text-gray-400">
+                    Brightness: {imageEdits.brightness}%
+                      </label>
+                      <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={imageEdits.brightness}
+                    onChange={(e) => setImageEdits(prev => ({ ...prev, brightness: parseInt(e.target.value) }))}
+                    className="w-full"
+                      />
+                    </div>
+                
+                    <div>
+                  <label className="text-xs text-gray-600 dark:text-gray-400">
+                    Contrast: {imageEdits.contrast}%
+                      </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={imageEdits.contrast}
+                    onChange={(e) => setImageEdits(prev => ({ ...prev, contrast: parseInt(e.target.value) }))}
+                    className="w-full"
+                      />
+                    </div>
+                
+                    <div>
+                  <label className="text-xs text-gray-600 dark:text-gray-400">
+                    Saturation: {imageEdits.saturation}%
+                      </label>
+                      <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={imageEdits.saturation}
+                    onChange={(e) => setImageEdits(prev => ({ ...prev, saturation: parseInt(e.target.value) }))}
+                    className="w-full"
+                      />
+      </div>
+                
+                <div>
+                  <label className="text-xs text-gray-600 dark:text-gray-400">
+                    Blur: {imageEdits.blur}px
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={imageEdits.blur}
+                    onChange={(e) => setImageEdits(prev => ({ ...prev, blur: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                    </div>
+                  </div>
+            </div>
+
+            {/* AI Features */}
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <Cpu className="h-4 w-4 inline mr-2" />
+                AI-Powered Features
+              </h4>
+              
+              <div className="space-y-2">
+                <button className="w-full text-left px-3 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm">
+                  🎨 Auto-enhance for education
+                </button>
+                <button className="w-full text-left px-3 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm">
+                  📐 Add educational annotations
+                </button>
+                <button className="w-full text-left px-3 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm">
+                  🔍 Extract text from image
+                </button>
+                <button className="w-full text-left px-3 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm">
+                  📊 Convert to diagram
+                </button>
+                      </div>
+                    </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setImageEdits({
+                    brightness: 100,
+                    contrast: 100,
+                    saturation: 100,
+                    blur: 0
+                  });
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reset
+              </button>
+                      <button
+                onClick={() => {
+                  if (editingImage) {
+                    const link = document.createElement('a');
+                    link.download = 'edited-image.png';
+                    link.href = editingImage;
+                    link.click();
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all flex items-center justify-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+                      </button>
+                    </div>
+                </div>
+                </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -578,386 +800,469 @@ const CreativeLearningPage: React.FC = () => {
             <div className="flex items-center space-x-3">
               <Palette className="h-8 w-8 text-pink-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
                   Creative Learning Hub
+                  {geminiAvailable && (
+                    <span className="ml-2 px-2 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs rounded-full font-medium">
+                      🤖 AI Ready
+                    </span>
+                  )}
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Share and discover creative ways to learn
+                  Create, share, and learn together with AI
                 </p>
               </div>
             </div>
             
+            <div className="flex items-center space-x-4">
+              {/* User Stats */}
             <div className="flex items-center space-x-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search designs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-64 border border-gray-300 dark:border-gray-600 rounded-full focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
-                />
+                <div className="flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full">
+                  <Trophy className="h-4 w-4 mr-1" />
+                  <span className="text-sm font-medium">{userPoints}</span>
+                </div>
+                <div className="flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+                  <Star className="h-4 w-4 mr-1" />
+                  <span className="text-sm font-medium">L{userLevel}</span>
+                </div>
+                <div className="flex items-center px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 rounded-full">
+                  <Flame className="h-4 w-4 mr-1" />
+                  <span className="text-sm font-medium">{userStreak}</span>
+                </div>
               </div>
               
+              <div className="flex items-center space-x-2">
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center px-4 py-2 bg-pink-600 text-white rounded-full hover:bg-pink-700 transition-colors text-sm font-medium"
+                  onClick={() => setShowCreatePostModal(true)}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-all text-sm font-medium"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create
-              </button>
+                  Create Post
+                </button>
+                <button
+                  onClick={() => setShowAiModal(true)}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all text-sm font-medium"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Generate
+                </button>
+              </div>
+              
             </div>
           </div>
         </div>
       </div>
 
+      {/* AI-Powered Features Section */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* AI-Powered Features Section */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                <span className="text-white text-sm font-bold">AI</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  🍌 Gemini Nano AI Studio
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Generate educational images with AI-powered creativity
-                </p>
-              </div>
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-6 mb-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="h-10 w-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-white" />
             </div>
-            <button
-              onClick={() => setShowAiModal(true)}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all text-sm font-medium"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Generate with AI
-            </button>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                AI-Powered Learning Tools
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Generate educational content with AI assistance
+              </p>
+            </div>
           </div>
           
-          {/* AI Suggestions */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">💡 AI-Powered Suggestions:</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {aiSuggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => useAiSuggestion(suggestion)}
-                  className="text-left p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-sm transition-all text-sm"
+          {apiError && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                    API Error
+                  </h3>
+                  <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                    {apiError}
+                  </p>
+                      <button
+                    onClick={() => setApiError(null)}
+                    className="mt-2 text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition-colors"
+                  >
+                    Dismiss
+                      </button>
+                  </div>
+                </div>
+              </div>
+          )}
+
+          {!geminiAvailable && !apiError && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <Cpu className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                        </div>
+                <div>
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Add your API Key for premium AI features
+                  </h3>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Add your API key in Settings to unlock high-quality AI image generation. Free fallback services are available.
+                  </p>
+                  <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔘 Manage API Keys button clicked');
+                    console.log('Navigating to /settings');
+                    try {
+                      navigate('/settings');
+                    } catch (error) {
+                      console.error('Navigation error:', error);
+                      window.location.href = '/settings';
+                    }
+                  }}
+                    className="mt-2 text-xs bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition-colors cursor-pointer"
+                    type="button"
                 >
-                  <span className="text-gray-700 dark:text-gray-300">{suggestion}</span>
+                    Manage API Keys
                 </button>
-              ))}
+                          </div>
+                        </div>
+                      </div>
+          )}
+
+          {/* Always show API key management button */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Cpu className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    API Key Management
+                  </h3>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Manage your AI service API keys for enhanced features
+                  </p>
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔘 Test Settings button clicked');
+                    console.log('Navigating to /test-settings');
+                    try {
+                      navigate('/test-settings');
+                    } catch (error) {
+                      console.error('Navigation error:', error);
+                      window.location.href = '/test-settings';
+                    }
+                  }}
+                  className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors cursor-pointer"
+                  type="button"
+                >
+                  Test Route
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔘 Manage API Keys button clicked');
+                    navigate('/api-settings');
+                  }}
+                  className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors cursor-pointer"
+                  type="button"
+                >
+                  Manage API Keys
+                </button>
+              </div>
             </div>
           </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {educationalSuggestions.slice(0, 5).map((suggestion, index) => (
+              <button
+                key={index}
+                onClick={() => useAiSuggestion(suggestion)}
+                className="text-left p-3 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm border border-gray-200 dark:border-gray-600"
+              >
+                {suggestion}
+              </button>
+                    ))}
+                  </div>
+                    </div>
+
+        {/* Designs Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {designs.map((design) => (
+            <div key={design.id} className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="aspect-video bg-gray-100 dark:bg-gray-700 relative group">
+                <img
+                  src={design.imageUrl}
+                  alt={design.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
+                      <button
+                      onClick={() => toggleLike(design.id)}
+                      className={`p-2 rounded-full ${
+                        design.isLiked 
+                          ? 'bg-red-500 text-white' 
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      } transition-colors`}
+                    >
+                      <Heart className={`h-4 w-4 ${design.isLiked ? 'fill-current' : ''}`} />
+                    </button>
+                    <button className="p-2 bg-white text-gray-700 rounded-full hover:bg-gray-100 transition-colors">
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                    <button className="p-2 bg-white text-gray-700 rounded-full hover:bg-gray-100 transition-colors">
+                      <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  {design.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                  {design.description}
+                </p>
+                
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {design.tags.slice(0, 3).map((tag: string, index: number) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center space-x-4">
+                    <span className="flex items-center">
+                      <Heart className="h-4 w-4 mr-1" />
+                      {design.likes}
+                    </span>
+                    <span className="flex items-center">
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      {design.comments}
+                    </span>
+                  </div>
+                  <span className="text-xs">
+                    by {design.author}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Social Media Status */}
-        {!hasApiKey && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-            <div className="flex items-center">
-              <div className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2">📱</div>
-              <p className="text-blue-800 dark:text-blue-200 text-sm">
-                Ready to create educational social media posts with instant AI images! 
-                <button 
-                  onClick={() => setShowApiKeyModal(true)}
-                  className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                >
-                  Get Started
-                </button>
-              </p>
+        {designs.length === 0 && (
+          <div className="text-center py-12">
+            <Palette className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No designs yet
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Start by uploading a design or generating one with AI
+            </p>
+            <div className="flex justify-center space-x-3">
+              <button
+                onClick={() => setShowAiModal(true)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Generate with AI
+              </button>
             </div>
           </div>
         )}
 
-        {/* Social Media Feed */}
+      {/* Social Learning Feed */}
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Learning Community Feed
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            Share your creations and learn from others
+          </p>
+        </div>
+
+        {/* Posts Feed */}
         <div className="space-y-6">
-          {filteredDesigns.map((design) => (
-            <div key={design.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               {/* Post Header */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center">
-                      {design.profiles?.avatar_url ? (
-                        <img
-                          src={design.profiles.avatar_url}
-                          alt={design.profiles.full_name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-5 w-5 text-white" />
+              <div className="p-6 pb-4">
+                <div className="flex items-start space-x-3">
+                  <img
+                    src={post.authorAvatar}
+                    alt={post.author}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {post.author}
+                      </h3>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {post.createdAt}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        post.type === 'quiz' 
+                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200'
+                          : post.type === 'lesson'
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                          : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                      }`}>
+                        {post.type === 'quiz' ? 'Quiz' : post.type === 'lesson' ? 'Lesson' : 'Image'}
+                      </span>
+                    </div>
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                      {post.title}
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">
+                      {post.content}
+                    </p>
+                    {post.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {post.tags.map((tag: string, index: number) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
                       )}
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {design.profiles?.full_name}
-                      </h3>
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {formatTimeAgo(design.created_at)}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {design.user_id === user?.id && (
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={() => startEditPost(design)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-                          title="Edit post"
-                        >
-                          <Palette className="h-4 w-4 text-gray-500" />
-                        </button>
-                        <button
-                          onClick={() => deletePost(design.id)}
-                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-full"
-                          title="Delete post"
-                        >
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        </button>
-                      </div>
-                    )}
-                    <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
-                      <MoreHorizontal className="h-5 w-5 text-gray-500" />
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              {/* Post Content */}
-              <div className="p-4">
-                {editingPost === design.id ? (
-                  // Edit Mode
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Title
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.title}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        placeholder="Enter title"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Description
-                      </label>
-                      <textarea
-                        value={editForm.description}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        rows={3}
-                        placeholder="Enter description"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Tags (comma-separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.tags.join(', ')}
-                        onChange={(e) => setEditForm(prev => ({ 
-                          ...prev, 
-                          tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        placeholder="Enter tags separated by commas"
-                      />
-                    </div>
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={saveEditPost}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Save Changes
-                      </button>
-                      <button
-                        onClick={cancelEditPost}
-                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+              {/* Post Image */}
+              {post.image && (
+                <div className="px-6 pb-4">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
                   </div>
-                ) : (
-                  // View Mode
-                  <>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                      {design.title}
-                    </h2>
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">
-                      {design.description}
-                    </p>
-                  </>
-                )}
-                
-                {/* Image */}
-                <div className="mb-4 relative">
-                  {generating && design.user_id === user?.id ? (
-                    <div className="w-full h-96 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                      <div className="text-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 dark:text-gray-300">🤖 AI is generating your educational post image...</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This takes 4-5 seconds using free AI services</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 font-mono">{design.prompt}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <img
-                      src={design.image_url}
-                      alt={design.title}
-                      className="w-full rounded-lg shadow-sm"
-                      onError={(e) => {
-                        // Fallback if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://via.placeholder.com/800x600/7C3AED/FFFFFF?text=${encodeURIComponent(design.title)}`;
-                      }}
-                    />
-                  )}
-                  {design.user_id === user?.id && !editingPost && !generating && (
-                    <div className="absolute top-2 right-2">
-                      <button
-                        onClick={() => regenerateImage(design.id, design.prompt)}
-                        disabled={generating}
-                        className="px-3 py-1 bg-black/50 hover:bg-black/70 text-white text-xs rounded-lg transition-colors flex items-center space-x-1"
-                        title="Regenerate image"
-                      >
-                        <Palette className="h-3 w-3" />
-                        <span>Regenerate</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+              )}
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {design.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-xs rounded-full font-medium"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  <div className="flex items-center space-x-4">
-                    <span className="flex items-center">
-                      <Star className="h-4 w-4 mr-1 text-yellow-500" />
-                      {design.rating.toFixed(1)}
-                    </span>
-                    <span>{design.likes_count} likes</span>
-                    <span>{design.comments_count} comments</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+              {/* Post Actions */}
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-6">
-                    <button
-                      onClick={() => toggleLike(design.id)}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-full transition-colors ${
-                        design.user_liked 
-                          ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
-                          : 'text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                      }`}
+                        <button
+                      onClick={() => handleLikePost(post.id)}
+                      className={`flex items-center space-x-2 ${
+                        post.isLiked 
+                          ? 'text-red-500' 
+                          : 'text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400'
+                      } transition-colors`}
                     >
-                      <Heart className={`h-5 w-5 ${design.user_liked ? 'fill-current' : ''}`} />
-                      <span className="text-sm font-medium">Like</span>
-                    </button>
-
-                    <button
-                      onClick={() => toggleComments(design.id)}
-                      className="flex items-center space-x-2 px-3 py-2 rounded-full text-gray-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                      <Heart className={`h-5 w-5 ${post.isLiked ? 'fill-current' : ''}`} />
+                      <span className="text-sm font-medium">{post.likes}</span>
+                        </button>
+                    
+                    <button 
+                      onClick={() => handleCommentPost(post.id)}
+                      className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
                     >
                       <MessageCircle className="h-5 w-5" />
-                      <span className="text-sm font-medium">Comment</span>
+                      <span className="text-sm font-medium">{post.comments}</span>
                     </button>
-
-                    <button className="flex items-center space-x-2 px-3 py-2 rounded-full text-gray-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+                    
+                        <button
+                      onClick={() => handleSharePost(post.id)}
+                      className="flex items-center space-x-2 text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
+                        >
                       <Share2 className="h-5 w-5" />
-                      <span className="text-sm font-medium">Share</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center space-x-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span className="text-sm font-medium">{post.shares}</span>
+                        </button>
+                      </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-1 text-yellow-500">
+                      <Trophy className="h-4 w-4" />
+                      <span className="text-sm font-medium">{post.points}</span>
+                    </div>
+                    
+                    {post.quiz && (
                       <button
-                        key={star}
-                        onClick={() => rateDesign(design.id, star)}
-                        className={`h-5 w-5 ${
-                          (design.user_rated || 0) >= star
-                            ? 'text-yellow-500 fill-current'
-                            : 'text-gray-300 hover:text-yellow-400'
-                        }`}
+                        onClick={() => startQuiz(post)}
+                        className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-all text-sm font-medium"
                       >
-                        <Star className="h-5 w-5" />
-                      </button>
-                    ))}
+                        <Play className="h-4 w-4 mr-2" />
+                        Take Quiz
+                    </button>
+                    )}
                   </div>
                 </div>
               </div>
-
+              
               {/* Comments Section */}
-              {expandedComments[design.id] && (
-                <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                  {/* Existing Comments */}
-                  <div className="space-y-3 mb-4">
-                    {design.comments?.map((comment) => (
-                      <div key={comment.id} className="flex space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
-                          <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="font-medium text-sm text-gray-900 dark:text-white">
-                                {comment.user_name}
-                              </span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatTimeAgo(comment.created_at)}
-                              </span>
+              {showComments === post.id && (
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="space-y-4">
+                    {/* Comment Input */}
+                    <div className="flex space-x-3">
+                      <div className="flex-1">
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="Write a comment..."
+                          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                          rows={2}
+                        />
+                      </div>
+                      <button
+                        onClick={() => submitComment(post.id)}
+                        disabled={!commentText.trim()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Post
+                      </button>
+                    </div>
+                    
+                    {/* Comments List */}
+                    <div className="space-y-3">
+                      {post.commentList?.map((comment: any) => (
+                        <div key={comment.id} className="flex space-x-3">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {comment.author.charAt(0)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="font-medium text-gray-900 dark:text-white text-sm">
+                                  {comment.author}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {new Date(comment.timestamp).toLocaleTimeString()}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 dark:text-gray-300 text-sm">
+                                {comment.text}
+                              </p>
                             </div>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                              {comment.content}
-                            </p>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Add Comment */}
-                  <div className="flex space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="flex-1 flex space-x-2">
-                      <input
-                        type="text"
-                        placeholder="Write a comment..."
-                        value={newComments[design.id] || ''}
-                        onChange={(e) => setNewComments(prev => ({ ...prev, [design.id]: e.target.value }))}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-full focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-800 dark:text-white text-sm"
-                        onKeyPress={(e) => e.key === 'Enter' && addComment(design.id)}
-                      />
-                      <button
-                        onClick={() => addComment(design.id)}
-                        className="px-4 py-2 bg-pink-600 text-white rounded-full hover:bg-pink-700 transition-colors text-sm font-medium"
-                      >
-                        <Send className="h-4 w-4" />
-                      </button>
+                      ))}
+                      
+                      {(!post.commentList || post.commentList.length === 0) && (
+                        <div className="text-center text-gray-500 dark:text-gray-400 text-sm py-4">
+                          No comments yet. Be the first to comment!
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -965,178 +1270,9 @@ const CreativeLearningPage: React.FC = () => {
             </div>
           ))}
         </div>
+                </div>
+              </div>
 
-        {filteredDesigns.length === 0 && (
-          <div className="text-center py-12">
-            <Palette className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No designs found
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              {searchTerm 
-                ? 'Try adjusting your search or filters'
-                : 'Be the first to create a creative learning design!'
-              }
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* API Key Modal */}
-      {showApiKeyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              📱 Create Educational Social Media Post
-            </h3>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                Create posts with AI-generated images for the educational community. Instant generation!
-              </p>
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">🎨 Educational Image Generation:</h4>
-                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
-                  <li>🖼️ Unique educational images</li>
-                  <li>⚡ Instant generation</li>
-                  <li>📚 Based on your prompt keywords</li>
-                  <li>📱 Perfect for social media posts</li>
-                  <li>✅ Always works - no API keys needed</li>
-                </ul>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">
-                  💡 Creates unique educational images based on your description!
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowApiKeyModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  if (apiKey.trim()) {
-                    localStorage.setItem('google_gemini_api_key', apiKey.trim());
-                  }
-                  setHasApiKey(true);
-                  setShowApiKeyModal(false);
-                }}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Start Creating Posts! 📱
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Design Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Create New Design
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  value={newDesign.title}
-                  onChange={(e) => setNewDesign(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g., Photosynthesis Process Diagram"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={newDesign.description}
-                  onChange={(e) => setNewDesign(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe your design and how it helps with learning..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  AI Prompt *
-                </label>
-                <textarea
-                  value={newDesign.prompt}
-                  onChange={(e) => setNewDesign(prev => ({ ...prev, prompt: e.target.value }))}
-                  placeholder="Describe what you want the AI to generate..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tags (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={newDesign.tags.join(', ')}
-                  onChange={(e) => setNewDesign(prev => ({ 
-                    ...prev, 
-                    tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)
-                  }))}
-                  placeholder="e.g., biology, photosynthesis, diagram, educational"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isPublic"
-                  checked={newDesign.isPublic}
-                  onChange={(e) => setNewDesign(prev => ({ ...prev, isPublic: e.target.checked }))}
-                  className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isPublic" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Make this design public for the community
-                </label>
-              </div>
-            </div>
-            
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={createDesign}
-                disabled={!newDesign.title || !newDesign.prompt || generating}
-                className="flex-1 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    🤖 Creating Post...
-                  </>
-                ) : (
-                  <>
-                    <Palette className="h-4 w-4 mr-2" />
-                    Create Social Media Post
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* AI Generation Modal */}
       {showAiModal && (
@@ -1144,51 +1280,51 @@ const CreativeLearningPage: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="h-8 w-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">AI</span>
-                </div>
+                <div className="h-10 w-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-white" />
+                      </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    🍌 Gemini Nano AI Studio
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    AI Image Generator
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Generate educational images with AI
+                    Create educational content with AI
                   </p>
-                </div>
+                    </div>
               </div>
-              <button
+                      <button
                 onClick={() => setShowAiModal(false)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                <XCircle className="h-6 w-6" />
-              </button>
-            </div>
+                <X className="h-6 w-6" />
+                      </button>
+                    </div>
 
             <div className="space-y-6">
               {/* Prompt Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Describe what you want to create *
+                  Describe what you want to create
                 </label>
                 <textarea
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="e.g., Create a detailed diagram of the water cycle with labeled components and arrows showing the process..."
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   rows={3}
+                  placeholder="e.g., Create a colorful diagram of the water cycle with labeled components"
                 />
-              </div>
+                </div>
 
               {/* Style and Aspect Ratio */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Style
-                  </label>
+                </label>
                   <select
                     value={aiStyle}
                     onChange={(e) => setAiStyle(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="photographic">Photographic</option>
                     <option value="digital_art">Digital Art</option>
@@ -1197,6 +1333,7 @@ const CreativeLearningPage: React.FC = () => {
                     <option value="oil_painting">Oil Painting</option>
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Aspect Ratio
@@ -1204,65 +1341,262 @@ const CreativeLearningPage: React.FC = () => {
                   <select
                     value={aiAspectRatio}
                     onChange={(e) => setAiAspectRatio(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="16:9">16:9 (Widescreen)</option>
                     <option value="1:1">1:1 (Square)</option>
+                    <option value="9:16">9:16 (Portrait)</option>
                     <option value="4:3">4:3 (Standard)</option>
                     <option value="3:4">3:4 (Portrait)</option>
-                    <option value="9:16">9:16 (Vertical)</option>
                   </select>
+                  </div>
                 </div>
-              </div>
-
-              {/* Generated Image Preview */}
+            
+              {/* Generated Image */}
               {aiGeneratedImage && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Generated Image
                   </label>
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
                     <img
                       src={aiGeneratedImage}
-                      alt="AI Generated"
-                      className="w-full h-auto max-h-96 object-contain"
+                      alt="Generated"
+                      className="w-full h-auto rounded-lg"
+                    />
+              </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3">
+                    <button
+                  onClick={() => setShowAiModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+                    </button>
+                    <button
+                  onClick={generateWithAI}
+                  disabled={!aiPrompt.trim() || aiGenerating}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                >
+                  {aiGenerating ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                  </>
+                ) : (
+                  <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate
+                  </>
+                )}
+                    </button>
+                {aiGeneratedImage && (
+                      <button
+                    onClick={saveAiImage}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Save to Gallery
+                      </button>
+                )}
+                  </div>
+                </div>
+              </div>
+        </div>
+      )}
+
+
+      {/* Create Post Modal */}
+      {showCreatePostModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Create Learning Post
+            </h3>
+              <button
+                onClick={() => setShowCreatePostModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Post Type
+                </label>
+                <select
+                  value={postType}
+                  onChange={(e) => setPostType(e.target.value as any)}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="image">Image Post</option>
+                  <option value="lesson">Lesson</option>
+                  <option value="quiz">Quiz</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={postTitle}
+                  onChange={(e) => setPostTitle(e.target.value)}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter post title..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Content
+                </label>
+                <textarea
+                  value={postContent}
+                  onChange={(e) => setPostContent(e.target.value)}
+                  rows={4}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Share your knowledge..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Image (Optional)
+                </label>
+                <div className="flex space-x-3">
+                  <input
+                    type="url"
+                    value={postImage || ''}
+                    onChange={(e) => setPostImage(e.target.value)}
+                    className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Image URL..."
+                  />
+                  <button
+                    onClick={() => setShowAiModal(true)}
+                    className="flex items-center px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI Generate
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tags (comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={postTags}
+                  onChange={(e) => setPostTags(e.target.value)}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="biology, science, education..."
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowCreatePostModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createPost}
+                  disabled={!postTitle.trim() || !postContent.trim()}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Create Post
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Image Generation Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Generate AI Image
+              </h3>
+              <button
+                onClick={() => setShowAiModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Describe the image you want to generate
+                </label>
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  rows={3}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="e.g., A futuristic classroom with holographic displays and students learning about space exploration"
+                />
+              </div>
+
+              {generatedImageUrl && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Generated Image
+                  </label>
+                  <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                    <img 
+                      src={generatedImageUrl} 
+                      alt="Generated" 
+                      className="w-full h-64 object-cover rounded-lg"
                     />
                   </div>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setShowAiModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={generateWithAI}
-                  disabled={!aiPrompt.trim() || aiGenerating}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                  onClick={generateAIImage}
+                  disabled={!aiPrompt.trim() || isGeneratingImage}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                 >
-                  {aiGenerating ? (
+                  {isGeneratingImage ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Generating...
                     </>
                   ) : (
                     <>
-                      <Palette className="h-4 w-4 mr-2" />
+                      <Sparkles className="h-4 w-4 mr-2" />
                       Generate Image
                     </>
                   )}
                 </button>
-                {aiGeneratedImage && (
+                {generatedImageUrl && (
                   <button
-                    onClick={saveAiImage}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                    onClick={useGeneratedImage}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Save to Gallery
+                    Use This Image
                   </button>
                 )}
               </div>
@@ -1270,6 +1604,113 @@ const CreativeLearningPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Quiz Modal */}
+      {showQuizModal && currentQuiz && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Quiz Challenge
+              </h3>
+              <button
+                onClick={() => setShowQuizModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {!showQuizResults ? (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    Question {currentQuestionIndex + 1} of {quizQuestions.length}
+                  </h4>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                    />
+              </div>
+            </div>
+            
+                <div>
+                  <h5 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    {quizQuestions[currentQuestionIndex]?.question}
+                  </h5>
+                  
+                  <div className="space-y-3">
+                    {quizQuestions[currentQuestionIndex]?.options.map((option: string, index: number) => (
+              <button
+                        key={index}
+                        onClick={() => handleQuizAnswer(quizQuestions[currentQuestionIndex].id, option)}
+                        className={`w-full p-4 text-left rounded-lg border-2 transition-colors ${
+                          quizAnswers[quizQuestions[currentQuestionIndex].id] === option
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                        }`}
+                      >
+                        {option}
+              </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between">
+              <button
+                    onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                    disabled={currentQuestionIndex === 0}
+                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  
+                  {currentQuestionIndex === quizQuestions.length - 1 ? (
+                    <button
+                      onClick={submitQuiz}
+                      className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors"
+                    >
+                      Submit Quiz
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setCurrentQuestionIndex(Math.min(quizQuestions.length - 1, currentQuestionIndex + 1))}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors"
+                    >
+                      Next
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center space-y-6">
+                <div className="text-6xl">🎉</div>
+                <h4 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Quiz Complete!
+                </h4>
+                <div className="text-lg text-gray-600 dark:text-gray-300">
+                  You scored {quizScore} out of {quizQuestions.length} questions
+                </div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  +{quizQuestions.reduce((total: number, q: any) => 
+                    quizAnswers[q.id] === q.correct ? total + q.points : total, 0
+                  )} Points Earned!
+                </div>
+                <button
+                  onClick={() => setShowQuizModal(false)}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors"
+                >
+                  Continue Learning
+              </button>
+            </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Nano Banana Editor Modal */}
+      {showEditModal && <NanoBananaEditor />}
     </div>
   );
 };
