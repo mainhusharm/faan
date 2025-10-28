@@ -9,7 +9,8 @@ import {
   BookOpen, Bookmark, Share2, ThumbsUp, 
   CheckCircle2, FileText, Video, BarChart3,
   Trophy, Zap, Target, Brain, Calculator, MessageCircle,
-  TrendingUp, Award, Flame
+  TrendingUp, Award, Flame, Sparkles, Globe, Download,
+  Lock, Unlock, PlayCircle, Circle, ArrowRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -825,10 +826,81 @@ const CourseDetailPage: React.FC = () => {
 
     const mockReviews = getReviewsForCourse(courseId!);
 
-    // AI-Generated quiz questions based on the current video and course
-    const getQuizzesForCourse = (courseId: string): Quiz[] => {
-      const quizSets: { [key: string]: Quiz[] } = {
-        '6': [ // Calculus I
+    // Set data
+    setCourse(mockCourse);
+    setVideos(mockVideos);
+    setCurrentVideoIndex(0);
+    setCurrentVideo(mockVideos[0]);
+    setReviews(mockReviews);
+    setLoading(false);
+    
+    // Calculate progress
+    const progress = (completedVideos.size / mockVideos.length) * 100;
+    setCourseProgress(progress);
+
+    // Fetch quiz for first video
+    const firstVideo = mockVideos[0];
+    if (firstVideo) {
+      await loadQuizForVideo(firstVideo.id, courseId!);
+    }
+  };
+
+  const handleVideoEnd = async () => {
+    if (!currentVideo) return;
+    
+    // Mark video as completed
+    const newCompletedVideos = new Set(completedVideos);
+    newCompletedVideos.add(currentVideo.id);
+    setCompletedVideos(newCompletedVideos);
+    
+    // Update progress
+    const progress = (newCompletedVideos.size / videos.length) * 100;
+    setCourseProgress(progress);
+    
+    // Save to Supabase if user is logged in
+    if (user) {
+      // await saveVideoProgress(user.id, courseId!, currentVideo.id);
+    }
+    
+    // Show quiz
+    if (currentQuiz) {
+      setShowQuiz(true);
+    }
+  };
+
+  const handleQuizComplete = async (score: number) => {
+    setShowQuiz(false);
+    
+    // Award points
+    const points = Math.round(score * 10);
+    setTotalPoints(prev => prev + points);
+    
+    // Auto-advance to next video
+    if (currentVideoIndex < videos.length - 1) {
+      navigateToVideo(currentVideoIndex + 1);
+    }
+  };
+
+  const navigateToVideo = async (index: number) => {
+    if (index < 0 || index >= videos.length) return;
+    
+    setCurrentVideoIndex(index);
+    const video = videos[index];
+    setCurrentVideo(video);
+    setShowQuiz(false);
+    
+    // Load quiz for this video
+    await loadQuizForVideo(video.id, courseId!);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const loadQuizForVideo = async (videoId: string, courseId: string) => {
+    // Mock quiz data - replace with actual Supabase query
+    const getQuizzesForCourse = (courseId: string): any[] => {
+      const quizSets: { [key: string]: any[] } = {
+        '6': [ // Calculus I quizzes
           {
             id: 'calc1-q1',
             video_id: 'calc1-1',
@@ -867,1012 +939,20 @@ const CourseDetailPage: React.FC = () => {
             ],
             correct_answer: 0,
             explanation: 'Using the power rule: d/dx(x³) = 3x². The power rule states that d/dx(xⁿ) = nxⁿ⁻¹.'
-          },
-          {
-            id: 'calc1-q4',
-            video_id: 'calc1-4',
-            question: 'What is the derivative of f(x) = x² · sin(x)?',
-            options: [
-              '2x · sin(x)',
-              'x² · cos(x)',
-              '2x · sin(x) + x² · cos(x)',
-              '2x · cos(x)'
-            ],
-            correct_answer: 2,
-            explanation: 'Using the product rule: d/dx[f(x)·g(x)] = f\'(x)·g(x) + f(x)·g\'(x). So d/dx[x²·sin(x)] = 2x·sin(x) + x²·cos(x).'
-          },
-          {
-            id: 'calc1-q5',
-            video_id: 'calc1-5',
-            question: 'What is the derivative of f(x) = (x² + 1)³?',
-            options: [
-              '3(x² + 1)²',
-              '6x(x² + 1)²',
-              '3x(x² + 1)²',
-              '6(x² + 1)²'
-            ],
-            correct_answer: 1,
-            explanation: 'Using the chain rule: d/dx[(x² + 1)³] = 3(x² + 1)² · d/dx(x² + 1) = 3(x² + 1)² · 2x = 6x(x² + 1)².'
-          },
-          {
-            id: 'calc1-q6',
-            video_id: 'calc1-6',
-            question: 'To find the maximum value of f(x) = x² - 4x + 3, we:',
-            options: [
-              'Set f(x) = 0',
-              'Set f\'(x) = 0',
-              'Set f\'\'(x) = 0',
-              'Evaluate f(0)'
-            ],
-            correct_answer: 1,
-            explanation: 'To find extrema, we find critical points by setting the first derivative equal to zero: f\'(x) = 0. Then we use the second derivative test to determine if it\'s a maximum or minimum.'
           }
         ],
-        '13': [ // Calculus II
+        '1': [ // Physics quizzes
           {
-            id: 'calc2-q1',
-            video_id: 'calc2-1',
-            question: 'What is ∫x dx?',
-            options: [
-              'x²/2 + C',
-              'x + C',
-              'x² + C',
-              '1 + C'
-            ],
-            correct_answer: 0,
-            explanation: 'Using the power rule for integration: ∫x dx = x²/2 + C. The power rule states that ∫xⁿ dx = xⁿ⁺¹/(n+1) + C for n ≠ -1.'
-          },
-          {
-            id: 'calc2-q2',
-            video_id: 'calc2-2',
-            question: 'What is ∫(3x² + 2x + 1) dx?',
-            options: [
-              'x³ + x² + x + C',
-              '6x + 2 + C',
-              '3x³ + 2x² + x + C',
-              'x³ + x² + x'
-            ],
-            correct_answer: 0,
-            explanation: 'Using the sum rule and power rule: ∫(3x² + 2x + 1) dx = 3(x³/3) + 2(x²/2) + x + C = x³ + x² + x + C.'
-          },
-          {
-            id: 'calc2-q3',
-            video_id: 'calc2-3',
-            question: 'To evaluate ∫x·e^(x²) dx, we use:',
-            options: [
-              'Integration by parts',
-              'u-substitution with u = x²',
-              'Partial fractions',
-              'Trigonometric substitution'
-            ],
+            id: '1',
+            video_id: '1',
+            question: 'According to Newton\'s First Law, what happens to an object in motion when no net force acts on it?',
+            options: ['It stops immediately', 'It continues at constant velocity', 'It accelerates', 'It changes direction'],
             correct_answer: 1,
-            explanation: 'We use u-substitution with u = x², so du = 2x dx. This gives us ∫x·e^(x²) dx = (1/2)∫e^u du = (1/2)e^u + C = (1/2)e^(x²) + C.'
-          },
-          {
-            id: 'calc2-q4',
-            video_id: 'calc2-4',
-            question: 'To evaluate ∫x·sin(x) dx, we use:',
-            options: [
-              'u-substitution',
-              'Integration by parts with u = x, dv = sin(x) dx',
-              'Partial fractions',
-              'Trigonometric identity'
-            ],
-            correct_answer: 1,
-            explanation: 'We use integration by parts with u = x (so du = dx) and dv = sin(x) dx (so v = -cos(x)). This gives us ∫x·sin(x) dx = -x·cos(x) + ∫cos(x) dx = -x·cos(x) + sin(x) + C.'
-          },
-          {
-            id: 'calc2-q5',
-            video_id: 'calc2-5',
-            question: 'The area between y = x² and y = x from x = 0 to x = 1 is:',
-            options: [
-              '∫₀¹ (x - x²) dx',
-              '∫₀¹ (x² - x) dx',
-              '∫₀¹ x dx',
-              '∫₀¹ x² dx'
-            ],
-            correct_answer: 0,
-            explanation: 'The area between two curves is ∫[top function - bottom function] dx. Since x > x² on [0,1], the area is ∫₀¹ (x - x²) dx.'
-          },
-          {
-            id: 'calc2-q6',
-            video_id: 'calc2-6',
-            question: 'The series Σ(n=1 to ∞) 1/n²:',
-            options: [
-              'Diverges',
-              'Converges to π²/6',
-              'Converges to 1',
-              'Converges to 0'
-            ],
-            correct_answer: 1,
-            explanation: 'This is the famous Basel problem. The series Σ(n=1 to ∞) 1/n² converges to π²/6, as proven by Euler. It\'s a p-series with p = 2 > 1, so it converges.'
+            explanation: 'Newton\'s First Law states that an object in motion will continue at constant velocity (including zero velocity) unless acted upon by a net external force.'
           }
-        ],
-        '14': [ // Calculus III
-          {
-            id: 'calc3-q1',
-            video_id: 'calc3-1',
-            question: 'For f(x,y) = x² + y², what is f(2,3)?',
-            options: [
-              '13',
-              '12',
-              '5',
-              '6'
-            ],
-            correct_answer: 0,
-            explanation: 'f(2,3) = 2² + 3² = 4 + 9 = 13. This represents the value of the function at the point (2,3).'
-          },
-          {
-            id: 'calc3-q2',
-            video_id: 'calc3-2',
-            question: 'What is ∂f/∂x for f(x,y) = x²y + sin(xy)?',
-            options: [
-              '2xy + y·cos(xy)',
-              'x² + x·cos(xy)',
-              '2xy + x·cos(xy)',
-              '2xy + cos(xy)'
-            ],
-            correct_answer: 0,
-            explanation: '∂f/∂x = ∂/∂x[x²y + sin(xy)] = 2xy + cos(xy)·∂/∂x(xy) = 2xy + cos(xy)·y = 2xy + y·cos(xy).'
-          },
-          {
-            id: 'calc3-q3',
-            video_id: 'calc3-3',
-            question: 'What is ∫₀¹∫₀² xy dy dx?',
-            options: [
-              '1',
-              '2',
-              '1/2',
-              '3/2'
-            ],
-            correct_answer: 0,
-            explanation: '∫₀¹∫₀² xy dy dx = ∫₀¹ x[∫₀² y dy] dx = ∫₀¹ x[y²/2]₀² dx = ∫₀¹ x[2] dx = ∫₀¹ 2x dx = [x²]₀¹ = 1.'
-          },
-          {
-            id: 'calc3-q4',
-            video_id: 'calc3-4',
-            question: 'A vector field F(x,y) = (P(x,y), Q(x,y)) is conservative if:',
-            options: [
-              'P = Q',
-              '∂P/∂y = ∂Q/∂x',
-              '∂P/∂x = ∂Q/∂y',
-              'P + Q = 0'
-            ],
-            correct_answer: 1,
-            explanation: 'A vector field is conservative if and only if ∂P/∂y = ∂Q/∂x. This is the condition for the vector field to have a potential function.'
-          },
-          {
-            id: 'calc3-q5',
-            video_id: 'calc3-5',
-            question: 'Green\'s theorem relates:',
-            options: [
-              'A line integral to a surface integral',
-              'A line integral to a double integral',
-              'A surface integral to a volume integral',
-              'Two line integrals'
-            ],
-            correct_answer: 1,
-            explanation: 'Green\'s theorem relates a line integral around a simple closed curve to a double integral over the region enclosed by the curve: ∮P dx + Q dy = ∬(∂Q/∂x - ∂P/∂y) dA.'
-          },
-          {
-            id: 'calc3-q6',
-            video_id: 'calc3-6',
-            question: 'The gradient of f(x,y,z) = x² + y² + z² at (1,1,1) is:',
-            options: [
-              '(2,2,2)',
-              '(1,1,1)',
-              '(3,3,3)',
-              '(0,0,0)'
-            ],
-            correct_answer: 0,
-            explanation: '∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z) = (2x, 2y, 2z). At (1,1,1), ∇f = (2,2,2).'
-          }
-        ],
-        '15': [ // Differential Equations
-          {
-            id: 'de-q1',
-            video_id: 'de-1',
-            question: 'What is the order of the differential equation y\'\' + 3y\' + 2y = 0?',
-            options: [
-              'First order',
-              'Second order',
-              'Third order',
-              'Zero order'
-            ],
-            correct_answer: 1,
-            explanation: 'The order of a differential equation is the highest derivative present. Here, y\'\' is the highest derivative, so it\'s second order.'
-          },
-          {
-            id: 'de-q2',
-            video_id: 'de-2',
-            question: 'The general solution of dy/dx = 2x is:',
-            options: [
-              'y = x² + C',
-              'y = 2x + C',
-              'y = x²',
-              'y = 2x'
-            ],
-            correct_answer: 0,
-            explanation: 'Separating variables: dy = 2x dx. Integrating both sides: ∫dy = ∫2x dx, so y = x² + C.'
-          },
-          {
-            id: 'de-q3',
-            video_id: 'de-3',
-            question: 'The characteristic equation of y\'\' - 5y\' + 6y = 0 is:',
-            options: [
-              'r² - 5r + 6 = 0',
-              'r - 5r + 6 = 0',
-              'r² + 5r + 6 = 0',
-              'r² - 6r + 5 = 0'
-            ],
-            correct_answer: 0,
-            explanation: 'For ay\'\' + by\' + cy = 0, the characteristic equation is ar² + br + c = 0. So for y\'\' - 5y\' + 6y = 0, it\'s r² - 5r + 6 = 0.'
-          },
-          {
-            id: 'de-q4',
-            video_id: 'de-4',
-            question: 'A system dx/dt = x + y, dy/dt = x - y has equilibrium at:',
-            options: [
-              '(0,0)',
-              '(1,1)',
-              '(1,-1)',
-              'No equilibrium'
-            ],
-            correct_answer: 0,
-            explanation: 'At equilibrium, dx/dt = 0 and dy/dt = 0. So x + y = 0 and x - y = 0. Adding: 2x = 0, so x = 0. Then y = 0. So equilibrium is at (0,0).'
-          },
-          {
-            id: 'de-q5',
-            video_id: 'de-5',
-            question: 'The Laplace transform of f(t) = e^(at) is:',
-            options: [
-              '1/(s-a)',
-              '1/(s+a)',
-              's/(s²+a²)',
-              'a/(s²+a²)'
-            ],
-            correct_answer: 0,
-            explanation: 'L{e^(at)} = ∫₀^∞ e^(at)·e^(-st) dt = ∫₀^∞ e^((a-s)t) dt = [e^((a-s)t)/(a-s)]₀^∞ = 1/(s-a) for s > a.'
-          },
-          {
-            id: 'de-q6',
-            video_id: 'de-6',
-            question: 'The logistic equation dP/dt = rP(1-P/K) models:',
-            options: [
-              'Exponential growth',
-              'Population growth with carrying capacity',
-              'Linear growth',
-              'Oscillatory behavior'
-            ],
-            correct_answer: 1,
-            explanation: 'The logistic equation models population growth with a carrying capacity K. When P is small, growth is approximately exponential. As P approaches K, growth slows down.'
-          }
-        ],
-        '7': [ // Chemistry Foundation
-          {
-            id: 'chem1-q1',
-            video_id: 'chem1-1',
-            question: 'What is the mole concept primarily used for in chemistry?',
-            options: [
-              'Measuring temperature',
-              'Counting atoms and molecules',
-              'Determining color changes',
-              'Measuring pressure'
-            ],
-            correct_answer: 1,
-            explanation: 'The mole concept is fundamental for counting atoms and molecules in chemical reactions. One mole contains 6.022 × 10²³ particles (Avogadro\'s number).'
-          },
-          {
-            id: 'chem1-q2',
-            video_id: 'chem1-1',
-            question: 'How many atoms are in 2 moles of carbon?',
-            options: [
-              '6.022 × 10²³ atoms',
-              '1.204 × 10²⁴ atoms',
-              '3.011 × 10²³ atoms',
-              '12.044 × 10²³ atoms'
-            ],
-            correct_answer: 1,
-            explanation: '2 moles × 6.022 × 10²³ atoms/mol = 1.204 × 10²⁴ atoms. The mole concept allows us to convert between moles and number of particles.'
-          },
-          {
-            id: 'chem1-q3',
-            video_id: 'chem1-1',
-            question: 'What is the relationship between moles and grams?',
-            options: [
-              'Moles = grams × molar mass',
-              'Grams = moles × molar mass',
-              'Moles = grams ÷ molar mass',
-              'Both B and C are correct'
-            ],
-            correct_answer: 3,
-            explanation: 'Both B and C are correct. Grams = moles × molar mass (to convert moles to grams) and moles = grams ÷ molar mass (to convert grams to moles).'
-          },
-          {
-            id: 'chem1-q4',
-            video_id: 'chem1-2',
-            question: 'What is the value of Avogadro\'s number?',
-            options: [
-              '6.022 × 10²²',
-              '6.022 × 10²³',
-              '6.022 × 10²⁴',
-              '6.022 × 10²¹'
-            ],
-            correct_answer: 1,
-            explanation: 'Avogadro\'s number is 6.022 × 10²³, which represents the number of particles (atoms, molecules, ions) in one mole of a substance.'
-          },
-          {
-            id: 'chem1-q5',
-            video_id: 'chem1-2',
-            question: 'Who is Avogadro\'s number named after?',
-            options: [
-              'Amedeo Avogadro',
-              'Antoine Lavoisier',
-              'John Dalton',
-              'Robert Boyle'
-            ],
-            correct_answer: 0,
-            explanation: 'Avogadro\'s number is named after Amedeo Avogadro, an Italian scientist who proposed that equal volumes of gases at the same temperature and pressure contain equal numbers of molecules.'
-          },
-          {
-            id: 'chem1-q6',
-            video_id: 'chem1-2',
-            question: 'If you have 3.011 × 10²³ molecules of water, how many moles is this?',
-            options: [
-              '0.5 moles',
-              '1.0 mole',
-              '1.5 moles',
-              '2.0 moles'
-            ],
-            correct_answer: 0,
-            explanation: '3.011 × 10²³ molecules ÷ 6.022 × 10²³ molecules/mol = 0.5 moles. This demonstrates the relationship between number of particles and moles.'
-          },
-          {
-            id: 'chem1-q7',
-            video_id: 'chem1-3',
-            question: 'What is the molar mass of water (H₂O)?',
-            options: [
-              '16.00 g/mol',
-              '18.02 g/mol',
-              '20.02 g/mol',
-              '22.02 g/mol'
-            ],
-            correct_answer: 1,
-            explanation: 'The molar mass of water is 18.02 g/mol: 2(1.01) + 16.00 = 2.02 + 16.00 = 18.02 g/mol, where 1.01 g/mol is the atomic mass of hydrogen and 16.00 g/mol is the atomic mass of oxygen.'
-          },
-          {
-            id: 'chem1-q8',
-            video_id: 'chem1-3',
-            question: 'How do you calculate the molar mass of a compound?',
-            options: [
-              'Add all atomic masses together',
-              'Multiply all atomic masses together',
-              'Add atomic masses multiplied by their subscripts',
-              'Divide atomic masses by their subscripts'
-            ],
-            correct_answer: 2,
-            explanation: 'To calculate molar mass, multiply each element\'s atomic mass by its subscript in the formula, then add all the results together.'
-          },
-          {
-            id: 'chem1-q9',
-            video_id: 'chem1-3',
-            question: 'What is the molar mass of carbon dioxide (CO₂)?',
-            options: [
-              '28.01 g/mol',
-              '44.01 g/mol',
-              '32.00 g/mol',
-              '16.00 g/mol'
-            ],
-            correct_answer: 1,
-            explanation: 'CO₂ molar mass = 12.01 + 2(16.00) = 12.01 + 32.00 = 44.01 g/mol. Carbon has atomic mass 12.01 g/mol and oxygen has 16.00 g/mol.'
-          },
-          {
-            id: 'chem1-q10',
-            video_id: 'chem1-3',
-            question: 'If you have 36.04 grams of water, how many moles is this?',
-            options: [
-              '1.0 mole',
-              '2.0 moles',
-              '0.5 moles',
-              '18.02 moles'
-            ],
-            correct_answer: 1,
-            explanation: 'Moles = grams ÷ molar mass = 36.04 g ÷ 18.02 g/mol = 2.0 moles. This demonstrates the practical application of molar mass calculations.'
-          }
-        ],
-        '1': [ // Physics (default)
-      {
-      id: '1',
-        video_id: '1',
-        question: 'According to Newton\'s First Law, what happens to an object in motion when no net force acts on it?',
-        options: [
-          'It stops immediately',
-          'It continues at constant velocity',
-          'It accelerates',
-          'It changes direction'
-        ],
-        correct_answer: 1,
-        explanation: 'Newton\'s First Law states that an object in motion will continue at constant velocity (including zero velocity) unless acted upon by a net external force.'
-      },
-      {
-        id: '2',
-        video_id: '2',
-        question: 'If you push a box with 10N of force and friction opposes with 6N, what is the net force?',
-      options: [
-          '16N in the direction of push',
-          '4N in the direction of push',
-          '6N opposing the push',
-          '10N in the direction of push'
-      ],
-      correct_answer: 1,
-        explanation: 'Net force = Applied force - Friction = 10N - 6N = 4N in the direction of the push. This demonstrates how multiple forces combine.'
-      },
-      {
-        id: '3',
-        video_id: '3',
-        question: 'A 2kg ball moving at 5m/s collides with a stationary 1kg ball. What principle governs this collision?',
-        options: [
-          'Conservation of Energy only',
-          'Conservation of Momentum only',
-          'Both Conservation of Energy and Momentum',
-          'Newton\'s Third Law only'
-        ],
-        correct_answer: 2,
-        explanation: 'In collisions, both momentum and energy conservation apply. Momentum is always conserved, while kinetic energy conservation depends on whether the collision is elastic or inelastic.'
-      },
-      {
-        id: '4',
-        video_id: '4',
-        question: 'A projectile launched at 45° will have its maximum range when air resistance is ignored. Why?',
-        options: [
-          'It maximizes the horizontal velocity component',
-          'It minimizes the effect of gravity',
-          'It optimally balances horizontal distance and flight time',
-          'It maximizes the vertical velocity component'
-        ],
-        correct_answer: 2,
-        explanation: 'At 45°, the horizontal and vertical velocity components are equal, creating the optimal balance between horizontal distance traveled and time in flight for maximum range.'
-      }
         ]
       };
       
-      return quizSets[courseId] || quizSets['1'];
-    };
-
-    const aiQuizzes = getQuizzesForCourse(courseId!);
-
-    const currentQuiz = aiQuizzes.find(q => q.video_id === currentVideo?.id) || aiQuizzes[0];
-
-    console.log('Setting course data:', { mockCourse, mockVideos, currentQuiz });
-    setCourse(mockCourse);
-    setVideos(mockVideos);
-    setReviews(mockReviews);
-    setCurrentQuiz(currentQuiz);
-    setCurrentVideo(mockVideos[0]); // Set the first video as current
-    setCourseProgress(25); // Mock progress
-    setLoading(false);
-  };
-
-  const handleVideoEnd = () => {
-    setShowQuiz(true);
-  };
-
-  const handleQuizComplete = async (score: number) => {
-    if (!user || !course || !videos[currentVideoIndex]) return;
-
-    // Mark video as completed
-    const videoId = videos[currentVideoIndex].id;
-    setCompletedVideos(prev => new Set([...prev, videoId]));
-
-    // Update course progress
-    const newProgress = ((completedVideos.size + 1) / videos.length) * 100;
-    setCourseProgress(newProgress);
-
-    // Update points and achievements
-    const newPoints = (profile?.points || 0) + score;
-    setTotalPoints(newPoints);
-
-    // Check for achievements
-    const newAchievements = [...achievements];
-    if (score >= 5 && !achievements.includes('Quiz Master')) {
-      newAchievements.push('Quiz Master');
-      setNewAchievement('Quiz Master');
-      setShowAchievement(true);
-    }
-    if (completedVideos.size + 1 === videos.length && !achievements.includes('Course Complete')) {
-      newAchievements.push('Course Complete');
-      setNewAchievement('Course Complete');
-      setShowAchievement(true);
-    }
-    if (newPoints >= 100 && !achievements.includes('Point Collector')) {
-      newAchievements.push('Point Collector');
-      setNewAchievement('Point Collector');
-      setShowAchievement(true);
-    }
-    setAchievements(newAchievements);
-
-    // Update streak
-    setStreak(prev => prev + 1);
-
-    // Update user points
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          points: newPoints,
-          achievements: newAchievements,
-          streak: streak + 1
-        })
-        .eq('id', user.id);
-
-      if (error) console.error('Error updating points:', error);
-    } catch (error) {
-      console.error('Error updating points:', error);
-    }
-
-    setShowQuiz(false);
-
-    // Auto-advance to next video if available
-    if (currentVideoIndex < videos.length - 1) {
-      setTimeout(() => {
-        const nextIndex = currentVideoIndex + 1;
-        setCurrentVideoIndex(nextIndex);
-        setCurrentVideo(videos[nextIndex]);
-      }, 2000);
-    }
-  };
-
-  const navigateToVideo = (index: number) => {
-    console.log('Navigating to video index:', index, 'videos:', videos);
-    setCurrentVideoIndex(index);
-    setCurrentVideo(videos[index]); // Set the current video
-    setShowQuiz(false);
-    
-    // Update quiz for the new video using the course-specific quiz system
-    const videoId = videos[index]?.id;
-    console.log('Selected video ID:', videoId);
-    
-    // Get quizzes for the current course
-    const getQuizzesForCourse = (courseId: string): Quiz[] => {
-      const quizSets: { [key: string]: Quiz[] } = {
-        '6': [ // Calculus I
-          {
-            id: 'calc1-q1',
-            video_id: 'calc1-1',
-            question: 'What is the limit of f(x) = x² as x approaches 3?',
-            options: ['6', '9', '3', 'The limit does not exist'],
-            correct_answer: 1,
-            explanation: 'The limit of x² as x approaches 3 is 3² = 9. This can be found by direct substitution since x² is continuous at x = 3.'
-          },
-          {
-            id: 'calc1-q2',
-            video_id: 'calc1-2',
-            question: 'A function f(x) is continuous at x = a if:',
-            options: ['f(a) exists', 'lim(x→a) f(x) exists', 'lim(x→a) f(x) = f(a)', 'All of the above'],
-            correct_answer: 3,
-            explanation: 'A function is continuous at x = a if and only if: f(a) exists, the limit exists, and the limit equals the function value at that point.'
-          },
-          {
-            id: 'calc1-q3',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = x³?',
-            options: ['3x²', 'x²', '3x', 'x³/3'],
-            correct_answer: 0,
-            explanation: 'Using the power rule: d/dx(x³) = 3x². The power rule states that d/dx(xⁿ) = nxⁿ⁻¹. This fundamental concept is covered in your differentiation video.'
-          },
-          {
-            id: 'calc1-q3b',
-            video_id: 'calc1-3',
-            question: 'What does the derivative represent geometrically?',
-            options: ['The area under the curve', 'The slope of the tangent line', 'The y-intercept', 'The x-intercept'],
-            correct_answer: 1,
-            explanation: 'The derivative represents the slope of the tangent line to the curve at any given point. This is the fundamental geometric interpretation of derivatives.'
-          },
-          {
-            id: 'calc1-q3c',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = 5x²?',
-            options: ['10x', '5x', '10x²', '5x²'],
-            correct_answer: 0,
-            explanation: 'Using the power rule: d/dx(5x²) = 5 × 2x = 10x. The constant multiple rule allows us to factor out the constant 5.'
-          },
-          {
-            id: 'calc1-q3d',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = x² + 3x + 2?',
-            options: ['2x + 3', '2x + 3x + 2', 'x + 3', '2x² + 3x'],
-            correct_answer: 0,
-            explanation: 'Using the sum rule and power rule: d/dx(x² + 3x + 2) = 2x + 3 + 0 = 2x + 3. The derivative of a constant is 0.'
-          },
-          {
-            id: 'calc1-q3e',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = 1/x?',
-            options: ['-1/x²', '1/x²', '-x²', 'x²'],
-            correct_answer: 0,
-            explanation: 'Rewriting 1/x as x⁻¹ and using the power rule: d/dx(x⁻¹) = -1 × x⁻² = -1/x². This is a common derivative that students should memorize.'
-          },
-          {
-            id: 'calc1-q3b',
-            video_id: 'calc1-3',
-            question: 'What does the derivative represent geometrically?',
-            options: ['The area under the curve', 'The slope of the tangent line', 'The y-intercept', 'The x-intercept'],
-            correct_answer: 1,
-            explanation: 'The derivative represents the slope of the tangent line to the curve at any given point. This is the fundamental geometric interpretation of derivatives.'
-          },
-          {
-            id: 'calc1-q3c',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = 5x²?',
-            options: ['10x', '5x', '10x²', '5x²'],
-            correct_answer: 0,
-            explanation: 'Using the power rule: d/dx(5x²) = 5 × 2x = 10x. The constant multiple rule allows us to factor out the constant 5.'
-          },
-          {
-            id: 'calc1-q3d',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = x² + 3x + 2?',
-            options: ['2x + 3', '2x + 3x + 2', 'x + 3', '2x² + 3x'],
-            correct_answer: 0,
-            explanation: 'Using the sum rule and power rule: d/dx(x² + 3x + 2) = 2x + 3 + 0 = 2x + 3. The derivative of a constant is 0.'
-          },
-          {
-            id: 'calc1-q3e',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = 1/x?',
-            options: ['-1/x²', '1/x²', '-x²', 'x²'],
-            correct_answer: 0,
-            explanation: 'Rewriting 1/x as x⁻¹ and using the power rule: d/dx(x⁻¹) = -1 × x⁻² = -1/x². This is a common derivative that students should memorize.'
-          },
-          {
-            id: 'calc1-q3f',
-            video_id: 'calc1-3',
-            question: 'What is the derivative of f(x) = √x?',
-            options: ['1/(2√x)', '1/√x', '2√x', '√x/2'],
-            correct_answer: 0,
-            explanation: 'Rewriting √x as x^(1/2) and using the power rule: d/dx(x^(1/2)) = (1/2)x^(-1/2) = 1/(2√x). This is another fundamental derivative.'
-          },
-          {
-            id: 'calc1-q4',
-            video_id: 'calc1-4',
-            question: 'What is the derivative of f(x) = x² · sin(x)?',
-            options: ['2x · sin(x)', 'x² · cos(x)', '2x · sin(x) + x² · cos(x)', '2x · cos(x)'],
-            correct_answer: 2,
-            explanation: 'Using the product rule: d/dx[f(x)·g(x)] = f\'(x)·g(x) + f(x)·g\'(x). So d/dx[x²·sin(x)] = 2x·sin(x) + x²·cos(x).'
-          },
-          {
-            id: 'calc1-q5',
-            video_id: 'calc1-5',
-            question: 'What is the derivative of f(x) = (x² + 1)³?',
-            options: ['3(x² + 1)²', '6x(x² + 1)²', '3x(x² + 1)²', '6(x² + 1)²'],
-            correct_answer: 1,
-            explanation: 'Using the chain rule: d/dx[(x² + 1)³] = 3(x² + 1)² · d/dx(x² + 1) = 3(x² + 1)² · 2x = 6x(x² + 1)².'
-          },
-          {
-            id: 'calc1-q6',
-            video_id: 'calc1-6',
-            question: 'What is ∫x dx?',
-            options: ['x²/2 + C', 'x + C', 'x² + C', '1 + C'],
-            correct_answer: 0,
-            explanation: 'Using the power rule for integration: ∫x dx = x²/2 + C. The power rule states that ∫xⁿ dx = xⁿ⁺¹/(n+1) + C for n ≠ -1.'
-          },
-          {
-            id: 'calc1-q7',
-            video_id: 'calc1-7',
-            question: 'To find the maximum value of f(x) = x² - 4x + 3, we:',
-            options: ['Set f(x) = 0', 'Set f\'(x) = 0', 'Set f\'\'(x) = 0', 'Evaluate f(0)'],
-            correct_answer: 1,
-            explanation: 'To find extrema, we find critical points by setting the first derivative equal to zero: f\'(x) = 0. Then we use the second derivative test to determine if it\'s a maximum or minimum.'
-          },
-          {
-            id: 'calc1-q8',
-            video_id: 'calc1-8',
-            question: 'The area under the curve y = x² from x = 0 to x = 2 is:',
-            options: ['8/3', '4', '2', '16/3'],
-            correct_answer: 0,
-            explanation: 'The area is ∫₀² x² dx = [x³/3]₀² = 2³/3 - 0³/3 = 8/3. This demonstrates the fundamental connection between integration and area.'
-          }
-        ],
-        '13': [ // Calculus II
-          {
-            id: 'calc2-q1',
-            video_id: 'calc2-1',
-            question: 'What is ∫x dx?',
-            options: ['x²/2 + C', 'x + C', 'x² + C', '1 + C'],
-            correct_answer: 0,
-            explanation: 'Using the power rule for integration: ∫x dx = x²/2 + C. The power rule states that ∫xⁿ dx = xⁿ⁺¹/(n+1) + C for n ≠ -1.'
-          },
-          {
-            id: 'calc2-q2',
-            video_id: 'calc2-2',
-            question: 'What is ∫(3x² + 2x + 1) dx?',
-            options: ['x³ + x² + x + C', '6x + 2 + C', '3x³ + 2x² + x + C', 'x³ + x² + x'],
-            correct_answer: 0,
-            explanation: 'Using the sum rule and power rule: ∫(3x² + 2x + 1) dx = 3(x³/3) + 2(x²/2) + x + C = x³ + x² + x + C.'
-          },
-          {
-            id: 'calc2-q3',
-            video_id: 'calc2-3',
-            question: 'To evaluate ∫x·e^(x²) dx, we use:',
-            options: ['Integration by parts', 'u-substitution with u = x²', 'Partial fractions', 'Trigonometric substitution'],
-            correct_answer: 1,
-            explanation: 'We use u-substitution with u = x², so du = 2x dx. This gives us ∫x·e^(x²) dx = (1/2)∫e^u du = (1/2)e^u + C = (1/2)e^(x²) + C.'
-          },
-          {
-            id: 'calc2-q4',
-            video_id: 'calc2-4',
-            question: 'To evaluate ∫x·sin(x) dx, we use:',
-            options: ['u-substitution', 'Integration by parts with u = x, dv = sin(x) dx', 'Partial fractions', 'Trigonometric identity'],
-            correct_answer: 1,
-            explanation: 'We use integration by parts with u = x (so du = dx) and dv = sin(x) dx (so v = -cos(x)). This gives us ∫x·sin(x) dx = -x·cos(x) + ∫cos(x) dx = -x·cos(x) + sin(x) + C.'
-          },
-          {
-            id: 'calc2-q5',
-            video_id: 'calc2-5',
-            question: 'To integrate ∫1/(x²-1) dx, we use:',
-            options: ['u-substitution', 'Integration by parts', 'Partial fractions', 'Trigonometric substitution'],
-            correct_answer: 2,
-            explanation: 'We use partial fractions: 1/(x²-1) = 1/[(x-1)(x+1)] = A/(x-1) + B/(x+1). Solving gives A = 1/2, B = -1/2, so the integral becomes (1/2)ln|x-1| - (1/2)ln|x+1| + C.'
-          },
-          {
-            id: 'calc2-q6',
-            video_id: 'calc2-6',
-            question: 'The area between y = x² and y = x from x = 0 to x = 1 is:',
-            options: ['∫₀¹ (x - x²) dx', '∫₀¹ (x² - x) dx', '∫₀¹ x dx', '∫₀¹ x² dx'],
-            correct_answer: 0,
-            explanation: 'The area between two curves is ∫[top function - bottom function] dx. Since x > x² on [0,1], the area is ∫₀¹ (x - x²) dx.'
-          },
-          {
-            id: 'calc2-q7',
-            video_id: 'calc2-7',
-            question: 'The work done by a force F(x) = 2x moving an object from x = 0 to x = 3 is:',
-            options: ['9', '6', '18', '12'],
-            correct_answer: 0,
-            explanation: 'Work = ∫₀³ F(x) dx = ∫₀³ 2x dx = [x²]₀³ = 3² - 0² = 9. This demonstrates the application of integration to physics problems.'
-          },
-          {
-            id: 'calc2-q8',
-            video_id: 'calc2-8',
-            question: 'The improper integral ∫₁^∞ 1/x² dx:',
-            options: ['Diverges', 'Converges to 1', 'Converges to 0', 'Converges to 2'],
-            correct_answer: 1,
-            explanation: '∫₁^∞ 1/x² dx = lim(t→∞) ∫₁ᵗ 1/x² dx = lim(t→∞) [-1/x]₁ᵗ = lim(t→∞) [-1/t + 1] = 0 + 1 = 1. This is a convergent improper integral.'
-          },
-          {
-            id: 'calc2-q9',
-            video_id: 'calc2-9',
-            question: 'The series Σ(n=1 to ∞) 1/n²:',
-            options: ['Diverges', 'Converges to π²/6', 'Converges to 1', 'Converges to 0'],
-            correct_answer: 1,
-            explanation: 'This is the famous Basel problem. The series Σ(n=1 to ∞) 1/n² converges to π²/6, as proven by Euler. It\'s a p-series with p = 2 > 1, so it converges.'
-          },
-          {
-            id: 'calc2-q10',
-            video_id: 'calc2-10',
-            question: 'The Taylor series for e^x centered at x = 0 is:',
-            options: ['Σ(n=0 to ∞) xⁿ/n!', 'Σ(n=0 to ∞) xⁿ', 'Σ(n=0 to ∞) xⁿ/n', 'Σ(n=0 to ∞) xⁿ/(n+1)!'],
-            correct_answer: 0,
-            explanation: 'The Taylor series for e^x is e^x = Σ(n=0 to ∞) xⁿ/n! = 1 + x + x²/2! + x³/3! + ... This is one of the most important power series in mathematics.'
-          }
-        ],
-        '14': [ // Calculus III
-          {
-            id: 'calc3-q1',
-            video_id: 'calc3-1',
-            question: 'For f(x,y) = x² + y², what is f(2,3)?',
-            options: ['13', '12', '5', '6'],
-            correct_answer: 0,
-            explanation: 'f(2,3) = 2² + 3² = 4 + 9 = 13. This represents the value of the function at the point (2,3).'
-          },
-          {
-            id: 'calc3-q2',
-            video_id: 'calc3-2',
-            question: 'What is ∂f/∂x for f(x,y) = x²y + sin(xy)?',
-            options: ['2xy + y·cos(xy)', 'x² + x·cos(xy)', '2xy + x·cos(xy)', '2xy + cos(xy)'],
-            correct_answer: 0,
-            explanation: '∂f/∂x = ∂/∂x[x²y + sin(xy)] = 2xy + cos(xy)·∂/∂x(xy) = 2xy + cos(xy)·y = 2xy + y·cos(xy).'
-          },
-          {
-            id: 'calc3-q3',
-            video_id: 'calc3-3',
-            question: 'What is ∫₀¹∫₀² xy dy dx?',
-            options: ['1', '2', '1/2', '3/2'],
-            correct_answer: 0,
-            explanation: '∫₀¹∫₀² xy dy dx = ∫₀¹ x[∫₀² y dy] dx = ∫₀¹ x[y²/2]₀² dx = ∫₀¹ x[2] dx = ∫₀¹ 2x dx = [x²]₀¹ = 1.'
-          },
-          {
-            id: 'calc3-q4',
-            video_id: 'calc3-4',
-            question: 'A vector field F(x,y) = (P(x,y), Q(x,y)) is conservative if:',
-            options: ['P = Q', '∂P/∂y = ∂Q/∂x', '∂P/∂x = ∂Q/∂y', 'P + Q = 0'],
-            correct_answer: 1,
-            explanation: 'A vector field is conservative if and only if ∂P/∂y = ∂Q/∂x. This is the condition for the vector field to have a potential function.'
-          },
-          {
-            id: 'calc3-q5',
-            video_id: 'calc3-5',
-            question: 'Green\'s theorem relates:',
-            options: ['A line integral to a surface integral', 'A line integral to a double integral', 'A surface integral to a volume integral', 'Two line integrals'],
-            correct_answer: 1,
-            explanation: 'Green\'s theorem relates a line integral around a simple closed curve to a double integral over the region enclosed by the curve: ∮P dx + Q dy = ∬(∂Q/∂x - ∂P/∂y) dA.'
-          },
-          {
-            id: 'calc3-q6',
-            video_id: 'calc3-6',
-            question: 'The gradient of f(x,y,z) = x² + y² + z² at (1,1,1) is:',
-            options: ['(2,2,2)', '(1,1,1)', '(3,3,3)', '(0,0,0)'],
-            correct_answer: 0,
-            explanation: '∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z) = (2x, 2y, 2z). At (1,1,1), ∇f = (2,2,2).'
-          }
-        ],
-        '15': [ // Differential Equations
-          {
-            id: 'de-q1',
-            video_id: 'de-1',
-            question: 'What is the order of the differential equation y\'\' + 3y\' + 2y = 0?',
-            options: ['First order', 'Second order', 'Third order', 'Zero order'],
-            correct_answer: 1,
-            explanation: 'The order of a differential equation is the highest derivative present. Here, y\'\' is the highest derivative, so it\'s second order.'
-          },
-          {
-            id: 'de-q2',
-            video_id: 'de-2',
-            question: 'The general solution of dy/dx = 2x is:',
-            options: ['y = x² + C', 'y = 2x + C', 'y = x²', 'y = 2x'],
-            correct_answer: 0,
-            explanation: 'Separating variables: dy = 2x dx. Integrating both sides: ∫dy = ∫2x dx, so y = x² + C.'
-          },
-          {
-            id: 'de-q3',
-            video_id: 'de-3',
-            question: 'The characteristic equation of y\'\' - 5y\' + 6y = 0 is:',
-            options: ['r² - 5r + 6 = 0', 'r - 5r + 6 = 0', 'r² + 5r + 6 = 0', 'r² - 6r + 5 = 0'],
-            correct_answer: 0,
-            explanation: 'For ay\'\' + by\' + cy = 0, the characteristic equation is ar² + br + c = 0. So for y\'\' - 5y\' + 6y = 0, it\'s r² - 5r + 6 = 0.'
-          },
-          {
-            id: 'de-q4',
-            video_id: 'de-4',
-            question: 'A system dx/dt = x + y, dy/dt = x - y has equilibrium at:',
-            options: ['(0,0)', '(1,1)', '(1,-1)', 'No equilibrium'],
-            correct_answer: 0,
-            explanation: 'At equilibrium, dx/dt = 0 and dy/dt = 0. So x + y = 0 and x - y = 0. Adding: 2x = 0, so x = 0. Then y = 0. So equilibrium is at (0,0).'
-          },
-          {
-            id: 'de-q5',
-            video_id: 'de-5',
-            question: 'The Laplace transform of f(t) = e^(at) is:',
-            options: ['1/(s-a)', '1/(s+a)', 's/(s²+a²)', 'a/(s²+a²)'],
-            correct_answer: 0,
-            explanation: 'L{e^(at)} = ∫₀^∞ e^(at)·e^(-st) dt = ∫₀^∞ e^((a-s)t) dt = [e^((a-s)t)/(a-s)]₀^∞ = 1/(s-a) for s > a.'
-          },
-          {
-            id: 'de-q6',
-            video_id: 'de-6',
-            question: 'The logistic equation dP/dt = rP(1-P/K) models:',
-            options: ['Exponential growth', 'Population growth with carrying capacity', 'Linear growth', 'Oscillatory behavior'],
-            correct_answer: 1,
-            explanation: 'The logistic equation models population growth with a carrying capacity K. When P is small, growth is approximately exponential. As P approaches K, growth slows down.'
-          }
-        ],
-        '7': [ // Chemistry Foundation
-          {
-            id: 'chem1-q1',
-            video_id: 'chem1-1',
-            question: 'What is the mole concept primarily used for in chemistry?',
-            options: ['Measuring temperature', 'Counting atoms and molecules', 'Determining color changes', 'Measuring pressure'],
-            correct_answer: 1,
-            explanation: 'The mole concept is fundamental for counting atoms and molecules in chemical reactions. One mole contains 6.022 × 10²³ particles (Avogadro\'s number).'
-          },
-          {
-            id: 'chem1-q2',
-            video_id: 'chem1-1',
-            question: 'How many atoms are in 2 moles of carbon?',
-            options: ['6.022 × 10²³ atoms', '1.204 × 10²⁴ atoms', '3.011 × 10²³ atoms', '12.044 × 10²³ atoms'],
-            correct_answer: 1,
-            explanation: '2 moles × 6.022 × 10²³ atoms/mol = 1.204 × 10²⁴ atoms. The mole concept allows us to convert between moles and number of particles.'
-          },
-          {
-            id: 'chem1-q3',
-            video_id: 'chem1-1',
-            question: 'What is the relationship between moles and grams?',
-            options: ['Moles = grams × molar mass', 'Grams = moles × molar mass', 'Moles = grams ÷ molar mass', 'Both B and C are correct'],
-            correct_answer: 3,
-            explanation: 'Both B and C are correct. Grams = moles × molar mass (to convert moles to grams) and moles = grams ÷ molar mass (to convert grams to moles).'
-          },
-          {
-            id: 'chem1-q4',
-            video_id: 'chem1-2',
-            question: 'What is the value of Avogadro\'s number?',
-            options: ['6.022 × 10²²', '6.022 × 10²³', '6.022 × 10²⁴', '6.022 × 10²¹'],
-            correct_answer: 1,
-            explanation: 'Avogadro\'s number is 6.022 × 10²³, which represents the number of particles (atoms, molecules, ions) in one mole of a substance.'
-          },
-          {
-            id: 'chem1-q5',
-            video_id: 'chem1-2',
-            question: 'Who is Avogadro\'s number named after?',
-            options: ['Amedeo Avogadro', 'Antoine Lavoisier', 'John Dalton', 'Robert Boyle'],
-            correct_answer: 0,
-            explanation: 'Avogadro\'s number is named after Amedeo Avogadro, an Italian scientist who proposed that equal volumes of gases at the same temperature and pressure contain equal numbers of molecules.'
-          },
-          {
-            id: 'chem1-q6',
-            video_id: 'chem1-2',
-            question: 'If you have 3.011 × 10²³ molecules of water, how many moles is this?',
-            options: ['0.5 moles', '1.0 mole', '1.5 moles', '2.0 moles'],
-            correct_answer: 0,
-            explanation: '3.011 × 10²³ molecules ÷ 6.022 × 10²³ molecules/mol = 0.5 moles. This demonstrates the relationship between number of particles and moles.'
-          },
-          {
-            id: 'chem1-q7',
-            video_id: 'chem1-3',
-            question: 'What is the molar mass of water (H₂O)?',
-            options: ['16.00 g/mol', '18.02 g/mol', '20.02 g/mol', '22.02 g/mol'],
-            correct_answer: 1,
-            explanation: 'The molar mass of water is 18.02 g/mol: 2(1.01) + 16.00 = 2.02 + 16.00 = 18.02 g/mol, where 1.01 g/mol is the atomic mass of hydrogen and 16.00 g/mol is the atomic mass of oxygen.'
-          },
-          {
-            id: 'chem1-q8',
-            video_id: 'chem1-3',
-            question: 'How do you calculate the molar mass of a compound?',
-            options: ['Add all atomic masses together', 'Multiply all atomic masses together', 'Add atomic masses multiplied by their subscripts', 'Divide atomic masses by their subscripts'],
-            correct_answer: 2,
-            explanation: 'To calculate molar mass, multiply each element\'s atomic mass by its subscript in the formula, then add all the results together.'
-          },
-          {
-            id: 'chem1-q9',
-            video_id: 'chem1-3',
-            question: 'What is the molar mass of carbon dioxide (CO₂)?',
-            options: ['28.01 g/mol', '44.01 g/mol', '32.00 g/mol', '16.00 g/mol'],
-            correct_answer: 1,
-            explanation: 'CO₂ molar mass = 12.01 + 2(16.00) = 12.01 + 32.00 = 44.01 g/mol. Carbon has atomic mass 12.01 g/mol and oxygen has 16.00 g/mol.'
-          },
-          {
-            id: 'chem1-q10',
-            video_id: 'chem1-3',
-            question: 'If you have 36.04 grams of water, how many moles is this?',
-            options: ['1.0 mole', '2.0 moles', '0.5 moles', '18.02 moles'],
-            correct_answer: 1,
-            explanation: 'Moles = grams ÷ molar mass = 36.04 g ÷ 18.02 g/mol = 2.0 moles. This demonstrates the practical application of molar mass calculations.'
-          }
-        ],
-        '1': [ // Physics (default)
-      {
-        id: '1',
-        video_id: '1',
-        question: 'According to Newton\'s First Law, what happens to an object in motion when no net force acts on it?',
-            options: ['It stops immediately', 'It continues at constant velocity', 'It accelerates', 'It changes direction'],
-        correct_answer: 1,
-        explanation: 'Newton\'s First Law states that an object in motion will continue at constant velocity (including zero velocity) unless acted upon by a net external force.'
-      },
-      {
-        id: '2',
-        video_id: '2',
-        question: 'If you push a box with 10N of force and friction opposes with 6N, what is the net force?',
-            options: ['16N in the direction of push', '4N in the direction of push', '6N opposing the push', '10N in the direction of push'],
-        correct_answer: 1,
-        explanation: 'Net force = Applied force - Friction = 10N - 6N = 4N in the direction of the push. This demonstrates how multiple forces combine.'
-      },
-      {
-        id: '3',
-        video_id: '3',
-        question: 'A 2kg ball moving at 5m/s collides with a stationary 1kg ball. What principle governs this collision?',
-            options: ['Conservation of Energy only', 'Conservation of Momentum only', 'Both Conservation of Energy and Momentum', 'Newton\'s Third Law only'],
-        correct_answer: 2,
-        explanation: 'In collisions, both momentum and energy conservation apply. Momentum is always conserved, while kinetic energy conservation depends on whether the collision is elastic or inelastic.'
-      },
-      {
-        id: '4',
-        video_id: '4',
-        question: 'A projectile launched at 45° will have its maximum range when air resistance is ignored. Why?',
-            options: ['It maximizes the horizontal velocity component', 'It minimizes the effect of gravity', 'It optimally balances horizontal distance and flight time', 'It maximizes the vertical velocity component'],
-        correct_answer: 2,
-        explanation: 'At 45°, the horizontal and vertical velocity components are equal, creating the optimal balance between horizontal distance traveled and time in flight for maximum range.'
-      }
-        ]
-      };
-    
       return quizSets[courseId] || quizSets['1'];
     };
     
@@ -1891,7 +971,7 @@ const CourseDetailPage: React.FC = () => {
     const note: Note = {
       id: Date.now().toString(),
       videoId: currentVideo.id,
-      timestamp: 0, // Would be actual video timestamp
+      timestamp: 0,
       content: newNote,
       createdAt: new Date().toISOString()
     };
@@ -1935,17 +1015,15 @@ const CourseDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-4"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              <div className="lg:col-span-3">
-                <div className="h-64 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
-              <div className="h-64 bg-gray-200 rounded"></div>
+          <div className="animate-pulse space-y-6">
+            <div className="h-12 bg-slate-800/50 rounded-2xl w-2/3"></div>
+            <div className="h-96 bg-slate-800/50 rounded-3xl"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="h-64 bg-slate-800/50 rounded-2xl"></div>
+              <div className="h-64 bg-slate-800/50 rounded-2xl"></div>
+              <div className="h-64 bg-slate-800/50 rounded-2xl"></div>
             </div>
           </div>
         </div>
@@ -1955,12 +1033,12 @@ const CourseDetailPage: React.FC = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Course not found</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Course not found</h2>
           <button
             onClick={() => navigate('/courses')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg"
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium py-3 px-6 rounded-2xl transition-all duration-300"
           >
             Back to Courses
           </button>
@@ -1969,261 +1047,266 @@ const CourseDetailPage: React.FC = () => {
     );
   }
 
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:from-black dark:via-purple-950 dark:to-black particle-bg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          <div className="xl:col-span-3">
-            {/* Course Header */}
-            <div className="course-card-gradient rounded-3xl p-8 mb-8 shimmer-effect border-2 border-purple-500/30">
-              <div className="flex items-center space-x-2 text-sm mb-6">
-                <button
-                  onClick={() => navigate('/courses')}
-                  className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors flex items-center gap-2"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Courses
-                </button>
-                <ChevronRight className="h-4 w-4 text-purple-400" />
-                <span className="text-cyan-200">{course.title}</span>
-              </div>
+          <div className="xl:col-span-3 space-y-8">
+            {/* Premium Hero Section */}
+            <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900/95 via-indigo-900/95 to-slate-900/95 backdrop-blur-2xl border border-white/10 shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)]">
+              {/* Animated gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5 animate-pulse"></div>
               
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8 mb-8">
-                <div className="flex-1">
-                  <h1 className="text-5xl lg:text-6xl font-black mb-6 leading-tight gradient-text-animated">{course.title}</h1>
-                  <p className="text-xl text-cyan-100 leading-relaxed mb-8">{course.description}</p>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-3 px-5 py-4 bg-slate-900/50 rounded-2xl border border-cyan-500/30">
-                      <div className="p-3 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-xl">
-                        <Users className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-cyan-300 font-medium">Instructor</div>
-                        <div className="font-bold text-white text-lg">{course.instructor}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3 px-5 py-4 bg-slate-900/50 rounded-2xl border border-green-500/30">
-                      <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
-                        <Clock className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-green-300 font-medium">Duration</div>
-                        <div className="font-bold text-white text-lg">{course.duration}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3 px-5 py-4 bg-slate-900/50 rounded-2xl border border-yellow-500/30">
-                      <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl">
-                        <Star className="h-6 w-6 text-white fill-current" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-yellow-300 font-medium">Rating</div>
-                        <div className="font-bold text-white text-lg">{course.rating} ({course.studentsCount.toLocaleString()})</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3 px-5 py-4 bg-gradient-to-r from-cyan-500/10 to-purple-600/10 rounded-2xl border border-purple-500/30">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
-                        <Trophy className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-xs text-purple-300 font-medium">Level</div>
-                        <div className="font-bold text-white text-lg">{course.level}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center lg:items-end space-y-4 glass-vibrant rounded-3xl p-6 border-2 border-cyan-500/30">
-                  <div className="text-center lg:text-right">
-                    <div className="text-xs text-cyan-300 font-bold mb-2">SPECIAL OFFER</div>
-                    <div className="text-5xl font-black gradient-text-animated mb-2">${course.price}</div>
-                    {course.originalPrice && (
-                      <div className="text-2xl text-gray-400 line-through">${course.originalPrice}</div>
-                    )}
-                    <div className="mt-3 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-400/30">
-                      <span className="text-green-300 font-bold text-sm">{Math.round((1 - course.price / (course.originalPrice || course.price)) * 100)}% OFF</span>
-                    </div>
-                  </div>
-                  <button className="w-full px-8 py-5 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-black text-xl rounded-2xl hover:from-cyan-400 hover:to-purple-500 transform hover:scale-105 hover:shadow-[0_0_40px_rgba(0,245,255,0.6)] transition-all duration-300 flex items-center justify-center gap-3">
-                    <Zap className="h-6 w-6" />
-                    Enroll Now
+              <div className="relative z-10 p-8 lg:p-12">
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-3 mb-8">
+                  <button
+                    onClick={() => navigate('/courses')}
+                    className="group flex items-center gap-2 text-indigo-300 hover:text-white transition-all duration-300"
+                  >
+                    <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                    <span className="text-sm font-semibold tracking-wide">All Courses</span>
                   </button>
-                  <div className="flex items-center gap-2 text-cyan-300 text-sm">
-                    <Flame className="h-5 w-5 text-orange-400" />
-                    <span className="font-bold">{Math.floor(Math.random() * 50 + 10)} students enrolled today</span>
+                  <ChevronRight className="h-4 w-4 text-slate-600" />
+                  <span className="text-sm text-slate-400 truncate">{course.title}</span>
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-12 items-start">
+                  {/* Left: Course Info */}
+                  <div className="flex-1 space-y-8">
+                    {/* Title with premium typography */}
+                    <div>
+                      <h1 className="text-5xl lg:text-6xl xl:text-7xl font-black mb-6 leading-[1.1] bg-gradient-to-r from-white via-indigo-100 to-white bg-clip-text text-transparent tracking-tight">
+                        {course.title}
+                      </h1>
+                      <p className="text-xl lg:text-2xl text-slate-300 leading-relaxed font-light">
+                        {course.description}
+                      </p>
+                    </div>
+
+                    {/* Premium Stats Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { icon: Users, label: 'Instructor', value: course.instructor, gradient: 'from-indigo-500 to-purple-600' },
+                        { icon: Clock, label: 'Duration', value: course.duration, gradient: 'from-purple-500 to-pink-600' },
+                        { icon: Star, label: 'Rating', value: `${course.rating} (${course.studentsCount.toLocaleString()})`, gradient: 'from-amber-500 to-orange-600' },
+                        { icon: Trophy, label: 'Level', value: course.level, gradient: 'from-cyan-500 to-blue-600' }
+                      ].map((stat, idx) => (
+                        <div key={idx} className="group relative overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-xl border border-white/5 p-5 hover:border-white/10 transition-all duration-500 hover:scale-[1.02]">
+                          <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-500" style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}></div>
+                          <div className="relative flex items-center gap-4">
+                            <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}>
+                              <stat.icon className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-slate-400 font-semibold tracking-wider uppercase mb-1">{stat.label}</div>
+                              <div className="font-bold text-white text-base">{stat.value}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 backdrop-blur-sm">
+                        <span className="text-green-400 font-bold text-sm flex items-center gap-2">
+                          <Unlock className="h-4 w-4" />
+                          {videos.filter(v => v.isPreview).length} Free Previews
+                        </span>
+                      </div>
+                      <div className="px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm">
+                        <span className="text-blue-400 font-bold text-sm flex items-center gap-2">
+                          <Globe className="h-4 w-4" />
+                          {course.language}
+                        </span>
+                      </div>
+                      <div className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 backdrop-blur-sm">
+                        <span className="text-purple-400 font-bold text-sm flex items-center gap-2">
+                          <Download className="h-4 w-4" />
+                          Offline Access
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Pricing Card */}
+                  <div className="lg:w-80 flex-shrink-0">
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-[2px] shadow-[0_20px_60px_-15px_rgba(99,102,241,0.5)] hover:shadow-[0_20px_80px_-15px_rgba(99,102,241,0.7)] transition-all duration-500">
+                      <div className="relative bg-slate-900 rounded-3xl p-8 h-full">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5"></div>
+                        
+                        <div className="relative space-y-6">
+                          <div>
+                            <div className="text-xs font-bold text-indigo-300 mb-3 tracking-wider uppercase flex items-center gap-2">
+                              <Sparkles className="h-4 w-4" />
+                              Limited Time Offer
+                            </div>
+                            <div className="flex items-baseline gap-3 mb-2">
+                              <span className="text-6xl font-black text-white">${course.price}</span>
+                              {course.originalPrice && (
+                                <span className="text-2xl text-slate-500 line-through">${course.originalPrice}</span>
+                              )}
+                            </div>
+                            {course.originalPrice && (
+                              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-xl border border-green-500/20">
+                                <span className="text-green-400 font-bold text-sm">
+                                  Save {Math.round((1 - course.price / course.originalPrice) * 100)}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <button className="group w-full relative overflow-hidden px-8 py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black text-xl rounded-2xl hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 transition-all duration-500 shadow-lg hover:shadow-2xl hover:shadow-indigo-500/50 hover:-translate-y-1">
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                            <span className="relative flex items-center justify-center gap-3">
+                              <Zap className="h-6 w-6" />
+                              Enroll Now
+                            </span>
+                          </button>
+
+                          <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
+                            <Flame className="h-5 w-5 text-orange-400" />
+                            <span className="font-semibold">{Math.floor(Math.random() * 50 + 10)} students enrolled today</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Video Player Section */}
+            {/* Premium Video Player Section */}
             {currentVideo && (
-              <div className="course-card-gradient rounded-3xl overflow-hidden mb-8 border-2 border-purple-500/30">
-                {/* Video Player Header */}
-                <div className="p-6 border-b border-cyan-500/20 bg-slate-900/30">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex-1">
-                      <h2 className="text-3xl font-black gradient-text-animated mb-4">
-                        {currentVideo.title}
-                      </h2>
-                      <p className="text-cyan-100 mb-6 leading-relaxed text-lg">
-                        {currentVideo.description}
-                      </p>
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <div className="flex items-center space-x-2 px-4 py-2 bg-slate-900/50 rounded-xl border border-cyan-500/30">
-                          <Clock className="h-5 w-5 text-cyan-400" />
-                          <span className="text-white font-bold">{formatDuration(currentVideo.duration)}</span>
-                        </div>
-                        {currentVideo.isPreview && (
-                          <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-black flex items-center gap-2 shadow-lg">
-                            <Play className="h-4 w-4" />
-                            FREE PREVIEW
+              <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900/95 via-slate-900/98 to-slate-900/95 backdrop-blur-2xl border border-white/10 shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5"></div>
+                
+                <div className="relative z-10 p-6 lg:p-8">
+                  {/* Video Header */}
+                  <div className="mb-6">
+                    <div className="flex items-start justify-between gap-6 mb-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold tracking-wider uppercase">
+                            Lesson {currentVideoIndex + 1} of {videos.length}
                           </span>
-                        )}
-                        <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl border border-purple-500/30">
-                          <BarChart3 className="h-5 w-5 text-purple-400" />
-                          <span className="text-white font-bold">{courseProgress.toFixed(0)}% Complete</span>
+                          {currentVideo.isPreview && (
+                            <span className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-300 text-xs font-bold flex items-center gap-2">
+                              <PlayCircle className="h-3 w-3" />
+                              Free Preview
+                            </span>
+                          )}
                         </div>
+                        <h2 className="text-3xl lg:text-4xl font-black text-white mb-3 leading-tight">
+                          {currentVideo.title}
+                        </h2>
+                        <p className="text-lg text-slate-300 leading-relaxed">
+                          {currentVideo.description}
+                        </p>
+                      </div>
+
+                      {/* Video Navigation */}
+                      <div className="flex items-center gap-2 bg-slate-800/50 rounded-2xl p-2 backdrop-blur-xl border border-white/5">
+                        <button
+                          onClick={() => navigateToVideo(Math.max(0, currentVideoIndex - 1))}
+                          disabled={currentVideoIndex === 0}
+                          className="p-3 text-indigo-400 hover:text-white hover:bg-indigo-500/10 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 disabled:hover:bg-transparent"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => navigateToVideo(Math.min(videos.length - 1, currentVideoIndex + 1))}
+                          disabled={currentVideoIndex === videos.length - 1}
+                          className="p-3 text-indigo-400 hover:text-white hover:bg-indigo-500/10 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 disabled:hover:bg-transparent"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3 glass-vibrant rounded-2xl p-3 border border-cyan-500/30">
-                      <button
-                        onClick={() => navigateToVideo(Math.max(0, currentVideoIndex - 1))}
-                        disabled={currentVideoIndex === 0}
-                        className="p-3 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      >
-                        <ChevronLeft className="h-6 w-6" />
-                      </button>
-                      <span className="text-white font-black px-3">
-                        {currentVideoIndex + 1} / {videos.length}
-                      </span>
-                      <button
-                        onClick={() => navigateToVideo(Math.min(videos.length - 1, currentVideoIndex + 1))}
-                        disabled={currentVideoIndex === videos.length - 1}
-                        className="p-3 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      >
-                        <ChevronRight className="h-6 w-6" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Video Controls */}
-                  <div className="flex items-center justify-between pt-6 border-t border-cyan-500/20">
-                    <div className="flex items-center gap-3 flex-wrap">
+
+                    {/* Video Meta Info */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-white/5 backdrop-blur-xl">
+                        <Clock className="h-4 w-4 text-indigo-400" />
+                        <span className="text-sm font-semibold text-white">{formatDuration(currentVideo.duration)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-white/5 backdrop-blur-xl">
+                        <BarChart3 className="h-4 w-4 text-purple-400" />
+                        <span className="text-sm font-semibold text-white">{courseProgress.toFixed(0)}% Complete</span>
+                      </div>
                       <button
                         onClick={() => toggleBookmark(currentVideo.id)}
-                        className={`px-4 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${
                           bookmarkedVideos.has(currentVideo.id)
-                            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                            : 'bg-slate-900/50 text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 hover:border-cyan-400'
-                        }`}
+                            ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+                            : 'bg-slate-800/50 border border-white/5 text-slate-400 hover:text-white'
+                        } backdrop-blur-xl`}
                       >
-                        <Bookmark className="h-5 w-5" />
-                        <span>Save</span>
+                        <Bookmark className="h-4 w-4" />
+                        <span className="text-sm">Bookmark</span>
                       </button>
-                      <button
-                        onClick={() => setShowNotes(!showNotes)}
-                        className="px-4 py-3 rounded-xl bg-slate-900/50 text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400 font-bold transition-all flex items-center gap-2"
-                      >
-                        <FileText className="h-5 w-5" />
-                        <span>Notes</span>
-                      </button>
-                      <button className="px-4 py-3 rounded-xl bg-slate-900/50 text-pink-400 hover:text-pink-300 border border-pink-500/30 hover:border-pink-400 font-bold transition-all flex items-center gap-2">
-                        <Share2 className="h-5 w-5" />
-                        <span>Share</span>
-                      </button>
-                    </div>
-                    {/* Interactive Tools */}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {/* Quiz Button */}
-                      {!showQuiz && currentQuiz && (
-                        <button
-                          onClick={() => setShowQuiz(true)}
-                          className="px-5 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-400 hover:to-green-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
-                        >
-                          <Brain className="h-5 w-5" />
-                          <span>Quiz</span>
-                        </button>
-                      )}
-                      
-                      {/* Problem Solver */}
-                      <button
-                        onClick={() => setShowProblemSolver(!showProblemSolver)}
-                        className="px-5 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-400 hover:to-pink-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
-                      >
-                        <Calculator className="h-5 w-5" />
-                        <span>Solve</span>
-                      </button>
-                      
-                      {/* Graphing Tool */}
-                      <button
-                        onClick={() => setShowGraphingTool(!showGraphingTool)}
-                        className="px-5 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl hover:from-blue-400 hover:to-cyan-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
-                      >
-                        <TrendingUp className="h-5 w-5" />
-                        <span>Graph</span>
-                      </button>
-                      
-                      {/* Discussion */}
-                      <button
-                        onClick={() => setShowDiscussion(!showDiscussion)}
-                        className="px-5 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-400 hover:to-red-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
-                      >
-                        <MessageCircle className="h-5 w-5" />
-                        <span>Discuss</span>
+                      <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-white/5 text-slate-400 hover:text-white font-semibold transition-all duration-300 backdrop-blur-xl">
+                        <Share2 className="h-4 w-4" />
+                        <span className="text-sm">Share</span>
                       </button>
                     </div>
                   </div>
-                </div>
 
-                {/* Video Player */}
-                <div className="relative">
-                  <VideoPlayer
-                    src={currentVideo.video_url}
-                    onVideoEnd={handleVideoEnd}
-                  />
-                </div>
-
-                {/* Notes Section */}
-                {showNotes && (
-                  <div className="p-6 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes</h3>
-                    <div className="space-y-4">
-                      <div className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={newNote}
-                          onChange={(e) => setNewNote(e.target.value)}
-                          placeholder="Add a note..."
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <button
-                          onClick={addNote}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      <div className="space-y-2">
-                        {notes.filter(note => note.videoId === currentVideo.id).map(note => (
-                          <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-700">{note.content}</p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {formatDate(note.createdAt)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  {/* Video Player */}
+                  <div className="mb-6">
+                    <VideoPlayer
+                      src={currentVideo.video_url}
+                      onVideoEnd={handleVideoEnd}
+                    />
                   </div>
-                )}
+
+                  {/* Interactive Tools Bar */}
+                  <div className="flex flex-wrap gap-3">
+                    {!showQuiz && currentQuiz && (
+                      <button
+                        onClick={() => setShowQuiz(true)}
+                        className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl hover:from-green-400 hover:to-emerald-500 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-green-500/50 font-bold flex items-center gap-2"
+                      >
+                        <Brain className="h-5 w-5" />
+                        <span>Take Quiz</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowProblemSolver(!showProblemSolver)}
+                      className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl hover:from-purple-400 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-purple-500/50 font-bold flex items-center gap-2"
+                    >
+                      <Calculator className="h-5 w-5" />
+                      <span>AI Solver</span>
+                    </button>
+                    <button
+                      onClick={() => setShowGraphingTool(!showGraphingTool)}
+                      className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-2xl hover:from-blue-400 hover:to-cyan-500 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 font-bold flex items-center gap-2"
+                    >
+                      <TrendingUp className="h-5 w-5" />
+                      <span>Graph Tool</span>
+                    </button>
+                    <button
+                      onClick={() => setShowDiscussion(!showDiscussion)}
+                      className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-2xl hover:from-orange-400 hover:to-red-500 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-orange-500/50 font-bold flex items-center gap-2"
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                      <span>Discussion</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Quiz */}
             {showQuiz && currentQuiz && (
-              <div className="mb-6">
+              <div className="animate-fadeIn">
                 <QuizComponent
                   quiz={currentQuiz}
                   onComplete={handleQuizComplete}
@@ -2231,42 +1314,33 @@ const CourseDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Premium Interactive Problem Solver */}
+            {/* AI Tools Sections */}
             {showProblemSolver && (
-              <div className="relative bg-gradient-to-br from-white/95 via-purple-50/90 to-white/95 dark:from-slate-900/95 dark:via-purple-950/90 dark:to-slate-900/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(139,92,246,0.4)] border border-purple-200/50 dark:border-purple-500/20 p-8 sm:p-10 mb-8 transition-all duration-500 hover:shadow-[0_20px_80px_-15px_rgba(139,92,246,0.6)] ring-1 ring-purple-100/50 dark:ring-purple-500/10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 pointer-events-none"></div>
+              <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-purple-900/50 via-slate-900/80 to-pink-900/50 backdrop-blur-2xl border border-purple-500/20 p-8 shadow-[0_20px_60px_-15px_rgba(168,85,247,0.4)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5"></div>
                 
-                <div className="relative z-10">
-                  <div className="flex items-center space-x-4 mb-8">
-                    <div className="p-4 bg-gradient-to-br from-violet-500 via-purple-500 to-purple-600 rounded-2xl shadow-lg shadow-purple-500/30">
+                <div className="relative space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-lg">
                       <Calculator className="h-7 w-7 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-purple-700 dark:from-violet-400 dark:via-purple-400 dark:to-purple-500 bg-clip-text text-transparent">
-                        AI Problem Solver
-                      </h3>
-                      <p className="text-sm text-purple-600 dark:text-purple-400 font-medium mt-1">Powered by advanced AI mathematics</p>
+                      <h3 className="text-3xl font-black text-white">AI Problem Solver</h3>
+                      <p className="text-sm text-purple-300 font-medium">Powered by advanced AI mathematics</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-xs">BETA</span>
-                        Enter your calculus problem
-                      </label>
-                      <input
-                        type="text"
-                        value={problemInput}
-                        onChange={(e) => setProblemInput(e.target.value)}
-                        placeholder='Try "derivative of x^2 + 3x + 1" or "integral of 2x"...'
-                        className="w-full px-6 py-4 bg-white/80 dark:bg-slate-800/80 border-2 border-purple-200 dark:border-purple-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 dark:text-white transition-all duration-300 text-lg shadow-sm hover:shadow-md backdrop-blur-sm"
-                      />
-                    </div>
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      value={problemInput}
+                      onChange={(e) => setProblemInput(e.target.value)}
+                      placeholder='Try "derivative of x^2 + 3x + 1" or "integral of 2x"...'
+                      className="w-full px-6 py-4 bg-slate-800/80 border-2 border-purple-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-400 text-white transition-all duration-300 text-lg"
+                    />
                     
                     <button
                       onClick={() => {
-                        // Simulate AI problem solving
                         const solutions: { [key: string]: string } = {
                           'derivative of x^2': '2x',
                           'derivative of x^2 + 3x + 1': '2x + 3',
@@ -2279,22 +1353,22 @@ const CourseDetailPage: React.FC = () => {
                         const solution = solutions[problemInput.toLowerCase()] || 'Step-by-step solution will be provided here...';
                         setProblemSolution(solution);
                       }}
-                      className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-violet-500 via-purple-500 to-purple-600 text-white rounded-2xl hover:from-violet-600 hover:via-purple-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transform hover:-translate-y-0.5 font-bold text-lg flex items-center gap-3 justify-center ring-2 ring-purple-400/20"
+                      className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl hover:from-purple-400 hover:to-pink-500 transition-all duration-300 shadow-lg font-bold text-lg flex items-center gap-3"
                     >
                       <Brain className="h-5 w-5" />
                       Solve with AI
                     </button>
                     
                     {problemSolution && (
-                      <div className="bg-gradient-to-br from-purple-50/80 via-white/80 to-purple-50/80 dark:from-purple-950/50 dark:via-slate-800/80 dark:to-purple-950/50 p-6 sm:p-8 rounded-2xl border-2 border-purple-200 dark:border-purple-500/30 shadow-inner backdrop-blur-sm animate-fadeIn">
+                      <div className="bg-slate-800/80 p-8 rounded-2xl border-2 border-purple-500/30">
                         <div className="flex items-center gap-3 mb-4">
                           <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
                             <CheckCircle className="h-5 w-5 text-white" />
                           </div>
-                          <h4 className="font-black text-gray-900 dark:text-white text-xl">Solution</h4>
+                          <h4 className="font-black text-white text-xl">Solution</h4>
                         </div>
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-purple-200 dark:border-purple-500/30 shadow-sm">
-                          <p className="text-gray-900 dark:text-gray-100 font-mono text-xl font-bold">{problemSolution}</p>
+                        <div className="bg-slate-900 p-6 rounded-xl">
+                          <p className="text-white font-mono text-xl font-bold">{problemSolution}</p>
                         </div>
                       </div>
                     )}
@@ -2303,61 +1377,48 @@ const CourseDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Premium Interactive Graphing Tool */}
             {showGraphingTool && (
-              <div className="relative bg-gradient-to-br from-white/95 via-blue-50/90 to-white/95 dark:from-slate-900/95 dark:via-blue-950/90 dark:to-slate-900/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(59,130,246,0.4)] border border-blue-200/50 dark:border-blue-500/20 p-8 sm:p-10 mb-8 transition-all duration-500 hover:shadow-[0_20px_80px_-15px_rgba(59,130,246,0.6)] ring-1 ring-blue-100/50 dark:ring-blue-500/10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
+              <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-blue-900/50 via-slate-900/80 to-cyan-900/50 backdrop-blur-2xl border border-blue-500/20 p-8 shadow-[0_20px_60px_-15px_rgba(59,130,246,0.4)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5"></div>
                 
-                <div className="relative z-10">
-                  <div className="flex items-center space-x-4 mb-8">
-                    <div className="p-4 bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/30">
+                <div className="relative space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg">
                       <TrendingUp className="h-7 w-7 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-black bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 dark:from-blue-400 dark:via-cyan-400 dark:to-blue-500 bg-clip-text text-transparent">
-                        AI Graphing Tool
-                      </h3>
-                      <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1">Visualize functions in real-time</p>
+                      <h3 className="text-3xl font-black text-white">AI Graphing Tool</h3>
+                      <p className="text-sm text-blue-300 font-medium">Visualize functions in real-time</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-                        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs">NEW</span>
-                        Enter function to graph
-                      </label>
-                      <input
-                        type="text"
-                        value={graphFunction}
-                        onChange={(e) => setGraphFunction(e.target.value)}
-                        placeholder='Try "x^2", "sin(x)", "e^x", or "x^3 - 2x"...'
-                        className="w-full px-6 py-4 bg-white/80 dark:bg-slate-800/80 border-2 border-blue-200 dark:border-blue-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 dark:text-white transition-all duration-300 text-lg shadow-sm hover:shadow-md backdrop-blur-sm"
-                      />
-                    </div>
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      value={graphFunction}
+                      onChange={(e) => setGraphFunction(e.target.value)}
+                      placeholder='Try "x^2", "sin(x)", "e^x", or "x^3 - 2x"...'
+                      className="w-full px-6 py-4 bg-slate-800/80 border-2 border-blue-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 text-white transition-all duration-300 text-lg"
+                    />
                     
                     <button
-                      onClick={() => {
-                        // Simulate graphing
-                        console.log('Graphing function:', graphFunction);
-                      }}
-                      className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:via-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transform hover:-translate-y-0.5 font-bold text-lg flex items-center gap-3 justify-center ring-2 ring-blue-400/20"
+                      onClick={() => console.log('Graphing function:', graphFunction)}
+                      className="px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-2xl hover:from-blue-400 hover:to-cyan-500 transition-all duration-300 shadow-lg font-bold text-lg flex items-center gap-3"
                     >
                       <TrendingUp className="h-5 w-5" />
                       Generate Graph
                     </button>
                     
-                    <div className="bg-gradient-to-br from-blue-50/80 via-white/80 to-cyan-50/80 dark:from-blue-950/50 dark:via-slate-800/80 dark:to-cyan-950/50 h-96 rounded-2xl flex items-center justify-center border-2 border-blue-200 dark:border-blue-500/30 shadow-inner backdrop-blur-sm overflow-hidden">
-                      <div className="text-center text-gray-600 dark:text-gray-300">
-                        <div className="p-6 bg-white/90 dark:bg-slate-800/90 rounded-3xl shadow-2xl mb-6 ring-1 ring-blue-200 dark:ring-blue-500/30 backdrop-blur-sm">
-                          <TrendingUp className="h-20 w-20 mx-auto mb-4 text-blue-500 dark:text-blue-400" />
-                          <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mx-auto mb-4"></div>
+                    <div className="bg-slate-800/80 h-96 rounded-2xl flex items-center justify-center border-2 border-blue-500/30">
+                      <div className="text-center">
+                        <div className="p-6 bg-slate-900 rounded-3xl mb-6">
+                          <TrendingUp className="h-20 w-20 mx-auto mb-4 text-blue-400" />
                         </div>
-                        <p className="text-xl font-bold mb-3 text-gray-900 dark:text-white">Interactive Graph Canvas</p>
+                        <p className="text-xl font-bold text-white mb-3">Interactive Graph Canvas</p>
                         {graphFunction && (
-                          <div className="bg-white/90 dark:bg-slate-800/90 px-6 py-3 rounded-2xl border border-blue-200 dark:border-blue-500/30 inline-block shadow-sm backdrop-blur-sm">
-                            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Function: </span>
-                            <span className="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">{graphFunction}</span>
+                          <div className="bg-slate-900 px-6 py-3 rounded-2xl inline-block">
+                            <span className="text-sm text-slate-400 font-medium">Function: </span>
+                            <span className="font-mono text-lg font-bold text-blue-400">{graphFunction}</span>
                           </div>
                         )}
                       </div>
@@ -2367,49 +1428,46 @@ const CourseDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Premium Discussion Forum */}
             {showDiscussion && (
-              <div className="relative bg-gradient-to-br from-white/95 via-orange-50/90 to-white/95 dark:from-slate-900/95 dark:via-orange-950/90 dark:to-slate-900/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(249,115,22,0.4)] border border-orange-200/50 dark:border-orange-500/20 p-8 sm:p-10 mb-8 transition-all duration-500 hover:shadow-[0_20px_80px_-15px_rgba(249,115,22,0.6)] ring-1 ring-orange-100/50 dark:ring-orange-500/10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-500/5 pointer-events-none"></div>
+              <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-orange-900/50 via-slate-900/80 to-red-900/50 backdrop-blur-2xl border border-orange-500/20 p-8 shadow-[0_20px_60px_-15px_rgba(249,115,22,0.4)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-500/5"></div>
                 
-                <div className="relative z-10">
-                  <div className="flex items-center space-x-4 mb-8">
-                    <div className="p-4 bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 rounded-2xl shadow-lg shadow-orange-500/30">
+                <div className="relative space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg">
                       <MessageCircle className="h-7 w-7 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-black bg-gradient-to-r from-amber-600 via-orange-600 to-orange-700 dark:from-amber-400 dark:via-orange-400 dark:to-orange-500 bg-clip-text text-transparent">
-                        Course Discussion
-                      </h3>
-                      <p className="text-sm text-orange-600 dark:text-orange-400 font-medium mt-1">Connect with fellow learners</p>
+                      <h3 className="text-3xl font-black text-white">Course Discussion</h3>
+                      <p className="text-sm text-orange-300 font-medium">Connect with fellow learners</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-6">
-                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="space-y-4">
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
                       {discussionMessages.map((msg, index) => (
-                        <div key={index} className="flex space-x-4 p-5 bg-gradient-to-r from-orange-50/80 via-white/80 to-orange-50/80 dark:from-orange-950/50 dark:via-slate-800/80 dark:to-orange-950/50 rounded-2xl border border-orange-200 dark:border-orange-500/30 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                          <div className="w-12 h-12 bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30 ring-2 ring-orange-300 dark:ring-orange-500/30">
+                        <div key={index} className="flex gap-4 p-5 bg-slate-800/80 rounded-2xl border border-orange-500/20">
+                          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
                             <span className="text-white font-black text-base">{msg.user[0]}</span>
                           </div>
                           <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-3">
-                              <span className="font-bold text-gray-900 dark:text-white text-lg">{msg.user}</span>
-                              <span className="text-xs text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/50 px-3 py-1.5 rounded-full font-medium">{msg.time}</span>
+                            <div className="flex items-center gap-3 mb-3">
+                              <span className="font-bold text-white text-lg">{msg.user}</span>
+                              <span className="text-xs text-orange-400 bg-orange-500/10 px-3 py-1.5 rounded-full font-medium">{msg.time}</span>
                             </div>
-                            <p className="text-gray-800 dark:text-gray-200 bg-white dark:bg-slate-900 p-4 rounded-xl border border-orange-200 dark:border-orange-500/30 leading-relaxed">{msg.message}</p>
+                            <p className="text-slate-300 bg-slate-900 p-4 rounded-xl leading-relaxed">{msg.message}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex gap-3">
                       <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Ask a question or share your thoughts..."
-                        className="flex-1 px-6 py-4 bg-white/80 dark:bg-slate-800/80 border-2 border-orange-200 dark:border-orange-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:text-white transition-all duration-300 text-lg shadow-sm hover:shadow-md backdrop-blur-sm"
+                        className="flex-1 px-6 py-4 bg-slate-800/80 border-2 border-orange-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-400 text-white transition-all duration-300 text-lg"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && newMessage.trim()) {
                             setDiscussionMessages(prev => [...prev, {
@@ -2432,7 +1490,7 @@ const CourseDetailPage: React.FC = () => {
                             setNewMessage('');
                           }
                         }}
-                        className="px-8 py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 text-white rounded-2xl hover:from-amber-600 hover:via-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transform hover:-translate-y-0.5 font-bold text-lg flex items-center gap-3 justify-center ring-2 ring-orange-400/20"
+                        className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-2xl hover:from-orange-400 hover:to-red-500 transition-all duration-300 shadow-lg font-bold text-lg flex items-center gap-3"
                       >
                         <MessageCircle className="h-5 w-5" />
                         Send
@@ -2443,10 +1501,13 @@ const CourseDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Course Tabs */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
-              <div className="border-b border-gray-200">
-                <nav className="flex space-x-8 px-6">
+            {/* Modern Tabs Section */}
+            <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900/95 via-slate-900/98 to-slate-900/95 backdrop-blur-2xl border border-white/10 shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)]">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5"></div>
+              
+              {/* Premium Tab Navigation */}
+              <div className="relative border-b border-white/5">
+                <div className="flex overflow-x-auto no-scrollbar px-6">
                   {[
                     { id: 'overview', label: 'Overview', icon: BookOpen },
                     { id: 'content', label: 'Content', icon: Video },
@@ -2456,277 +1517,115 @@ const CourseDetailPage: React.FC = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      className={`relative flex items-center gap-3 px-6 py-5 font-bold text-sm whitespace-nowrap transition-all duration-300 ${
                         activeTab === tab.id
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          ? 'text-white'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      <tab.icon className="h-4 w-4" />
+                      <tab.icon className="h-5 w-5" />
                       <span>{tab.label}</span>
+                      {activeTab === tab.id && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+                      )}
                     </button>
                   ))}
-                </nav>
+                </div>
               </div>
 
-              <div className="p-8">
+              {/* Tab Content */}
+              <div className="relative p-8">
                 {activeTab === 'overview' && (
                   <div className="space-y-8">
-                    {/* Course Description - Enhanced with glassmorphism */}
-                    <div className="relative group overflow-hidden bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 rounded-3xl p-8 border-2 border-blue-200/50 hover:border-blue-300/70 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/20">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-transparent to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-center space-x-4 mb-6">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-blue-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                            <div className="relative p-4 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-2xl shadow-lg">
-                              <BookOpen className="h-8 w-8 text-white" />
+                    {/* What You'll Learn */}
+                    <div>
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg">
+                          <Target className="h-6 w-6 text-white" />
+                        </div>
+                        <h3 className="text-3xl font-black text-white">What You'll Learn</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {course.whatYoullLearn.map((item, index) => (
+                          <div key={index} className="group flex items-start gap-4 p-6 rounded-2xl bg-slate-800/50 border border-white/5 hover:border-green-500/30 hover:bg-green-500/5 transition-all duration-300">
+                            <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <CheckCircle2 className="h-6 w-6 text-white" />
                             </div>
+                            <p className="text-slate-300 font-medium leading-relaxed">{item}</p>
                           </div>
-                          <div>
-                            <h3 className="text-3xl font-black text-gray-900 mb-1">Course Overview</h3>
-                            <div className="h-1.5 w-24 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full"></div>
-                          </div>
-                        </div>
-                        <p className="text-gray-800 text-lg leading-relaxed font-medium">{course.description}</p>
-                        
-                        {/* Quick Stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t-2 border-blue-200/50">
-                          <div className="text-center">
-                            <div className="text-3xl font-black text-blue-600 mb-1">{videos.length}</div>
-                            <div className="text-sm text-gray-600 font-semibold">Lessons</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-3xl font-black text-indigo-600 mb-1">{course.level}</div>
-                            <div className="text-sm text-gray-600 font-semibold">Level</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-3xl font-black text-purple-600 mb-1">{course.duration}</div>
-                            <div className="text-sm text-gray-600 font-semibold">Duration</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-3xl font-black text-pink-600 mb-1">{course.language}</div>
-                            <div className="text-sm text-gray-600 font-semibold">Language</div>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* What You'll Learn - Enhanced with cards and hover effects */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-green-500/5 via-emerald-500/5 to-teal-500/5 rounded-3xl p-8 border-2 border-green-200/50 hover:border-green-300/70 transition-all duration-500 hover:shadow-2xl hover:shadow-green-500/20">
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-8">
-                          <div className="flex items-center space-x-4">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-green-600 rounded-2xl blur-xl opacity-50"></div>
-                              <div className="relative p-4 bg-gradient-to-br from-green-600 via-green-500 to-emerald-600 rounded-2xl shadow-lg">
-                                <Target className="h-8 w-8 text-white" />
-                              </div>
-                            </div>
-                            <div>
-                              <h3 className="text-3xl font-black text-gray-900 mb-1">What You'll Learn</h3>
-                              <div className="h-1.5 w-24 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full"></div>
-                            </div>
-                          </div>
-                          <div className="px-4 py-2 bg-green-100 rounded-xl border-2 border-green-300">
-                            <span className="text-green-800 font-black text-lg">{course.whatYoullLearn.length} Skills</span>
-                          </div>
+                    {/* Requirements */}
+                    <div>
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="p-3 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg">
+                          <CheckCircle className="h-6 w-6 text-white" />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          {course.whatYoullLearn.map((item, index) => (
-                            <div key={index} className="group relative overflow-hidden bg-gradient-to-br from-white via-green-50/50 to-emerald-50/30 p-6 rounded-2xl border-2 border-green-200/70 hover:border-green-400 hover:shadow-xl hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-1">
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-emerald-400/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
-                              <div className="relative flex items-start space-x-4">
-                                <div className="flex-shrink-0">
-                                  <div className="relative">
-                                    <div className="absolute inset-0 bg-green-500 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                                    <div className="relative w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                                      <CheckCircle2 className="h-7 w-7 text-white" />
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex-1">
-                                  <div className="text-xs font-black text-green-600 mb-2">SKILL {index + 1}</div>
-                                  <p className="text-gray-900 font-bold text-base leading-snug">{item}</p>
-                                </div>
-                              </div>
+                        <h3 className="text-3xl font-black text-white">Prerequisites</h3>
+                      </div>
+                      <div className="space-y-4">
+                        {course.requirements.map((req, index) => (
+                          <div key={index} className="flex items-center gap-4 p-6 rounded-2xl bg-slate-800/50 border border-white/5">
+                            <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-lg text-white font-black">
+                              {index + 1}
                             </div>
-                          ))}
-                        </div>
+                            <p className="text-slate-300 font-medium leading-relaxed">{req}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Requirements - Enhanced with timeline style */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-yellow-500/5 rounded-3xl p-8 border-2 border-orange-200/50 hover:border-orange-300/70 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/20">
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-8">
-                          <div className="flex items-center space-x-4">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-orange-600 rounded-2xl blur-xl opacity-50"></div>
-                              <div className="relative p-4 bg-gradient-to-br from-orange-600 via-orange-500 to-amber-600 rounded-2xl shadow-lg">
-                                <CheckCircle className="h-8 w-8 text-white" />
-                              </div>
-                            </div>
-                            <div>
-                              <h3 className="text-3xl font-black text-gray-900 mb-1">Prerequisites</h3>
-                              <div className="h-1.5 w-24 bg-gradient-to-r from-orange-600 to-amber-600 rounded-full"></div>
-                            </div>
-                          </div>
-                          <div className="px-4 py-2 bg-orange-100 rounded-xl border-2 border-orange-300">
-                            <span className="text-orange-800 font-black text-lg">{course.requirements.length} Required</span>
-                          </div>
-                        </div>
-                        <div className="relative space-y-5">
-                          {/* Timeline line */}
-                          <div className="absolute left-6 top-8 bottom-8 w-1 bg-gradient-to-b from-orange-300 via-amber-300 to-yellow-300 rounded-full"></div>
-                          
-                          {course.requirements.map((req, index) => (
-                            <div key={index} className="relative group flex items-start space-x-6 bg-gradient-to-br from-white via-orange-50/50 to-amber-50/30 p-6 rounded-2xl border-2 border-orange-200/70 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/20 transition-all duration-300 hover:translate-x-2">
-                              <div className="relative flex-shrink-0">
-                                <div className="absolute inset-0 bg-orange-500 rounded-full blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                                <div className="relative w-14 h-14 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white">
-                                  <span className="text-white text-xl font-black">{index + 1}</span>
-                                </div>
-                              </div>
-                              <div className="flex-1 pt-2">
-                                <div className="text-xs font-black text-orange-600 mb-2">REQUIREMENT {index + 1}</div>
-                                <p className="text-gray-900 font-bold text-base leading-snug">{req}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Course Stats - Enhanced with animations and gradients */}
+                    {/* Course Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="group relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-500 hover:-translate-y-2">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 via-transparent to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-                        <div className="relative z-10">
-                          <div className="flex items-center justify-between mb-6">
-                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
-                              <Clock className="h-10 w-10" />
-                            </div>
-                            <div className="px-3 py-1 bg-white/20 rounded-xl backdrop-blur-sm">
-                              <BarChart3 className="h-5 w-5" />
-                            </div>
+                      {[
+                        { label: 'Total Duration', value: course.duration, icon: Clock, gradient: 'from-blue-500 to-indigo-600' },
+                        { label: 'Students Enrolled', value: course.studentsCount.toLocaleString(), icon: Users, gradient: 'from-green-500 to-emerald-600' },
+                        { label: 'Average Rating', value: `${course.rating} / 5.0`, icon: Star, gradient: 'from-purple-500 to-pink-600' }
+                      ].map((stat, idx) => (
+                        <div key={idx} className={`group relative overflow-hidden p-8 rounded-2xl bg-gradient-to-br ${stat.gradient} shadow-lg hover:shadow-2xl transition-all duration-500`}>
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+                          <div className="relative">
+                            <stat.icon className="h-10 w-10 text-white mb-4" />
+                            <h4 className="text-lg font-bold text-white/80 mb-2">{stat.label}</h4>
+                            <p className="text-4xl font-black text-white">{stat.value}</p>
                           </div>
-                          <div className="mb-3">
-                            <h4 className="text-lg font-bold text-blue-100 mb-2">Total Duration</h4>
-                            <p className="text-5xl font-black mb-2">{course.duration}</p>
-                            <div className="h-1.5 w-20 bg-white/40 rounded-full"></div>
-                          </div>
-                          <p className="text-blue-100 font-semibold">Complete Learning Path</p>
                         </div>
-                      </div>
-                      
-                      <div className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-500 to-emerald-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl hover:shadow-green-500/40 transition-all duration-500 hover:-translate-y-2">
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 via-transparent to-emerald-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-                        <div className="relative z-10">
-                          <div className="flex items-center justify-between mb-6">
-                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
-                              <Users className="h-10 w-10" />
-                            </div>
-                            <div className="px-3 py-1 bg-white/20 rounded-xl backdrop-blur-sm">
-                              <TrendingUp className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <div className="mb-3">
-                            <h4 className="text-lg font-bold text-green-100 mb-2">Students Enrolled</h4>
-                            <p className="text-5xl font-black mb-2">{course.studentsCount.toLocaleString()}</p>
-                            <div className="h-1.5 w-20 bg-white/40 rounded-full"></div>
-                          </div>
-                          <p className="text-green-100 font-semibold">Active Community</p>
-                        </div>
-                      </div>
-                      
-                      <div className="group relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-500 to-pink-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl hover:shadow-purple-500/40 transition-all duration-500 hover:-translate-y-2">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-transparent to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-                        <div className="relative z-10">
-                          <div className="flex items-center justify-between mb-6">
-                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
-                              <Star className="h-10 w-10 fill-current" />
-                            </div>
-                            <div className="px-3 py-1 bg-white/20 rounded-xl backdrop-blur-sm">
-                              <Award className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <div className="mb-3">
-                            <h4 className="text-lg font-bold text-purple-100 mb-2">Average Rating</h4>
-                            <div className="flex items-baseline space-x-2 mb-2">
-                              <p className="text-5xl font-black">{course.rating}</p>
-                              <span className="text-2xl font-bold text-purple-200">/5.0</span>
-                            </div>
-                            <div className="h-1.5 w-20 bg-white/40 rounded-full"></div>
-                          </div>
-                          <p className="text-purple-100 font-semibold">Highly Rated Course</p>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
                 {activeTab === 'content' && (
-                  <div className="space-y-8">
-                    {/* Content Header with Stats */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-blue-500/10 rounded-3xl p-8 border-2 border-purple-200/50">
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-400/5 via-transparent to-pink-400/5"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-                          <div className="flex items-center space-x-4">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-purple-600 rounded-2xl blur-xl opacity-50"></div>
-                              <div className="relative p-4 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-600 rounded-2xl shadow-lg">
-                                <Video className="h-8 w-8 text-white" />
-                              </div>
-                            </div>
-                            <div>
-                              <h3 className="text-3xl font-black text-gray-900 mb-1">Course Content</h3>
-                              <div className="h-1.5 w-24 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="px-4 py-2 bg-purple-100 rounded-xl border-2 border-purple-300">
-                              <span className="text-purple-800 font-black text-lg">{videos.length} Lessons</span>
-                            </div>
-                            <div className="px-4 py-2 bg-pink-100 rounded-xl border-2 border-pink-300">
-                              <span className="text-pink-800 font-black text-lg">{course.duration}</span>
-                            </div>
-                          </div>
+                  <div className="space-y-6">
+                    {/* Progress Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                      <div className="p-6 rounded-2xl bg-green-500/10 border border-green-500/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-green-300 uppercase tracking-wider">Completed</span>
+                          <CheckCircle className="h-5 w-5 text-green-400" />
                         </div>
-                        
-                        {/* Progress Overview */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-purple-200/50">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-bold text-gray-600">COMPLETED</span>
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            </div>
-                            <div className="text-3xl font-black text-green-600">{completedVideos.size}/{videos.length}</div>
-                          </div>
-                          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-purple-200/50">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-bold text-gray-600">PROGRESS</span>
-                              <BarChart3 className="h-5 w-5 text-blue-500" />
-                            </div>
-                            <div className="text-3xl font-black text-blue-600">{courseProgress.toFixed(0)}%</div>
-                          </div>
-                          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-purple-200/50">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-bold text-gray-600">TIME LEFT</span>
-                              <Clock className="h-5 w-5 text-orange-500" />
-                            </div>
-                            <div className="text-3xl font-black text-orange-600">{Math.round((100 - courseProgress) * videos.length * 25 / 100)} min</div>
-                          </div>
+                        <div className="text-4xl font-black text-green-400">{completedVideos.size}/{videos.length}</div>
+                      </div>
+                      <div className="p-6 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-blue-300 uppercase tracking-wider">Progress</span>
+                          <BarChart3 className="h-5 w-5 text-blue-400" />
                         </div>
+                        <div className="text-4xl font-black text-blue-400">{courseProgress.toFixed(0)}%</div>
+                      </div>
+                      <div className="p-6 rounded-2xl bg-orange-500/10 border border-orange-500/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-orange-300 uppercase tracking-wider">Time Left</span>
+                          <Clock className="h-5 w-5 text-orange-400" />
+                        </div>
+                        <div className="text-4xl font-black text-orange-400">{Math.round((100 - courseProgress) * videos.length * 25 / 100)} min</div>
                       </div>
                     </div>
 
                     {/* Video List */}
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {videos.map((video, index) => {
                         const isCompleted = completedVideos.has(video.id);
                         const isCurrent = currentVideoIndex === index;
@@ -2735,208 +1634,136 @@ const CourseDetailPage: React.FC = () => {
                           <button
                             key={video.id}
                             onClick={() => navigateToVideo(index)}
-                            className={`group w-full text-left relative overflow-hidden rounded-2xl border-2 transition-all duration-300 ${
+                            className={`group w-full text-left relative overflow-hidden rounded-2xl transition-all duration-300 ${
                               isCurrent
-                                ? 'border-blue-500 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 shadow-xl shadow-blue-500/20 scale-[1.02]'
+                                ? 'bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 border-2 border-indigo-500/50 shadow-lg shadow-indigo-500/20'
                                 : isCompleted
-                                ? 'border-green-300/70 bg-gradient-to-r from-green-50/50 via-emerald-50/30 to-white hover:border-green-400 hover:shadow-lg hover:shadow-green-500/20'
-                                : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/10'
-                            } hover:scale-[1.02]`}
+                                ? 'bg-green-500/5 border-2 border-green-500/20 hover:border-green-500/40'
+                                : 'bg-slate-800/30 border-2 border-white/5 hover:border-white/10'
+                            }`}
                           >
-                            {/* Background gradient effect */}
-                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
-                              isCurrent 
-                                ? 'bg-gradient-to-r from-blue-400/5 via-indigo-400/5 to-purple-400/5'
-                                : isCompleted
-                                ? 'bg-gradient-to-r from-green-400/5 via-emerald-400/5 to-teal-400/5'
-                                : 'bg-gradient-to-r from-purple-400/5 via-pink-400/5 to-blue-400/5'
-                            }`}></div>
-                            
-                            {/* Progress indicator line */}
                             {(isCurrent || isCompleted) && (
-                              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                                isCurrent ? 'bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500' : 'bg-gradient-to-b from-green-500 to-emerald-500'
+                              <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                                isCurrent ? 'bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-500' : 'bg-gradient-to-b from-green-500 to-emerald-500'
                               }`}></div>
                             )}
                             
-                            <div className="relative p-6">
-                              <div className="flex items-center space-x-5">
-                                {/* Video Icon/Status */}
-                                <div className="flex-shrink-0">
-                                  {isCompleted ? (
-                                    <div className="relative">
-                                      <div className="absolute inset-0 bg-green-500 rounded-2xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                                      <div className="relative w-16 h-16 bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                        <CheckCircle className="h-8 w-8 text-white" />
-                                      </div>
-                                    </div>
-                                  ) : isCurrent ? (
-                                    <div className="relative">
-                                      <div className="absolute inset-0 bg-blue-500 rounded-2xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                                      <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
-                                        <Play className="h-8 w-8 text-white fill-current" />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="relative">
-                                      <div className="absolute inset-0 bg-gray-400 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                                      <div className="relative w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-2xl flex items-center justify-center shadow group-hover:from-purple-100 group-hover:to-pink-100 group-hover:border-purple-300 transition-all duration-300">
-                                        <Play className="h-7 w-7 text-gray-500 group-hover:text-purple-600 transition-colors" />
-                                      </div>
+                            <div className="p-6 flex items-center gap-5">
+                              {/* Video Icon */}
+                              <div className="flex-shrink-0">
+                                {isCompleted ? (
+                                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <CheckCircle className="h-8 w-8 text-white" />
+                                  </div>
+                                ) : isCurrent ? (
+                                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
+                                    <Play className="h-8 w-8 text-white fill-current" />
+                                  </div>
+                                ) : (
+                                  <div className="w-16 h-16 bg-slate-700/50 border-2 border-slate-600 rounded-2xl flex items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-500/10 transition-all">
+                                    <Play className="h-7 w-7 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Video Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className={`text-xs font-black px-3 py-1 rounded-lg ${
+                                    isCurrent 
+                                      ? 'bg-indigo-500 text-white' 
+                                      : isCompleted
+                                      ? 'bg-green-500 text-white'
+                                      : 'bg-slate-700 text-slate-300'
+                                  }`}>
+                                    LESSON {index + 1}
+                                  </span>
+                                  {video.isPreview && (
+                                    <span className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1 rounded-lg text-xs font-black">
+                                      <PlayCircle className="h-3 w-3" />
+                                      FREE
+                                    </span>
+                                  )}
+                                  {isCurrent && (
+                                    <span className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-black animate-pulse">
+                                      <Circle className="h-2 w-2 fill-current" />
+                                      NOW PLAYING
+                                    </span>
+                                  )}
+                                </div>
+                                <h4 className={`text-xl font-bold mb-2 ${
+                                  isCurrent ? 'text-white' : 'text-slate-300'
+                                }`}>
+                                  {video.title}
+                                </h4>
+                                <p className="text-sm text-slate-400 leading-relaxed line-clamp-2 mb-3">
+                                  {video.description}
+                                </p>
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded-lg">
+                                    <Clock className="h-4 w-4 text-slate-400" />
+                                    <span className="text-sm font-semibold text-slate-300">{formatDuration(video.duration)}</span>
+                                  </div>
+                                  {isCompleted && (
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 rounded-lg">
+                                      <CheckCircle2 className="h-4 w-4 text-green-400" />
+                                      <span className="text-sm font-semibold text-green-300">Completed</span>
                                     </div>
                                   )}
                                 </div>
-                                
-                                {/* Video Info */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-4 mb-3">
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-3 mb-2">
-                                        <span className={`text-xs font-black px-3 py-1 rounded-lg ${
-                                          isCurrent 
-                                            ? 'bg-blue-600 text-white' 
-                                            : isCompleted
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-gray-200 text-gray-600'
-                                        }`}>
-                                          LESSON {index + 1}
-                                        </span>
-                                        {video.isPreview && (
-                                          <span className="flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-black shadow-lg">
-                                            <Play className="h-3 w-3" />
-                                            FREE PREVIEW
-                                          </span>
-                                        )}
-                                        {isCurrent && (
-                                          <span className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-red-600 text-white px-3 py-1 rounded-lg text-xs font-black animate-pulse">
-                                            <Flame className="h-3 w-3" />
-                                            NOW PLAYING
-                                          </span>
-                                        )}
-                                      </div>
-                                      <h4 className={`text-xl font-bold mb-2 ${
-                                        isCurrent ? 'text-blue-900' : 'text-gray-900'
-                                      }`}>
-                                        {video.title}
-                                      </h4>
-                                      {video.description && (
-                                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-                                          {video.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Meta info */}
-                                  <div className="flex items-center gap-4 flex-wrap">
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-                                      <Clock className="h-4 w-4 text-gray-600" />
-                                      <span className="text-sm font-bold text-gray-700">{formatDuration(video.duration)}</span>
-                                    </div>
-                                    {isCompleted && (
-                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-lg">
-                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm font-bold text-green-700">Completed</span>
-                                      </div>
-                                    )}
-                                    {bookmarkedVideos.has(video.id) && (
-                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 rounded-lg">
-                                        <Bookmark className="h-4 w-4 text-yellow-600" />
-                                        <span className="text-sm font-bold text-yellow-700">Saved</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                {/* Chevron indicator */}
-                                <div className="flex-shrink-0">
-                                  <div className={`p-3 rounded-xl transition-all duration-300 ${
-                                    isCurrent 
-                                      ? 'bg-blue-100 text-blue-600 scale-110' 
-                                      : 'bg-gray-100 text-gray-400 group-hover:bg-purple-100 group-hover:text-purple-600 group-hover:scale-110'
-                                  }`}>
-                                    <ChevronRight className="h-6 w-6" />
-                                  </div>
-                                </div>
+                              </div>
+                              
+                              {/* Arrow indicator */}
+                              <div className="flex-shrink-0">
+                                <ArrowRight className={`h-6 w-6 transition-all duration-300 ${
+                                  isCurrent 
+                                    ? 'text-indigo-400 scale-110' 
+                                    : 'text-slate-600 group-hover:text-indigo-400 group-hover:translate-x-1'
+                                }`} />
                               </div>
                             </div>
                           </button>
                         );
                       })}
                     </div>
-
-                    {/* Course Summary Card */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 rounded-3xl p-8 border-2 border-indigo-200/50">
-                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/5 via-transparent to-pink-400/5"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="p-3 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl">
-                              <Award className="h-6 w-6 text-white" />
-                            </div>
-                            <h4 className="text-2xl font-black text-gray-900">Course Summary</h4>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-indigo-200/50">
-                            <div className="text-3xl font-black text-indigo-600 mb-1">{videos.length}</div>
-                            <div className="text-sm text-gray-600 font-bold">Total Lessons</div>
-                          </div>
-                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-purple-200/50">
-                            <div className="text-3xl font-black text-purple-600 mb-1">{videos.reduce((acc, v) => acc + v.duration, 0)}</div>
-                            <div className="text-sm text-gray-600 font-bold">Total Minutes</div>
-                          </div>
-                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-pink-200/50">
-                            <div className="text-3xl font-black text-pink-600 mb-1">{completedVideos.size}</div>
-                            <div className="text-sm text-gray-600 font-bold">Completed</div>
-                          </div>
-                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-blue-200/50">
-                            <div className="text-3xl font-black text-blue-600 mb-1">{videos.length - completedVideos.size}</div>
-                            <div className="text-sm text-gray-600 font-bold">Remaining</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 )}
 
                 {activeTab === 'reviews' && (
-                  <div>
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900">Student Reviews</h3>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
+                      <h3 className="text-3xl font-black text-white">Student Reviews</h3>
+                      <div className="flex items-center gap-3 px-5 py-3 bg-slate-800/50 rounded-2xl border border-white/5">
+                        <div className="flex items-center gap-1">
                           {renderStars(course.rating)}
                         </div>
-                        <span className="text-sm text-gray-600">
-                          {course.rating} ({reviews.length} reviews)
-                        </span>
+                        <span className="text-white font-bold">{course.rating} ({reviews.length} reviews)</span>
                       </div>
                     </div>
-                    <div className="space-y-6">
+                    
+                    <div className="space-y-4">
                       {reviews.map(review => (
-                        <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                          <div className="flex items-start space-x-3">
+                        <div key={review.id} className="p-6 rounded-2xl bg-slate-800/30 border border-white/5 hover:border-white/10 transition-all">
+                          <div className="flex items-start gap-4">
                             <img
                               src={review.avatar}
                               alt={review.studentName}
-                              className="w-10 h-10 rounded-full"
+                              className="w-12 h-12 rounded-full ring-2 ring-white/10"
                             />
                             <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <span className="font-medium text-gray-900">{review.studentName}</span>
-                                <div className="flex items-center space-x-1">
+                              <div className="flex items-center gap-3 mb-3">
+                                <span className="font-bold text-white text-lg">{review.studentName}</span>
+                                <div className="flex items-center gap-1">
                                   {renderStars(review.rating)}
                                 </div>
-                                <span className="text-sm text-gray-500">{formatDate(review.date)}</span>
+                                <span className="text-sm text-slate-400">{formatDate(review.date)}</span>
                               </div>
-                              <p className="text-gray-700 mb-2">{review.comment}</p>
-                              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                <button className="flex items-center space-x-1 hover:text-gray-700">
+                              <p className="text-slate-300 mb-4 leading-relaxed">{review.comment}</p>
+                              <div className="flex items-center gap-4">
+                                <button className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
                                   <ThumbsUp className="h-4 w-4" />
                                   <span>Helpful ({review.helpful})</span>
                                 </button>
-                                <button className="hover:text-gray-700">Report</button>
                               </div>
                             </div>
                           </div>
@@ -2949,148 +1776,53 @@ const CourseDetailPage: React.FC = () => {
                 {activeTab === 'instructor' && (
                   <div className="space-y-8">
                     {/* Instructor Header */}
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-100">
-                      <div className="flex flex-col md:flex-row items-start md:items-center space-y-6 md:space-y-0 md:space-x-8">
-                        {/* Instructor Avatar */}
+                    <div className="p-8 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-white/10">
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
                         <div className="relative">
-                          <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                          <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
                             <Users className="h-12 w-12 text-white" />
                           </div>
-                          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-4 border-white">
+                          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-4 border-slate-900">
                             <CheckCircle className="h-5 w-5 text-white" />
                           </div>
                         </div>
                         
-                        {/* Instructor Info */}
                         <div className="flex-1">
-                          <h3 className="text-3xl font-bold text-gray-900 mb-2">{course.instructor}</h3>
-                          <p className="text-lg text-gray-600 mb-4">Expert Instructor & Course Creator</p>
+                          <h3 className="text-4xl font-black text-white mb-2">{course.instructor}</h3>
+                          <p className="text-lg text-slate-300 mb-6">Expert Instructor & Course Creator</p>
                           
-                          <div className="flex flex-wrap items-center gap-6 mb-6">
-                            <div className="flex items-center space-x-2">
-                              <div className="flex items-center space-x-1">
+                          <div className="flex flex-wrap items-center gap-6">
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
                                 {renderStars(course.instructorRating)}
                               </div>
-                              <span className="font-semibold text-gray-900">{course.instructorRating}</span>
-                              <span className="text-gray-600">Instructor Rating</span>
+                              <span className="font-bold text-white">{course.instructorRating}</span>
+                              <span className="text-slate-400">Rating</span>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Users className="h-5 w-5 text-blue-600" />
-                              <span className="font-semibold text-gray-900">{course.instructorStudents.toLocaleString()}</span>
-                              <span className="text-gray-600">Students</span>
+                            <div className="flex items-center gap-2">
+                              <Users className="h-5 w-5 text-indigo-400" />
+                              <span className="font-bold text-white">{course.instructorStudents.toLocaleString()}</span>
+                              <span className="text-slate-400">Students</span>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <BookOpen className="h-5 w-5 text-green-600" />
-                              <span className="font-semibold text-gray-900">{course.instructorCourses}</span>
-                              <span className="text-gray-600">Courses</span>
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="h-5 w-5 text-purple-400" />
+                              <span className="font-bold text-white">{course.instructorCourses}</span>
+                              <span className="text-slate-400">Courses</span>
                             </div>
                           </div>
-                          
-                          <button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                            View Full Profile
-                          </button>
                         </div>
                       </div>
                     </div>
 
                     {/* Instructor Bio */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-8">
-                      <div className="flex items-center space-x-3 mb-6">
-                        <div className="p-2 bg-blue-600 rounded-lg">
+                    <div className="p-8 rounded-2xl bg-slate-800/30 border border-white/5">
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl">
                           <FileText className="h-6 w-6 text-white" />
                         </div>
-                        <h4 className="text-2xl font-bold text-gray-900">About the Instructor</h4>
+                        <h4 className="text-2xl font-black text-white">About the Instructor</h4>
                       </div>
-                      <p className="text-gray-700 text-lg leading-relaxed mb-6">{course.instructorBio}</p>
-                      
-                      <div className="border-t border-gray-200 pt-6">
-                        <h5 className="text-lg font-semibold text-gray-900 mb-4">Teaching Philosophy</h5>
-                        <p className="text-gray-600 leading-relaxed">
-                          "I believe in making complex concepts accessible through clear explanations, 
-                          practical examples, and hands-on learning. My goal is to help every student 
-                          not just understand the material, but truly master it and apply it in real-world scenarios."
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Instructor Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Trophy className="h-8 w-8" />
-                          <h4 className="text-xl font-bold">Experience</h4>
-                        </div>
-                        <p className="text-3xl font-bold">20+</p>
-                        <p className="text-blue-100">Years Teaching</p>
-                      </div>
-                      
-                      <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Users className="h-8 w-8" />
-                          <h4 className="text-xl font-bold">Students</h4>
-                        </div>
-                        <p className="text-3xl font-bold">{course.instructorStudents.toLocaleString()}</p>
-                        <p className="text-green-100">Taught</p>
-                      </div>
-                      
-                      <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Star className="h-8 w-8" />
-                          <h4 className="text-xl font-bold">Rating</h4>
-                        </div>
-                        <p className="text-3xl font-bold">{course.instructorRating}</p>
-                        <p className="text-purple-100">Instructor Rating</p>
-                      </div>
-                    </div>
-
-                    {/* Student Testimonials */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-8">
-                      <div className="flex items-center space-x-3 mb-6">
-                        <div className="p-2 bg-yellow-600 rounded-lg">
-                          <MessageCircle className="h-6 w-6 text-white" />
-                        </div>
-                        <h4 className="text-2xl font-bold text-gray-900">What Students Say</h4>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-100">
-                          <div className="flex items-center space-x-1 mb-3">
-                            {renderStars(5)}
-                          </div>
-                          <p className="text-gray-700 mb-4 italic">
-                            "Amazing instructor! The explanations are crystal clear and the examples are perfect. 
-                            I finally understand calculus thanks to this course."
-                          </p>
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                              <span className="text-white font-bold">A</span>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">Alex Johnson</p>
-                              <p className="text-sm text-gray-600">Student</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-green-50 rounded-xl p-6 border border-green-100">
-                          <div className="flex items-center space-x-1 mb-3">
-                            {renderStars(5)}
-                          </div>
-                          <p className="text-gray-700 mb-4 italic">
-                            "The best math instructor I've ever had. The AI visualizations make everything 
-                            so much easier to understand. Highly recommended!"
-                          </p>
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                              <span className="text-white font-bold">S</span>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">Sarah Chen</p>
-                              <p className="text-sm text-gray-600">Student</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <p className="text-lg text-slate-300 leading-relaxed">{course.instructorBio}</p>
                     </div>
                   </div>
                 )}
@@ -3098,122 +1830,10 @@ const CourseDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-6">
-            {/* Progress Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Progress</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>Course Progress</span>
-                    <span>{courseProgress.toFixed(0)}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${courseProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{completedVideos.size}</div>
-                    <div className="text-sm text-green-600">Completed</div>
-                  </div>
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{videos.length}</div>
-                    <div className="text-sm text-blue-600">Total Videos</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Course Info */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Info</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Duration</span>
-                  <span className="font-medium">{course.duration}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Level</span>
-                  <span className="font-medium">{course.level}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Language</span>
-                  <span className="font-medium">{course.language}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Students</span>
-                  <span className="font-medium">{course.studentsCount.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-
-            <RankingSidebar />
-          </div>
-        </div>
-      </div>
-
-      {/* Achievement Notification */}
-      {showAchievement && (
-        <div className="fixed top-6 right-6 z-50 animate-bounce">
-          <div className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 text-white p-6 rounded-2xl shadow-2xl border border-yellow-300/50 flex items-center space-x-4 backdrop-blur-xl">
-            <div className="p-3 bg-white/20 rounded-xl">
-              <Trophy className="h-10 w-10 text-white" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-xl mb-1">🎉 Achievement Unlocked!</h4>
-              <p className="text-lg font-medium">{newAchievement}</p>
-            </div>
-            <button
-              onClick={() => setShowAchievement(false)}
-              className="text-white hover:text-yellow-200 p-2 rounded-full hover:bg-white/20 transition-all duration-300"
-            >
-              <span className="text-xl font-bold">✕</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Progress Stats */}
-      <div className="fixed bottom-6 left-6 z-40">
-        <div className="bg-white backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200 p-6 space-y-4">
-          <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-xl">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Target className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="text-sm font-medium text-gray-600">Progress</span>
-              <p className="text-lg font-bold text-gray-900">{courseProgress.toFixed(0)}%</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-xl">
-            <div className="p-2 bg-yellow-500 rounded-lg">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="text-sm font-medium text-gray-600">Points</span>
-              <p className="text-lg font-bold text-gray-900">{totalPoints}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-xl">
-            <div className="p-2 bg-red-500 rounded-lg">
-              <Flame className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="text-sm font-medium text-gray-600">Streak</span>
-              <p className="text-lg font-bold text-gray-900">{streak} days</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-xl">
-            <div className="p-2 bg-purple-500 rounded-lg">
-              <Award className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="text-sm font-medium text-gray-600">Achievements</span>
-              <p className="text-lg font-bold text-gray-900">{achievements.length}</p>
+          {/* Sidebar */}
+          <div className="xl:col-span-1">
+            <div className="sticky top-8">
+              <RankingSidebar />
             </div>
           </div>
         </div>
