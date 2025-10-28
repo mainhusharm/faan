@@ -2469,129 +2469,433 @@ const CourseDetailPage: React.FC = () => {
                 </nav>
               </div>
 
-              <div className="p-6">
+              <div className="p-8">
                 {activeTab === 'overview' && (
                   <div className="space-y-8">
-                    {/* Course Description */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-                      <div className="flex items-center space-x-3 mb-4">
-                        <div className="p-2 bg-blue-600 rounded-lg">
-                          <BookOpen className="h-6 w-6 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-900">Course Overview</h3>
-                      </div>
-                      <p className="text-gray-700 text-lg leading-relaxed">{course.description}</p>
-                    </div>
-
-                    {/* What You'll Learn */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                      <div className="flex items-center space-x-3 mb-6">
-                        <div className="p-2 bg-green-600 rounded-lg">
-                          <Target className="h-6 w-6 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-900">What You'll Learn</h3>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {course.whatYoullLearn.map((item, index) => (
-                          <div key={index} className="flex items-start space-x-3 p-4 bg-green-50 rounded-xl border border-green-100 hover:bg-green-100 transition-colors">
-                            <CheckCircle2 className="h-6 w-6 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-800 font-medium">{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Requirements */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                      <div className="flex items-center space-x-3 mb-6">
-                        <div className="p-2 bg-orange-600 rounded-lg">
-                          <CheckCircle className="h-6 w-6 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-900">Requirements</h3>
-                      </div>
-                      <div className="space-y-3">
-                        {course.requirements.map((req, index) => (
-                          <div key={index} className="flex items-start space-x-3 p-4 bg-orange-50 rounded-xl border border-orange-100">
-                            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
-                              <span className="text-white text-sm font-bold">{index + 1}</span>
+                    {/* Course Description - Enhanced with glassmorphism */}
+                    <div className="relative group overflow-hidden bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 rounded-3xl p-8 border-2 border-blue-200/50 hover:border-blue-300/70 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/20">
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-transparent to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center space-x-4 mb-6">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-blue-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                            <div className="relative p-4 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+                              <BookOpen className="h-8 w-8 text-white" />
                             </div>
-                            <span className="text-gray-800 font-medium">{req}</span>
                           </div>
-                        ))}
+                          <div>
+                            <h3 className="text-3xl font-black text-gray-900 mb-1">Course Overview</h3>
+                            <div className="h-1.5 w-24 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full"></div>
+                          </div>
+                        </div>
+                        <p className="text-gray-800 text-lg leading-relaxed font-medium">{course.description}</p>
+                        
+                        {/* Quick Stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t-2 border-blue-200/50">
+                          <div className="text-center">
+                            <div className="text-3xl font-black text-blue-600 mb-1">{videos.length}</div>
+                            <div className="text-sm text-gray-600 font-semibold">Lessons</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-black text-indigo-600 mb-1">{course.level}</div>
+                            <div className="text-sm text-gray-600 font-semibold">Level</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-black text-purple-600 mb-1">{course.duration}</div>
+                            <div className="text-sm text-gray-600 font-semibold">Duration</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-black text-pink-600 mb-1">{course.language}</div>
+                            <div className="text-sm text-gray-600 font-semibold">Language</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Course Stats */}
+                    {/* What You'll Learn - Enhanced with cards and hover effects */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-green-500/5 via-emerald-500/5 to-teal-500/5 rounded-3xl p-8 border-2 border-green-200/50 hover:border-green-300/70 transition-all duration-500 hover:shadow-2xl hover:shadow-green-500/20">
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-8">
+                          <div className="flex items-center space-x-4">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-green-600 rounded-2xl blur-xl opacity-50"></div>
+                              <div className="relative p-4 bg-gradient-to-br from-green-600 via-green-500 to-emerald-600 rounded-2xl shadow-lg">
+                                <Target className="h-8 w-8 text-white" />
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-3xl font-black text-gray-900 mb-1">What You'll Learn</h3>
+                              <div className="h-1.5 w-24 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full"></div>
+                            </div>
+                          </div>
+                          <div className="px-4 py-2 bg-green-100 rounded-xl border-2 border-green-300">
+                            <span className="text-green-800 font-black text-lg">{course.whatYoullLearn.length} Skills</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          {course.whatYoullLearn.map((item, index) => (
+                            <div key={index} className="group relative overflow-hidden bg-gradient-to-br from-white via-green-50/50 to-emerald-50/30 p-6 rounded-2xl border-2 border-green-200/70 hover:border-green-400 hover:shadow-xl hover:shadow-green-500/20 transition-all duration-300 hover:-translate-y-1">
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-emerald-400/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                              <div className="relative flex items-start space-x-4">
+                                <div className="flex-shrink-0">
+                                  <div className="relative">
+                                    <div className="absolute inset-0 bg-green-500 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                                    <div className="relative w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                                      <CheckCircle2 className="h-7 w-7 text-white" />
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="text-xs font-black text-green-600 mb-2">SKILL {index + 1}</div>
+                                  <p className="text-gray-900 font-bold text-base leading-snug">{item}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Requirements - Enhanced with timeline style */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-yellow-500/5 rounded-3xl p-8 border-2 border-orange-200/50 hover:border-orange-300/70 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/20">
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-8">
+                          <div className="flex items-center space-x-4">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-orange-600 rounded-2xl blur-xl opacity-50"></div>
+                              <div className="relative p-4 bg-gradient-to-br from-orange-600 via-orange-500 to-amber-600 rounded-2xl shadow-lg">
+                                <CheckCircle className="h-8 w-8 text-white" />
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-3xl font-black text-gray-900 mb-1">Prerequisites</h3>
+                              <div className="h-1.5 w-24 bg-gradient-to-r from-orange-600 to-amber-600 rounded-full"></div>
+                            </div>
+                          </div>
+                          <div className="px-4 py-2 bg-orange-100 rounded-xl border-2 border-orange-300">
+                            <span className="text-orange-800 font-black text-lg">{course.requirements.length} Required</span>
+                          </div>
+                        </div>
+                        <div className="relative space-y-5">
+                          {/* Timeline line */}
+                          <div className="absolute left-6 top-8 bottom-8 w-1 bg-gradient-to-b from-orange-300 via-amber-300 to-yellow-300 rounded-full"></div>
+                          
+                          {course.requirements.map((req, index) => (
+                            <div key={index} className="relative group flex items-start space-x-6 bg-gradient-to-br from-white via-orange-50/50 to-amber-50/30 p-6 rounded-2xl border-2 border-orange-200/70 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/20 transition-all duration-300 hover:translate-x-2">
+                              <div className="relative flex-shrink-0">
+                                <div className="absolute inset-0 bg-orange-500 rounded-full blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                                <div className="relative w-14 h-14 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white">
+                                  <span className="text-white text-xl font-black">{index + 1}</span>
+                                </div>
+                              </div>
+                              <div className="flex-1 pt-2">
+                                <div className="text-xs font-black text-orange-600 mb-2">REQUIREMENT {index + 1}</div>
+                                <p className="text-gray-900 font-bold text-base leading-snug">{req}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Course Stats - Enhanced with animations and gradients */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Clock className="h-8 w-8" />
-                          <h4 className="text-xl font-bold">Duration</h4>
+                      <div className="group relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-500 hover:-translate-y-2">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 via-transparent to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
+                              <Clock className="h-10 w-10" />
+                            </div>
+                            <div className="px-3 py-1 bg-white/20 rounded-xl backdrop-blur-sm">
+                              <BarChart3 className="h-5 w-5" />
+                            </div>
+                          </div>
+                          <div className="mb-3">
+                            <h4 className="text-lg font-bold text-blue-100 mb-2">Total Duration</h4>
+                            <p className="text-5xl font-black mb-2">{course.duration}</p>
+                            <div className="h-1.5 w-20 bg-white/40 rounded-full"></div>
+                          </div>
+                          <p className="text-blue-100 font-semibold">Complete Learning Path</p>
                         </div>
-                        <p className="text-3xl font-bold">{course.duration}</p>
-                        <p className="text-blue-100">Total Learning Time</p>
                       </div>
                       
-                      <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Users className="h-8 w-8" />
-                          <h4 className="text-xl font-bold">Students</h4>
+                      <div className="group relative overflow-hidden bg-gradient-to-br from-green-600 via-green-500 to-emerald-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl hover:shadow-green-500/40 transition-all duration-500 hover:-translate-y-2">
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 via-transparent to-emerald-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
+                              <Users className="h-10 w-10" />
+                            </div>
+                            <div className="px-3 py-1 bg-white/20 rounded-xl backdrop-blur-sm">
+                              <TrendingUp className="h-5 w-5" />
+                            </div>
+                          </div>
+                          <div className="mb-3">
+                            <h4 className="text-lg font-bold text-green-100 mb-2">Students Enrolled</h4>
+                            <p className="text-5xl font-black mb-2">{course.studentsCount.toLocaleString()}</p>
+                            <div className="h-1.5 w-20 bg-white/40 rounded-full"></div>
+                          </div>
+                          <p className="text-green-100 font-semibold">Active Community</p>
                         </div>
-                        <p className="text-3xl font-bold">{course.studentsCount.toLocaleString()}</p>
-                        <p className="text-green-100">Enrolled</p>
                       </div>
                       
-                      <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Star className="h-8 w-8" />
-                          <h4 className="text-xl font-bold">Rating</h4>
+                      <div className="group relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-500 to-pink-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl hover:shadow-purple-500/40 transition-all duration-500 hover:-translate-y-2">
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-transparent to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
+                              <Star className="h-10 w-10 fill-current" />
+                            </div>
+                            <div className="px-3 py-1 bg-white/20 rounded-xl backdrop-blur-sm">
+                              <Award className="h-5 w-5" />
+                            </div>
+                          </div>
+                          <div className="mb-3">
+                            <h4 className="text-lg font-bold text-purple-100 mb-2">Average Rating</h4>
+                            <div className="flex items-baseline space-x-2 mb-2">
+                              <p className="text-5xl font-black">{course.rating}</p>
+                              <span className="text-2xl font-bold text-purple-200">/5.0</span>
+                            </div>
+                            <div className="h-1.5 w-20 bg-white/40 rounded-full"></div>
+                          </div>
+                          <p className="text-purple-100 font-semibold">Highly Rated Course</p>
                         </div>
-                        <p className="text-3xl font-bold">{course.rating}</p>
-                        <p className="text-purple-100">Out of 5 Stars</p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {activeTab === 'content' && (
-                  <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Course Content</h3>
-              <div className="space-y-3">
-                {videos.map((video, index) => (
-                  <button
-                    key={video.id}
-                    onClick={() => navigateToVideo(index)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
-                      currentVideoIndex === index
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        {completedVideos.has(video.id) ? (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <Play className="h-5 w-5 text-gray-400" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{video.title}</div>
-                        <div className="text-sm text-gray-500">
-                          {formatDuration(video.duration)}
-                                {video.isPreview && (
-                                  <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                                    Preview
-                                  </span>
-                                )}
+                  <div className="space-y-8">
+                    {/* Content Header with Stats */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-blue-500/10 rounded-3xl p-8 border-2 border-purple-200/50">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-400/5 via-transparent to-pink-400/5"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+                          <div className="flex items-center space-x-4">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-purple-600 rounded-2xl blur-xl opacity-50"></div>
+                              <div className="relative p-4 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-600 rounded-2xl shadow-lg">
+                                <Video className="h-8 w-8 text-white" />
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-3xl font-black text-gray-900 mb-1">Course Content</h3>
+                              <div className="h-1.5 w-24 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="px-4 py-2 bg-purple-100 rounded-xl border-2 border-purple-300">
+                              <span className="text-purple-800 font-black text-lg">{videos.length} Lessons</span>
+                            </div>
+                            <div className="px-4 py-2 bg-pink-100 rounded-xl border-2 border-pink-300">
+                              <span className="text-pink-800 font-black text-lg">{course.duration}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Progress Overview */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-purple-200/50">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-bold text-gray-600">COMPLETED</span>
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            </div>
+                            <div className="text-3xl font-black text-green-600">{completedVideos.size}/{videos.length}</div>
+                          </div>
+                          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-purple-200/50">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-bold text-gray-600">PROGRESS</span>
+                              <BarChart3 className="h-5 w-5 text-blue-500" />
+                            </div>
+                            <div className="text-3xl font-black text-blue-600">{courseProgress.toFixed(0)}%</div>
+                          </div>
+                          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-purple-200/50">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-bold text-gray-600">TIME LEFT</span>
+                              <Clock className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="text-3xl font-black text-orange-600">{Math.round((100 - courseProgress) * videos.length * 25 / 100)} min</div>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {index + 1}
-                      </div>
                     </div>
-                  </button>
-                ))}
+
+                    {/* Video List */}
+                    <div className="space-y-4">
+                      {videos.map((video, index) => {
+                        const isCompleted = completedVideos.has(video.id);
+                        const isCurrent = currentVideoIndex === index;
+                        
+                        return (
+                          <button
+                            key={video.id}
+                            onClick={() => navigateToVideo(index)}
+                            className={`group w-full text-left relative overflow-hidden rounded-2xl border-2 transition-all duration-300 ${
+                              isCurrent
+                                ? 'border-blue-500 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 shadow-xl shadow-blue-500/20 scale-[1.02]'
+                                : isCompleted
+                                ? 'border-green-300/70 bg-gradient-to-r from-green-50/50 via-emerald-50/30 to-white hover:border-green-400 hover:shadow-lg hover:shadow-green-500/20'
+                                : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/10'
+                            } hover:scale-[1.02]`}
+                          >
+                            {/* Background gradient effect */}
+                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                              isCurrent 
+                                ? 'bg-gradient-to-r from-blue-400/5 via-indigo-400/5 to-purple-400/5'
+                                : isCompleted
+                                ? 'bg-gradient-to-r from-green-400/5 via-emerald-400/5 to-teal-400/5'
+                                : 'bg-gradient-to-r from-purple-400/5 via-pink-400/5 to-blue-400/5'
+                            }`}></div>
+                            
+                            {/* Progress indicator line */}
+                            {(isCurrent || isCompleted) && (
+                              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                                isCurrent ? 'bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500' : 'bg-gradient-to-b from-green-500 to-emerald-500'
+                              }`}></div>
+                            )}
+                            
+                            <div className="relative p-6">
+                              <div className="flex items-center space-x-5">
+                                {/* Video Icon/Status */}
+                                <div className="flex-shrink-0">
+                                  {isCompleted ? (
+                                    <div className="relative">
+                                      <div className="absolute inset-0 bg-green-500 rounded-2xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                                      <div className="relative w-16 h-16 bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                        <CheckCircle className="h-8 w-8 text-white" />
+                                      </div>
+                                    </div>
+                                  ) : isCurrent ? (
+                                    <div className="relative">
+                                      <div className="absolute inset-0 bg-blue-500 rounded-2xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                                      <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
+                                        <Play className="h-8 w-8 text-white fill-current" />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="relative">
+                                      <div className="absolute inset-0 bg-gray-400 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                                      <div className="relative w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-2xl flex items-center justify-center shadow group-hover:from-purple-100 group-hover:to-pink-100 group-hover:border-purple-300 transition-all duration-300">
+                                        <Play className="h-7 w-7 text-gray-500 group-hover:text-purple-600 transition-colors" />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Video Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-4 mb-3">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-3 mb-2">
+                                        <span className={`text-xs font-black px-3 py-1 rounded-lg ${
+                                          isCurrent 
+                                            ? 'bg-blue-600 text-white' 
+                                            : isCompleted
+                                            ? 'bg-green-600 text-white'
+                                            : 'bg-gray-200 text-gray-600'
+                                        }`}>
+                                          LESSON {index + 1}
+                                        </span>
+                                        {video.isPreview && (
+                                          <span className="flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-black shadow-lg">
+                                            <Play className="h-3 w-3" />
+                                            FREE PREVIEW
+                                          </span>
+                                        )}
+                                        {isCurrent && (
+                                          <span className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-red-600 text-white px-3 py-1 rounded-lg text-xs font-black animate-pulse">
+                                            <Flame className="h-3 w-3" />
+                                            NOW PLAYING
+                                          </span>
+                                        )}
+                                      </div>
+                                      <h4 className={`text-xl font-bold mb-2 ${
+                                        isCurrent ? 'text-blue-900' : 'text-gray-900'
+                                      }`}>
+                                        {video.title}
+                                      </h4>
+                                      {video.description && (
+                                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                                          {video.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Meta info */}
+                                  <div className="flex items-center gap-4 flex-wrap">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+                                      <Clock className="h-4 w-4 text-gray-600" />
+                                      <span className="text-sm font-bold text-gray-700">{formatDuration(video.duration)}</span>
+                                    </div>
+                                    {isCompleted && (
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-lg">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        <span className="text-sm font-bold text-green-700">Completed</span>
+                                      </div>
+                                    )}
+                                    {bookmarkedVideos.has(video.id) && (
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 rounded-lg">
+                                        <Bookmark className="h-4 w-4 text-yellow-600" />
+                                        <span className="text-sm font-bold text-yellow-700">Saved</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {/* Chevron indicator */}
+                                <div className="flex-shrink-0">
+                                  <div className={`p-3 rounded-xl transition-all duration-300 ${
+                                    isCurrent 
+                                      ? 'bg-blue-100 text-blue-600 scale-110' 
+                                      : 'bg-gray-100 text-gray-400 group-hover:bg-purple-100 group-hover:text-purple-600 group-hover:scale-110'
+                                  }`}>
+                                    <ChevronRight className="h-6 w-6" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Course Summary Card */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 rounded-3xl p-8 border-2 border-indigo-200/50">
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/5 via-transparent to-pink-400/5"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-3 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl">
+                              <Award className="h-6 w-6 text-white" />
+                            </div>
+                            <h4 className="text-2xl font-black text-gray-900">Course Summary</h4>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-indigo-200/50">
+                            <div className="text-3xl font-black text-indigo-600 mb-1">{videos.length}</div>
+                            <div className="text-sm text-gray-600 font-bold">Total Lessons</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-purple-200/50">
+                            <div className="text-3xl font-black text-purple-600 mb-1">{videos.reduce((acc, v) => acc + v.duration, 0)}</div>
+                            <div className="text-sm text-gray-600 font-bold">Total Minutes</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-pink-200/50">
+                            <div className="text-3xl font-black text-pink-600 mb-1">{completedVideos.size}</div>
+                            <div className="text-sm text-gray-600 font-bold">Completed</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-blue-200/50">
+                            <div className="text-3xl font-black text-blue-600 mb-1">{videos.length - completedVideos.size}</div>
+                            <div className="text-sm text-gray-600 font-bold">Remaining</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
