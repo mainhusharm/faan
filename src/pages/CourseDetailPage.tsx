@@ -1971,174 +1971,208 @@ const CourseDetailPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 dark:from-black dark:via-purple-950 dark:to-black particle-bg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           <div className="xl:col-span-3">
             {/* Course Header */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-              <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+            <div className="course-card-gradient rounded-3xl p-8 mb-8 shimmer-effect border-2 border-purple-500/30">
+              <div className="flex items-center space-x-2 text-sm mb-6">
                 <button
                   onClick={() => navigate('/courses')}
-                  className="text-blue-600 hover:text-blue-700 transition-colors"
+                  className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors flex items-center gap-2"
                 >
+                  <ChevronLeft className="h-4 w-4" />
                   Courses
                 </button>
-                <ChevronRight className="h-4 w-4" />
-                <span className="text-gray-400">{course.title}</span>
+                <ChevronRight className="h-4 w-4 text-purple-400" />
+                <span className="text-cyan-200">{course.title}</span>
               </div>
               
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8 mb-8">
                 <div className="flex-1">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">{course.title}</h1>
-                  <p className="text-lg text-gray-600 leading-relaxed mb-6">{course.description}</p>
+                  <h1 className="text-5xl lg:text-6xl font-black mb-6 leading-tight gradient-text-animated">{course.title}</h1>
+                  <p className="text-xl text-cyan-100 leading-relaxed mb-8">{course.description}</p>
                   
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-5 w-5 text-blue-600" />
-                      <span className="font-medium">{course.instructor}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-3 px-5 py-4 bg-slate-900/50 rounded-2xl border border-cyan-500/30">
+                      <div className="p-3 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-xl">
+                        <Users className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-cyan-300 font-medium">Instructor</div>
+                        <div className="font-bold text-white text-lg">{course.instructor}</div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-5 w-5 text-green-600" />
-                      <span>{course.duration}</span>
+                    <div className="flex items-center space-x-3 px-5 py-4 bg-slate-900/50 rounded-2xl border border-green-500/30">
+                      <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
+                        <Clock className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-300 font-medium">Duration</div>
+                        <div className="font-bold text-white text-lg">{course.duration}</div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                      <span className="font-medium">{course.rating}</span>
-                      <span className="text-gray-400">({course.studentsCount.toLocaleString()} students)</span>
+                    <div className="flex items-center space-x-3 px-5 py-4 bg-slate-900/50 rounded-2xl border border-yellow-500/30">
+                      <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl">
+                        <Star className="h-6 w-6 text-white fill-current" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-yellow-300 font-medium">Rating</div>
+                        <div className="font-bold text-white text-lg">{course.rating} ({course.studentsCount.toLocaleString()})</div>
+                      </div>
                     </div>
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                      {course.level}
-                    </span>
+                    <div className="flex items-center space-x-3 px-5 py-4 bg-gradient-to-r from-cyan-500/10 to-purple-600/10 rounded-2xl border border-purple-500/30">
+                      <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
+                        <Trophy className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-purple-300 font-medium">Level</div>
+                        <div className="font-bold text-white text-lg">{course.level}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-end space-y-3">
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gray-900">${course.price}</div>
+                <div className="flex flex-col items-center lg:items-end space-y-4 glass-vibrant rounded-3xl p-6 border-2 border-cyan-500/30">
+                  <div className="text-center lg:text-right">
+                    <div className="text-xs text-cyan-300 font-bold mb-2">SPECIAL OFFER</div>
+                    <div className="text-5xl font-black gradient-text-animated mb-2">${course.price}</div>
                     {course.originalPrice && (
-                      <div className="text-lg text-gray-500 line-through">${course.originalPrice}</div>
+                      <div className="text-2xl text-gray-400 line-through">${course.originalPrice}</div>
                     )}
+                    <div className="mt-3 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-400/30">
+                      <span className="text-green-300 font-bold text-sm">{Math.round((1 - course.price / (course.originalPrice || course.price)) * 100)}% OFF</span>
+                    </div>
                   </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors shadow-sm">
+                  <button className="w-full px-8 py-5 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-black text-xl rounded-2xl hover:from-cyan-400 hover:to-purple-500 transform hover:scale-105 hover:shadow-[0_0_40px_rgba(0,245,255,0.6)] transition-all duration-300 flex items-center justify-center gap-3">
+                    <Zap className="h-6 w-6" />
                     Enroll Now
                   </button>
+                  <div className="flex items-center gap-2 text-cyan-300 text-sm">
+                    <Flame className="h-5 w-5 text-orange-400" />
+                    <span className="font-bold">{Math.floor(Math.random() * 50 + 10)} students enrolled today</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Video Player Section */}
             {currentVideo && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+              <div className="course-card-gradient rounded-3xl overflow-hidden mb-8 border-2 border-purple-500/30">
                 {/* Video Player Header */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="p-6 border-b border-cyan-500/20 bg-slate-900/30">
+                  <div className="flex items-center justify-between mb-6">
                     <div className="flex-1">
-                      <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+                      <h2 className="text-3xl font-black gradient-text-animated mb-4">
                         {currentVideo.title}
                       </h2>
-                      <p className="text-gray-600 mb-4 leading-relaxed">
+                      <p className="text-cyan-100 mb-6 leading-relaxed text-lg">
                         {currentVideo.description}
                       </p>
-                      <div className="flex items-center space-x-6 text-sm text-gray-500">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span>{formatDuration(currentVideo.duration)}</span>
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center space-x-2 px-4 py-2 bg-slate-900/50 rounded-xl border border-cyan-500/30">
+                          <Clock className="h-5 w-5 text-cyan-400" />
+                          <span className="text-white font-bold">{formatDuration(currentVideo.duration)}</span>
                         </div>
                         {currentVideo.isPreview && (
-                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                            Preview
+                          <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-black flex items-center gap-2 shadow-lg">
+                            <Play className="h-4 w-4" />
+                            FREE PREVIEW
                           </span>
                         )}
-                        <div className="flex items-center space-x-2">
-                          <BarChart3 className="h-4 w-4 text-gray-400" />
-                          <span>{courseProgress.toFixed(0)}% Complete</span>
+                        <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl border border-purple-500/30">
+                          <BarChart3 className="h-5 w-5 text-purple-400" />
+                          <span className="text-white font-bold">{courseProgress.toFixed(0)}% Complete</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3 glass-vibrant rounded-2xl p-3 border border-cyan-500/30">
                       <button
                         onClick={() => navigateToVideo(Math.max(0, currentVideoIndex - 1))}
                         disabled={currentVideoIndex === 0}
-                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="p-3 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                       >
-                        <ChevronLeft className="h-5 w-5" />
+                        <ChevronLeft className="h-6 w-6" />
                       </button>
-                      <span className="text-sm text-gray-600 px-2">
-                        {currentVideoIndex + 1} of {videos.length}
+                      <span className="text-white font-black px-3">
+                        {currentVideoIndex + 1} / {videos.length}
                       </span>
                       <button
                         onClick={() => navigateToVideo(Math.min(videos.length - 1, currentVideoIndex + 1))}
                         disabled={currentVideoIndex === videos.length - 1}
-                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="p-3 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                       >
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className="h-6 w-6" />
                       </button>
                     </div>
                   </div>
                   
                   {/* Video Controls */}
-                  <div className="flex items-center justify-between pt-4">
-                    <div className="flex items-center space-x-1">
+                  <div className="flex items-center justify-between pt-6 border-t border-cyan-500/20">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <button
                         onClick={() => toggleBookmark(currentVideo.id)}
-                        className={`p-2 rounded-lg transition-colors ${
+                        className={`px-4 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
                           bookmarkedVideos.has(currentVideo.id)
-                            ? 'bg-blue-100 text-blue-600'
-                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                            : 'bg-slate-900/50 text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 hover:border-cyan-400'
                         }`}
                       >
                         <Bookmark className="h-5 w-5" />
+                        <span>Save</span>
                       </button>
                       <button
                         onClick={() => setShowNotes(!showNotes)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                        className="px-4 py-3 rounded-xl bg-slate-900/50 text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400 font-bold transition-all flex items-center gap-2"
                       >
                         <FileText className="h-5 w-5" />
+                        <span>Notes</span>
                       </button>
-                      <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                      <button className="px-4 py-3 rounded-xl bg-slate-900/50 text-pink-400 hover:text-pink-300 border border-pink-500/30 hover:border-pink-400 font-bold transition-all flex items-center gap-2">
                         <Share2 className="h-5 w-5" />
+                        <span>Share</span>
                       </button>
-                      {/* Interactive Tools */}
-                      <div className="flex items-center space-x-2">
-                        {/* Quiz Button */}
-                        {!showQuiz && currentQuiz && (
-                          <button
-                            onClick={() => setShowQuiz(true)}
-                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2 text-sm font-medium"
-                          >
-                            <Brain className="h-4 w-4" />
-                            <span>Quiz</span>
-                          </button>
-                        )}
-                        
-                        {/* Problem Solver */}
+                    </div>
+                    {/* Interactive Tools */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {/* Quiz Button */}
+                      {!showQuiz && currentQuiz && (
                         <button
-                          onClick={() => setShowProblemSolver(!showProblemSolver)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2 text-sm font-medium"
+                          onClick={() => setShowQuiz(true)}
+                          className="px-5 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-400 hover:to-green-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
                         >
-                          <Calculator className="h-4 w-4" />
-                          <span>Solve</span>
+                          <Brain className="h-5 w-5" />
+                          <span>Quiz</span>
                         </button>
-                        
-                        {/* Graphing Tool */}
-                        <button
-                          onClick={() => setShowGraphingTool(!showGraphingTool)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm font-medium"
-                        >
-                          <TrendingUp className="h-4 w-4" />
-                          <span>Graph</span>
-                        </button>
-                        
-                        {/* Discussion */}
-                        <button
-                          onClick={() => setShowDiscussion(!showDiscussion)}
-                          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2 text-sm font-medium"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          <span>Discuss</span>
-                        </button>
-                      </div>
+                      )}
+                      
+                      {/* Problem Solver */}
+                      <button
+                        onClick={() => setShowProblemSolver(!showProblemSolver)}
+                        className="px-5 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-400 hover:to-pink-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
+                      >
+                        <Calculator className="h-5 w-5" />
+                        <span>Solve</span>
+                      </button>
+                      
+                      {/* Graphing Tool */}
+                      <button
+                        onClick={() => setShowGraphingTool(!showGraphingTool)}
+                        className="px-5 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl hover:from-blue-400 hover:to-cyan-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
+                      >
+                        <TrendingUp className="h-5 w-5" />
+                        <span>Graph</span>
+                      </button>
+                      
+                      {/* Discussion */}
+                      <button
+                        onClick={() => setShowDiscussion(!showDiscussion)}
+                        className="px-5 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-400 hover:to-red-500 transform hover:scale-105 transition-all font-black flex items-center gap-2 shadow-lg"
+                      >
+                        <MessageCircle className="h-5 w-5" />
+                        <span>Discuss</span>
+                      </button>
                     </div>
                   </div>
                 </div>
