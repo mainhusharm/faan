@@ -2231,160 +2231,213 @@ const CourseDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Interactive Problem Solver */}
+            {/* Premium Interactive Problem Solver */}
             {showProblemSolver && (
-              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 dark:border-slate-700/50 p-8 mb-8 transition-all duration-500 hover:shadow-3xl">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="p-2 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl">
-                    <Calculator className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Interactive Problem Solver</h3>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Enter your calculus problem (e.g., "derivative of x^2 + 3x + 1"):
-                    </label>
-                    <input
-                      type="text"
-                      value={problemInput}
-                      onChange={(e) => setProblemInput(e.target.value)}
-                      placeholder="Type your problem here..."
-                      className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-violet-500/20 focus:border-violet-500 dark:bg-slate-700 dark:text-white transition-all duration-300"
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      // Simulate AI problem solving
-                      const solutions: { [key: string]: string } = {
-                        'derivative of x^2': '2x',
-                        'derivative of x^2 + 3x + 1': '2x + 3',
-                        'derivative of x^3': '3x^2',
-                        'derivative of sin(x)': 'cos(x)',
-                        'derivative of e^x': 'e^x',
-                        'integral of 2x': 'x^2 + C',
-                        'integral of x^2': 'x^3/3 + C'
-                      };
-                      const solution = solutions[problemInput.toLowerCase()] || 'Step-by-step solution will be provided here...';
-                      setProblemSolution(solution);
-                    }}
-                    className="px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl hover:from-violet-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
-                  >
-                    Solve Problem
-                  </button>
-                  {problemSolution && (
-                    <div className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-700 dark:to-gray-700 p-6 rounded-xl border border-gray-200 dark:border-slate-600 shadow-inner">
-                      <h4 className="font-bold text-gray-900 dark:text-white mb-3 text-lg">Solution:</h4>
-                      <p className="text-gray-700 dark:text-gray-300 font-mono text-lg bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600">{problemSolution}</p>
+              <div className="relative bg-gradient-to-br from-white/95 via-purple-50/90 to-white/95 dark:from-slate-900/95 dark:via-purple-950/90 dark:to-slate-900/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(139,92,246,0.4)] border border-purple-200/50 dark:border-purple-500/20 p-8 sm:p-10 mb-8 transition-all duration-500 hover:shadow-[0_20px_80px_-15px_rgba(139,92,246,0.6)] ring-1 ring-purple-100/50 dark:ring-purple-500/10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 pointer-events-none"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center space-x-4 mb-8">
+                    <div className="p-4 bg-gradient-to-br from-violet-500 via-purple-500 to-purple-600 rounded-2xl shadow-lg shadow-purple-500/30">
+                      <Calculator className="h-7 w-7 text-white" />
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Interactive Graphing Tool */}
-            {showGraphingTool && (
-              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 dark:border-slate-700/50 p-8 mb-8 transition-all duration-500 hover:shadow-3xl">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl">
-                    <TrendingUp className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Interactive Graphing Tool</h3>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Enter function to graph (e.g., "x^2", "sin(x)", "e^x"):
-                    </label>
-                    <input
-                      type="text"
-                      value={graphFunction}
-                      onChange={(e) => setGraphFunction(e.target.value)}
-                      placeholder="f(x) = ..."
-                      className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 dark:bg-slate-700 dark:text-white transition-all duration-300"
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      // Simulate graphing
-                      console.log('Graphing function:', graphFunction);
-                    }}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
-                  >
-                    Graph Function
-                  </button>
-                  <div className="bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-700 dark:to-gray-800 h-80 rounded-2xl flex items-center justify-center border-2 border-gray-200 dark:border-slate-600 shadow-inner">
-                    <div className="text-center text-gray-500 dark:text-gray-400">
-                      <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-lg mb-4">
-                        <TrendingUp className="h-16 w-16 mx-auto mb-3 text-blue-500" />
-                      </div>
-                      <p className="text-lg font-medium mb-2">Interactive Graph Canvas</p>
-                      <p className="text-sm bg-white dark:bg-slate-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-600">Function: {graphFunction || 'f(x) = ...'}</p>
+                    <div>
+                      <h3 className="text-3xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-purple-700 dark:from-violet-400 dark:via-purple-400 dark:to-purple-500 bg-clip-text text-transparent">
+                        AI Problem Solver
+                      </h3>
+                      <p className="text-sm text-purple-600 dark:text-purple-400 font-medium mt-1">Powered by advanced AI mathematics</p>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Discussion Forum */}
-            {showDiscussion && (
-              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 dark:border-slate-700/50 p-8 mb-8 transition-all duration-500 hover:shadow-3xl">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl">
-                    <MessageCircle className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Course Discussion</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-                    {discussionMessages.map((msg, index) => (
-                      <div key={index} className="flex space-x-4 p-4 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-700 dark:to-gray-700 rounded-xl border border-gray-200 dark:border-slate-600">
-                        <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                          <span className="text-white font-bold text-sm">{msg.user[0]}</span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="font-bold text-gray-900 dark:text-white">{msg.user}</span>
-                            <span className="text-xs text-gray-500 bg-white dark:bg-slate-800 px-2 py-1 rounded-full">{msg.time}</span>
-                          </div>
-                          <p className="text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 p-3 rounded-lg border border-gray-200 dark:border-slate-600">{msg.message}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex space-x-3">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Ask a question or share your thoughts..."
-                      className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:bg-slate-700 dark:text-white transition-all duration-300"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && newMessage.trim()) {
-                          setDiscussionMessages(prev => [...prev, {
-                            user: 'You',
-                            message: newMessage,
-                            time: 'now'
-                          }]);
-                          setNewMessage('');
-                        }
-                      }}
-                    />
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-xs">BETA</span>
+                        Enter your calculus problem
+                      </label>
+                      <input
+                        type="text"
+                        value={problemInput}
+                        onChange={(e) => setProblemInput(e.target.value)}
+                        placeholder='Try "derivative of x^2 + 3x + 1" or "integral of 2x"...'
+                        className="w-full px-6 py-4 bg-white/80 dark:bg-slate-800/80 border-2 border-purple-200 dark:border-purple-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 dark:text-white transition-all duration-300 text-lg shadow-sm hover:shadow-md backdrop-blur-sm"
+                      />
+                    </div>
+                    
                     <button
                       onClick={() => {
-                        if (newMessage.trim()) {
-                          setDiscussionMessages(prev => [...prev, {
-                            user: 'You',
-                            message: newMessage,
-                            time: 'now'
-                          }]);
-                          setNewMessage('');
-                        }
+                        // Simulate AI problem solving
+                        const solutions: { [key: string]: string } = {
+                          'derivative of x^2': '2x',
+                          'derivative of x^2 + 3x + 1': '2x + 3',
+                          'derivative of x^3': '3x^2',
+                          'derivative of sin(x)': 'cos(x)',
+                          'derivative of e^x': 'e^x',
+                          'integral of 2x': 'x^2 + C',
+                          'integral of x^2': 'x^3/3 + C'
+                        };
+                        const solution = solutions[problemInput.toLowerCase()] || 'Step-by-step solution will be provided here...';
+                        setProblemSolution(solution);
                       }}
-                      className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
+                      className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-violet-500 via-purple-500 to-purple-600 text-white rounded-2xl hover:from-violet-600 hover:via-purple-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transform hover:-translate-y-0.5 font-bold text-lg flex items-center gap-3 justify-center ring-2 ring-purple-400/20"
                     >
-                      Send
+                      <Brain className="h-5 w-5" />
+                      Solve with AI
                     </button>
+                    
+                    {problemSolution && (
+                      <div className="bg-gradient-to-br from-purple-50/80 via-white/80 to-purple-50/80 dark:from-purple-950/50 dark:via-slate-800/80 dark:to-purple-950/50 p-6 sm:p-8 rounded-2xl border-2 border-purple-200 dark:border-purple-500/30 shadow-inner backdrop-blur-sm animate-fadeIn">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+                            <CheckCircle className="h-5 w-5 text-white" />
+                          </div>
+                          <h4 className="font-black text-gray-900 dark:text-white text-xl">Solution</h4>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-purple-200 dark:border-purple-500/30 shadow-sm">
+                          <p className="text-gray-900 dark:text-gray-100 font-mono text-xl font-bold">{problemSolution}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Premium Interactive Graphing Tool */}
+            {showGraphingTool && (
+              <div className="relative bg-gradient-to-br from-white/95 via-blue-50/90 to-white/95 dark:from-slate-900/95 dark:via-blue-950/90 dark:to-slate-900/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(59,130,246,0.4)] border border-blue-200/50 dark:border-blue-500/20 p-8 sm:p-10 mb-8 transition-all duration-500 hover:shadow-[0_20px_80px_-15px_rgba(59,130,246,0.6)] ring-1 ring-blue-100/50 dark:ring-blue-500/10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center space-x-4 mb-8">
+                    <div className="p-4 bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 rounded-2xl shadow-lg shadow-blue-500/30">
+                      <TrendingUp className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 dark:from-blue-400 dark:via-cyan-400 dark:to-blue-500 bg-clip-text text-transparent">
+                        AI Graphing Tool
+                      </h3>
+                      <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1">Visualize functions in real-time</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs">NEW</span>
+                        Enter function to graph
+                      </label>
+                      <input
+                        type="text"
+                        value={graphFunction}
+                        onChange={(e) => setGraphFunction(e.target.value)}
+                        placeholder='Try "x^2", "sin(x)", "e^x", or "x^3 - 2x"...'
+                        className="w-full px-6 py-4 bg-white/80 dark:bg-slate-800/80 border-2 border-blue-200 dark:border-blue-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 dark:text-white transition-all duration-300 text-lg shadow-sm hover:shadow-md backdrop-blur-sm"
+                      />
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        // Simulate graphing
+                        console.log('Graphing function:', graphFunction);
+                      }}
+                      className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:via-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transform hover:-translate-y-0.5 font-bold text-lg flex items-center gap-3 justify-center ring-2 ring-blue-400/20"
+                    >
+                      <TrendingUp className="h-5 w-5" />
+                      Generate Graph
+                    </button>
+                    
+                    <div className="bg-gradient-to-br from-blue-50/80 via-white/80 to-cyan-50/80 dark:from-blue-950/50 dark:via-slate-800/80 dark:to-cyan-950/50 h-96 rounded-2xl flex items-center justify-center border-2 border-blue-200 dark:border-blue-500/30 shadow-inner backdrop-blur-sm overflow-hidden">
+                      <div className="text-center text-gray-600 dark:text-gray-300">
+                        <div className="p-6 bg-white/90 dark:bg-slate-800/90 rounded-3xl shadow-2xl mb-6 ring-1 ring-blue-200 dark:ring-blue-500/30 backdrop-blur-sm">
+                          <TrendingUp className="h-20 w-20 mx-auto mb-4 text-blue-500 dark:text-blue-400" />
+                          <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mx-auto mb-4"></div>
+                        </div>
+                        <p className="text-xl font-bold mb-3 text-gray-900 dark:text-white">Interactive Graph Canvas</p>
+                        {graphFunction && (
+                          <div className="bg-white/90 dark:bg-slate-800/90 px-6 py-3 rounded-2xl border border-blue-200 dark:border-blue-500/30 inline-block shadow-sm backdrop-blur-sm">
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Function: </span>
+                            <span className="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">{graphFunction}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Premium Discussion Forum */}
+            {showDiscussion && (
+              <div className="relative bg-gradient-to-br from-white/95 via-orange-50/90 to-white/95 dark:from-slate-900/95 dark:via-orange-950/90 dark:to-slate-900/95 backdrop-blur-2xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(249,115,22,0.4)] border border-orange-200/50 dark:border-orange-500/20 p-8 sm:p-10 mb-8 transition-all duration-500 hover:shadow-[0_20px_80px_-15px_rgba(249,115,22,0.6)] ring-1 ring-orange-100/50 dark:ring-orange-500/10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-500/5 pointer-events-none"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center space-x-4 mb-8">
+                    <div className="p-4 bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 rounded-2xl shadow-lg shadow-orange-500/30">
+                      <MessageCircle className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black bg-gradient-to-r from-amber-600 via-orange-600 to-orange-700 dark:from-amber-400 dark:via-orange-400 dark:to-orange-500 bg-clip-text text-transparent">
+                        Course Discussion
+                      </h3>
+                      <p className="text-sm text-orange-600 dark:text-orange-400 font-medium mt-1">Connect with fellow learners</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                      {discussionMessages.map((msg, index) => (
+                        <div key={index} className="flex space-x-4 p-5 bg-gradient-to-r from-orange-50/80 via-white/80 to-orange-50/80 dark:from-orange-950/50 dark:via-slate-800/80 dark:to-orange-950/50 rounded-2xl border border-orange-200 dark:border-orange-500/30 backdrop-blur-sm hover:shadow-md transition-all duration-300">
+                          <div className="w-12 h-12 bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30 ring-2 ring-orange-300 dark:ring-orange-500/30">
+                            <span className="text-white font-black text-base">{msg.user[0]}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <span className="font-bold text-gray-900 dark:text-white text-lg">{msg.user}</span>
+                              <span className="text-xs text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/50 px-3 py-1.5 rounded-full font-medium">{msg.time}</span>
+                            </div>
+                            <p className="text-gray-800 dark:text-gray-200 bg-white dark:bg-slate-900 p-4 rounded-xl border border-orange-200 dark:border-orange-500/30 leading-relaxed">{msg.message}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Ask a question or share your thoughts..."
+                        className="flex-1 px-6 py-4 bg-white/80 dark:bg-slate-800/80 border-2 border-orange-200 dark:border-orange-500/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:text-white transition-all duration-300 text-lg shadow-sm hover:shadow-md backdrop-blur-sm"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && newMessage.trim()) {
+                            setDiscussionMessages(prev => [...prev, {
+                              user: 'You',
+                              message: newMessage,
+                              time: 'now'
+                            }]);
+                            setNewMessage('');
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (newMessage.trim()) {
+                            setDiscussionMessages(prev => [...prev, {
+                              user: 'You',
+                              message: newMessage,
+                              time: 'now'
+                            }]);
+                            setNewMessage('');
+                          }
+                        }}
+                        className="px-8 py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 text-white rounded-2xl hover:from-amber-600 hover:via-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transform hover:-translate-y-0.5 font-bold text-lg flex items-center gap-3 justify-center ring-2 ring-orange-400/20"
+                      >
+                        <MessageCircle className="h-5 w-5" />
+                        Send
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
