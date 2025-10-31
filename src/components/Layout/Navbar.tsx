@@ -97,16 +97,16 @@ const Navbar: React.FC = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 overflow-hidden ${
           scrolled
             ? 'bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl border-b border-slate-200/50 dark:border-gray-700/50'
             : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-slate-200 dark:border-gray-700'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-20 w-full min-w-0">
             {/* Logo Section - Enhanced */}
-            <div className="flex items-center space-x-3 z-50">
+            <div className="flex items-center space-x-3 flex-shrink-0">
               <Link 
                 to="/" 
                 className="flex items-center space-x-3 group relative"
@@ -132,46 +132,48 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Desktop Navigation - Enhanced */}
-            <div className="hidden lg:flex items-center space-x-2">
-              {navLinks.map((link) => {
-                if (link.protected && !user) return null;
-                const Icon = link.icon;
-                const active = isActive(link.path);
+            <div className="hidden lg:flex items-center justify-center flex-1 px-2 min-w-0">
+              <div className="flex items-center space-x-1 overflow-x-auto max-w-full">
+                {navLinks.map((link) => {
+                  if (link.protected && !user) return null;
+                  const Icon = link.icon;
+                  const active = isActive(link.path);
 
-                return (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    className={`group relative px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2 ${
-                      active
-                        ? 'text-white dark:text-white'
-                        : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
-                    }`}
-                  >
-                    {/* Active state background with gradient */}
-                    {active && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-xl shadow-lg transform scale-100 transition-transform duration-300" />
-                    )}
-                    
-                    {/* Hover background */}
-                    {!active && (
-                      <div className="absolute inset-0 bg-slate-100 dark:bg-gray-800 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    )}
+                  return (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      className={`group relative px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2 whitespace-nowrap ${
+                        active
+                          ? 'text-white dark:text-white'
+                          : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
+                      }`}
+                    >
+                      {/* Active state background with gradient */}
+                      {active && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-xl shadow-lg transform scale-100 transition-transform duration-300" />
+                      )}
+                      
+                      {/* Hover background */}
+                      {!active && (
+                        <div className="absolute inset-0 bg-slate-100 dark:bg-gray-800 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      )}
 
-                    <Icon className={`h-4 w-4 relative z-10 ${active ? 'animate-pulse' : ''}`} />
-                    <span className="relative z-10">{link.label}</span>
+                      <Icon className={`h-4 w-4 relative z-10 ${active ? 'animate-pulse' : ''}`} />
+                      <span className="relative z-10">{link.label}</span>
 
-                    {/* Active indicator line */}
-                    {active && (
-                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-white to-transparent rounded-full" />
-                    )}
-                  </Link>
-                );
-              })}
+                      {/* Active indicator line */}
+                      {active && (
+                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-white to-transparent rounded-full" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Right Section - Enhanced */}
-            <div className="flex items-center space-x-3 z-50">
+            <div className="flex items-center space-x-3 flex-shrink-0">
               {/* Theme Toggle - Enhanced */}
               <button
                 onClick={toggleTheme}
@@ -328,7 +330,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu - Enhanced with smooth animations */}
       <div
-        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ${
+        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 overflow-hidden ${
           isMobileMenuOpen ? 'visible' : 'invisible'
         }`}
       >
@@ -342,7 +344,7 @@ const Navbar: React.FC = () => {
 
         {/* Menu Panel */}
         <div
-          className={`absolute top-20 right-0 bottom-0 w-full sm:w-80 bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-500 ease-out ${
+          className={`absolute top-20 right-0 bottom-0 w-full sm:w-80 bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-500 ease-out z-50 ${
             isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
@@ -383,14 +385,14 @@ const Navbar: React.FC = () => {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold transition-all duration-300 ${
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 w-full ${
                       active
                         ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 text-white shadow-lg transform scale-105'
                         : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-indigo-600 dark:hover:text-indigo-400'
                     }`}
                   >
-                    <Icon className={`h-5 w-5 ${active ? 'animate-pulse' : ''}`} />
-                    <span>{link.label}</span>
+                    <Icon className={`h-5 w-5 flex-shrink-0 ${active ? 'animate-pulse' : ''}`} />
+                    <span className="truncate">{link.label}</span>
                   </Link>
                 );
               })}
@@ -401,26 +403,26 @@ const Navbar: React.FC = () => {
               <div className="p-4 space-y-2 border-t border-gray-200 dark:border-gray-700">
                 <Link
                   to="/create-course"
-                  className="flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20 transition-all duration-300"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20 transition-all duration-300 w-full"
                 >
-                  <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                  <span>Create Course</span>
+                  <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                  <span className="truncate">Create Course</span>
                 </Link>
 
                 <Link
                   to="/api-settings"
-                  className="flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-50 hover:to-emerald-50 dark:hover:from-purple-900/20 dark:hover:to-emerald-900/20 transition-all duration-300"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-50 hover:to-emerald-50 dark:hover:from-purple-900/20 dark:hover:to-emerald-900/20 transition-all duration-300 w-full"
                 >
-                  <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <span>Settings</span>
+                  <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                  <span className="truncate">Settings</span>
                 </Link>
 
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-900/20 dark:hover:to-pink-900/20 transition-all duration-300 w-full text-left"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-900/20 dark:hover:to-pink-900/20 transition-all duration-300 w-full text-left"
                 >
-                  <LogOut className="h-5 w-5 text-red-600 dark:text-red-400" />
-                  <span>Sign Out</span>
+                  <LogOut className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                  <span className="truncate">Sign Out</span>
                 </button>
               </div>
             )}
@@ -430,18 +432,18 @@ const Navbar: React.FC = () => {
               <div className="p-4 space-y-3 border-t border-gray-200 dark:border-gray-700">
                 <Link
                   to="/signin"
-                  className="block w-full text-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 px-5 py-4 rounded-xl text-base font-semibold transition-all duration-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                  className="block w-full text-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 px-4 py-3 rounded-xl text-base font-semibold transition-all duration-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/signup"
-                  className="block w-full text-center relative group px-5 py-4 rounded-xl text-base font-semibold text-white overflow-hidden shadow-lg"
+                  className="block w-full text-center relative group px-4 py-3 rounded-xl text-base font-semibold text-white overflow-hidden shadow-lg"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
                   <span className="relative z-10 flex items-center justify-center space-x-1">
                     <span>Sign Up</span>
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-4 w-4 flex-shrink-0" />
                   </span>
                 </Link>
               </div>
