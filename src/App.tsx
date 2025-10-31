@@ -25,7 +25,8 @@ function App() {
         <AuthProvider>
           <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
             <Navbar />
-            <Routes>
+            <div className="pt-20">
+              <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/signup" element={<SignUpPage />} />
@@ -111,7 +112,8 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            </Routes>
+              </Routes>
+            </div>
           </div>
         </AuthProvider>
       </ThemeProvider>

@@ -1,14 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { BookOpen, User, LogOut, Home, Info, BookMarked, TestTube, Zap, GraduationCap, Moon, Sun, Palette, Settings, Users, Plus, ChevronDown } from 'lucide-react';
+import { 
+  BookOpen, 
+  User, 
+  LogOut, 
+  Home, 
+  Info, 
+  BookMarked, 
+  TestTube, 
+  Zap, 
+  GraduationCap, 
+  Moon, 
+  Sun, 
+  Palette, 
+  Settings, 
+  Plus, 
+  ChevronDown,
+  Menu,
+  X,
+  Sparkles
+} from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
@@ -19,6 +41,16 @@ const Navbar: React.FC = () => {
       console.error('Error signing out:', error);
     }
   };
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -34,168 +66,390 @@ const Navbar: React.FC = () => {
     };
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinks = [
+    { path: '/', label: 'Home', icon: Home, protected: false },
+    { path: '/about', label: 'About', icon: Info, protected: false },
+    { path: '/courses', label: 'Courses', icon: BookMarked, protected: true },
+    { path: '/practice', label: 'Practice', icon: TestTube, protected: true },
+    { path: '/crash-course', label: 'Crash Course', icon: Zap, protected: true },
+    { path: '/creative-learning', label: 'Creative', icon: Palette, protected: true },
+  ];
+
   return (
-    <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-slate-200 dark:border-gray-700 sticky top-0 z-50 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-emerald-600 rounded-xl flex items-center justify-center">
-                <GraduationCap className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-emerald-600 bg-clip-text text-transparent">Fusioned</span>
-            </Link>
-          </div>
-
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              <Link
-                to="/"
-                className="text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 hover:bg-slate-50 dark:hover:bg-gray-800"
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled
+            ? 'bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl border-b border-slate-200/50 dark:border-gray-700/50'
+            : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-slate-200 dark:border-gray-700'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            {/* Logo Section - Enhanced */}
+            <div className="flex items-center space-x-3 z-50">
+              <Link 
+                to="/" 
+                className="flex items-center space-x-3 group relative"
               >
-                <Home className="h-4 w-4" />
-                <span>Home</span>
-              </Link>
-              <Link
-                to="/about"
-                className="text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 hover:bg-slate-50 dark:hover:bg-gray-800"
-              >
-                <Info className="h-4 w-4" />
-                <span>About</span>
-              </Link>
-              {user && (
-                <>
-                  <Link
-                    to="/courses"
-                    className="text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 hover:bg-slate-50 dark:hover:bg-gray-800"
-                  >
-                    <BookMarked className="h-4 w-4" />
-                    <span>Courses</span>
-                  </Link>
-                  <Link
-                    to="/practice"
-                    className="text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 hover:bg-slate-50 dark:hover:bg-gray-800"
-                  >
-                    <TestTube className="h-4 w-4" />
-                    <span>Practice</span>
-                  </Link>
-                  <Link
-                    to="/crash-course"
-                    className="text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 hover:bg-slate-50 dark:hover:bg-gray-800"
-                  >
-                    <Zap className="h-4 w-4" />
-                    <span>Crash Course</span>
-                  </Link>
-                  <Link
-                    to="/creative-learning"
-                    className="text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 hover:bg-slate-50 dark:hover:bg-gray-800"
-                  >
-                    <Palette className="h-4 w-4" />
-                    <span>Creative Learning</span>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-all duration-200"
-              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <span className="bg-gradient-to-r from-indigo-100 to-emerald-100 dark:from-indigo-900 dark:to-emerald-900 text-indigo-800 dark:text-indigo-200 text-xs font-medium px-3 py-1 rounded-full">
-                    {profile?.points || 0} pts
-                  </span>
+                {/* Animated logo background */}
+                <div className="absolute -inset-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-2xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500" />
+                
+                <div className="relative w-12 h-12 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <GraduationCap className="h-7 w-7 text-white animate-pulse" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-ping" />
                 </div>
                 
-                {/* Profile Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                    className="flex items-center space-x-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-lg transition-colors hover:bg-slate-100 dark:hover:bg-gray-800"
-                  >
-                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-emerald-600 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-sm font-medium">
-                      {profile?.full_name || user.email}
-                    </span>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent tracking-tight">
+                    Fusioned
+                  </span>
+                  <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 -mt-1 flex items-center">
+                    EdTech
+                    <Sparkles className="h-2.5 w-2.5 ml-1" />
+                  </span>
+                </div>
+              </Link>
+            </div>
 
-                  {isProfileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {profile?.full_name || user.email}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {profile?.points || 0} points
-                        </p>
-                      </div>
-                      
-                      <div className="py-2">
-                        <Link
-                          to="/create-course"
-                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                        >
-                          <Plus className="h-4 w-4 text-indigo-600" />
-                          <span>Create Course</span>
-                        </Link>
-                        
-                        <Link
-                          to="/settings"
-                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                        >
-                          <Settings className="h-4 w-4" />
-                          <span>Settings</span>
-                        </Link>
-                        
-                        <button
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            handleSignOut();
-                          }}
-                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          <span>Sign Out</span>
-                        </button>
-                      </div>
+            {/* Desktop Navigation - Enhanced */}
+            <div className="hidden lg:flex items-center space-x-2">
+              {navLinks.map((link) => {
+                if (link.protected && !user) return null;
+                const Icon = link.icon;
+                const active = isActive(link.path);
+
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`group relative px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2 ${
+                      active
+                        ? 'text-white dark:text-white'
+                        : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
+                    }`}
+                  >
+                    {/* Active state background with gradient */}
+                    {active && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-xl shadow-lg transform scale-100 transition-transform duration-300" />
+                    )}
+                    
+                    {/* Hover background */}
+                    {!active && (
+                      <div className="absolute inset-0 bg-slate-100 dark:bg-gray-800 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    )}
+
+                    <Icon className={`h-4 w-4 relative z-10 ${active ? 'animate-pulse' : ''}`} />
+                    <span className="relative z-10">{link.label}</span>
+
+                    {/* Active indicator line */}
+                    {active && (
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-white to-transparent rounded-full" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Right Section - Enhanced */}
+            <div className="flex items-center space-x-3 z-50">
+              {/* Theme Toggle - Enhanced */}
+              <button
+                onClick={toggleTheme}
+                className="relative p-3 rounded-xl text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-all duration-300 group transform hover:scale-110"
+                title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl opacity-0 group-hover:opacity-20 blur transition-opacity duration-300" />
+                {isDarkMode ? (
+                  <Sun className="h-5 w-5 relative z-10 transform group-hover:rotate-180 transition-transform duration-500" />
+                ) : (
+                  <Moon className="h-5 w-5 relative z-10 transform group-hover:-rotate-12 transition-transform duration-500" />
+                )}
+              </button>
+
+              {user ? (
+                <div className="flex items-center space-x-3">
+                  {/* Points Badge - Enhanced */}
+                  <div className="relative hidden sm:block">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-full opacity-30 blur animate-pulse" />
+                    <div className="relative bg-gradient-to-r from-indigo-100 via-purple-100 to-emerald-100 dark:from-indigo-900/50 dark:via-purple-900/50 dark:to-emerald-900/50 text-indigo-800 dark:text-indigo-200 text-sm font-bold px-4 py-2 rounded-full backdrop-blur-sm border border-indigo-200 dark:border-indigo-700 shadow-lg">
+                      <span className="flex items-center space-x-1">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>{profile?.points || 0}</span>
+                        <span className="text-xs font-medium">pts</span>
+                      </span>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Profile Dropdown - Enhanced */}
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                      className="hidden md:flex items-center space-x-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-xl transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
+                    >
+                      <div className="relative">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-full opacity-0 group-hover:opacity-50 blur transition-opacity duration-300" />
+                        <div className="relative w-9 h-9 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-600 rounded-full flex items-center justify-center shadow-md">
+                          <User className="h-5 w-5 text-white" />
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold max-w-[120px] truncate">
+                        {profile?.full_name || user.email?.split('@')[0]}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Dropdown Menu - Enhanced */}
+                    {isProfileDropdownOpen && (
+                      <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transform origin-top-right transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+                        {/* Gradient top bar */}
+                        <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
+                        
+                        {/* User info section */}
+                        <div className="p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-slate-50 to-white dark:from-gray-800 dark:to-gray-800/50">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                              <User className="h-6 w-6 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                {profile?.full_name || user.email}
+                              </p>
+                              <div className="flex items-center space-x-1 mt-1">
+                                <Sparkles className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                                <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                                  {profile?.points || 0} points
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Menu items */}
+                        <div className="py-2">
+                          <Link
+                            to="/create-course"
+                            className="flex items-center space-x-3 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20 transition-all duration-200 group"
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                          >
+                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors">
+                              <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                            </div>
+                            <span>Create Course</span>
+                          </Link>
+
+                          <Link
+                            to="/api-settings"
+                            className="flex items-center space-x-3 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-50 hover:to-emerald-50 dark:hover:from-purple-900/20 dark:hover:to-emerald-900/20 transition-all duration-200 group"
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                          >
+                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                              <Settings className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <span>Settings</span>
+                          </Link>
+
+                          <button
+                            onClick={() => {
+                              setIsProfileDropdownOpen(false);
+                              handleSignOut();
+                            }}
+                            className="flex items-center space-x-3 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-900/20 dark:hover:to-pink-900/20 transition-all duration-200 w-full text-left group"
+                          >
+                            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
+                              <LogOut className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            </div>
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="hidden md:flex items-center space-x-2">
+                  <Link
+                    to="/signin"
+                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transform hover:scale-105"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="relative group px-5 py-2.5 rounded-xl text-sm font-semibold text-white overflow-hidden shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 group-hover:from-indigo-700 group-hover:via-purple-700 group-hover:to-emerald-700" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 blur-xl" />
+                    </div>
+                    <span className="relative z-10 flex items-center space-x-1">
+                      <span>Sign Up</span>
+                      <Sparkles className="h-3.5 w-3.5" />
+                    </span>
+                  </Link>
+                </div>
+              )}
+
+              {/* Mobile Menu Button - Enhanced */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden p-3 rounded-xl text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-all duration-300 transform hover:scale-110"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Menu - Enhanced with smooth animations */}
+      <div
+        className={`fixed inset-0 z-40 lg:hidden transition-all duration-500 ${
+          isMobileMenuOpen ? 'visible' : 'invisible'
+        }`}
+      >
+        {/* Backdrop */}
+        <div
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500 ${
+            isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+
+        {/* Menu Panel */}
+        <div
+          className={`absolute top-20 right-0 bottom-0 w-full sm:w-80 bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-500 ease-out ${
+            isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          {/* Gradient top bar */}
+          <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
+
+          <div className="overflow-y-auto h-full pb-20">
+            {/* User section for mobile */}
+            {user && (
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-slate-50 to-white dark:from-gray-800 dark:to-gray-800/50">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                    <User className="h-7 w-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                      {profile?.full_name || user.email}
+                    </p>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <Sparkles className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                      <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                        {profile?.points || 0} points
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className="flex space-x-2">
+            )}
+
+            {/* Navigation Links */}
+            <div className="p-4 space-y-2">
+              {navLinks.map((link) => {
+                if (link.protected && !user) return null;
+                const Icon = link.icon;
+                const active = isActive(link.path);
+
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold transition-all duration-300 ${
+                      active
+                        ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 text-white shadow-lg transform scale-105'
+                        : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-indigo-600 dark:hover:text-indigo-400'
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 ${active ? 'animate-pulse' : ''}`} />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* User actions for mobile */}
+            {user && (
+              <div className="p-4 space-y-2 border-t border-gray-200 dark:border-gray-700">
+                <Link
+                  to="/create-course"
+                  className="flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20 transition-all duration-300"
+                >
+                  <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Create Course</span>
+                </Link>
+
+                <Link
+                  to="/api-settings"
+                  className="flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-50 hover:to-emerald-50 dark:hover:from-purple-900/20 dark:hover:to-emerald-900/20 transition-all duration-300"
+                >
+                  <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <span>Settings</span>
+                </Link>
+
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center space-x-3 px-5 py-4 rounded-xl text-base font-semibold text-slate-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-900/20 dark:hover:to-pink-900/20 transition-all duration-300 w-full text-left"
+                >
+                  <LogOut className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+
+            {/* Auth buttons for mobile */}
+            {!user && (
+              <div className="p-4 space-y-3 border-t border-gray-200 dark:border-gray-700">
                 <Link
                   to="/signin"
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                  className="block w-full text-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 px-5 py-4 rounded-xl text-base font-semibold transition-all duration-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/signup"
-                  className="bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="block w-full text-center relative group px-5 py-4 rounded-xl text-base font-semibold text-white overflow-hidden shadow-lg"
                 >
-                  Sign Up
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
+                  <span className="relative z-10 flex items-center justify-center space-x-1">
+                    <span>Sign Up</span>
+                    <Sparkles className="h-4 w-4" />
+                  </span>
                 </Link>
               </div>
             )}
           </div>
         </div>
       </div>
-    </nav>
+    </>
   );
 };
 
