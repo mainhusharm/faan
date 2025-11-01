@@ -105,36 +105,6 @@ const DiagramPage: React.FC = () => {
     loadApiKey();
   }, [loadApiKey]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    setIsCanvasReady(true);
-
-    // Set canvas size
-    const updateCanvasSize = () => {
-      const container = canvas.parentElement;
-      if (!container) return;
-      
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-      
-      // Redraw background and actions
-      drawBackground(ctx);
-      redrawCanvas();
-    };
-
-    updateCanvasSize();
-    window.addEventListener('resize', updateCanvasSize);
-
-    return () => {
-      window.removeEventListener('resize', updateCanvasSize);
-    };
-  }, [background, drawBackground, redrawCanvas]);
-
   const drawBackground = useCallback((ctx: CanvasRenderingContext2D) => {
     const canvas = ctx.canvas;
     ctx.fillStyle = '#ffffff';
@@ -279,6 +249,35 @@ const DiagramPage: React.FC = () => {
       drawAction(ctx, action);
     });
   }, [actions, drawBackground, drawAction]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    setIsCanvasReady(true);
+
+    // Set canvas size
+    const updateCanvasSize = () => {
+      const container = canvas.parentElement;
+      if (!container) return;
+      
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      
+      // Redraw background and actions
+      redrawCanvas();
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize);
+    };
+  }, [background, actions, redrawCanvas]);
 
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>): Point | null => {
     const canvas = canvasRef.current;
@@ -441,20 +440,23 @@ const DiagramPage: React.FC = () => {
 
     try {
       canvas.toBlob(async (blob) => {
-        if (!blob) {
-          throw new Error('Failed to convert canvas to image');
-        }
+        try {
+          if (!blob) {
+            setError('Failed to convert canvas to image. Please try again.');
+            setProcessingStep('error');
+            return;
+          }
 
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onload = async () => {
-          try {
-            const base64Data = (reader.result as string).split(',')[1];
-            
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onload = async () => {
+            try {
+              const base64Data = (reader.result as string).split(',')[1];
+              
+              const genAI = new GoogleGenerativeAI(apiKey);
+              const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-            const prompt = `You are an expert educational AI assistant specialized in analyzing diagrams, flowcharts, graphs, molecular structures, and visual representations. Analyze this diagram and provide a comprehensive educational response in JSON format.
+              const prompt = `You are an expert educational AI assistant specialized in analyzing diagrams, flowcharts, graphs, molecular structures, and visual representations. Analyze this diagram and provide a comprehensive educational response in JSON format.
 
 Please provide:
 1. A detailed description of what is drawn in the diagram
@@ -477,44 +479,55 @@ Return ONLY a valid JSON object with this exact structure:
   "completeness_score": 0.75
 }`;
 
-            const imageParts = [
-              {
-                inlineData: {
-                  data: base64Data,
-                  mimeType: 'image/png'
+              const imageParts = [
+                {
+                  inlineData: {
+                    data: base64Data,
+                    mimeType: 'image/png'
+                  }
                 }
+              ];
+
+              const result = await model.generateContent([prompt, ...imageParts]);
+              const response = await result.response;
+              const text = response.text();
+
+              let jsonText = text;
+              if (text.includes('```json')) {
+                jsonText = text.split('```json')[1].split('```')[0].trim();
+              } else if (text.includes('```')) {
+                jsonText = text.split('```')[1].split('```')[0].trim();
               }
-            ];
 
-            const result = await model.generateContent([prompt, ...imageParts]);
-            const response = await result.response;
-            const text = response.text();
+              const aiResponse = JSON.parse(jsonText);
 
-            let jsonText = text;
-            if (text.includes('```json')) {
-              jsonText = text.split('```json')[1].split('```')[0].trim();
-            } else if (text.includes('```')) {
-              jsonText = text.split('```')[1].split('```')[0].trim();
+              setResult({
+                description: aiResponse.description,
+                concept: aiResponse.concept,
+                errors: aiResponse.errors || [],
+                suggestions: aiResponse.suggestions || [],
+                explanation: aiResponse.explanation,
+                relatedTopics: aiResponse.related_topics || []
+              });
+
+              setProcessingStep('completed');
+            } catch (error) {
+              console.error('Error analyzing diagram:', error);
+              setError(error instanceof Error ? error.message : 'Failed to analyze diagram. Please try again.');
+              setProcessingStep('error');
             }
-
-            const aiResponse = JSON.parse(jsonText);
-
-            setResult({
-              description: aiResponse.description,
-              concept: aiResponse.concept,
-              errors: aiResponse.errors || [],
-              suggestions: aiResponse.suggestions || [],
-              explanation: aiResponse.explanation,
-              relatedTopics: aiResponse.related_topics || []
-            });
-
-            setProcessingStep('completed');
-          } catch (error) {
-            console.error('Error analyzing diagram:', error);
-            setError(error instanceof Error ? error.message : 'Failed to analyze diagram. Please try again.');
+          };
+          
+          reader.onerror = () => {
+            console.error('Error reading canvas image');
+            setError('Failed to read canvas image. Please try again.');
             setProcessingStep('error');
-          }
-        };
+          };
+        } catch (error) {
+          console.error('Error in blob callback:', error);
+          setError('Failed to process canvas image. Please try again.');
+          setProcessingStep('error');
+        }
       });
     } catch (error) {
       console.error('Error preparing diagram for analysis:', error);
@@ -574,13 +587,19 @@ Return ONLY a valid JSON object with this exact structure:
           <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
             <div className="flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                   Gemini API Key Required
                 </p>
                 <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
                   Please set up your Gemini API key in Settings to use the AI analysis feature.
                 </p>
+                <a
+                  href="/api-settings"
+                  className="inline-flex items-center mt-2 text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100 underline"
+                >
+                  Go to Settings →
+                </a>
               </div>
             </div>
           </div>
@@ -724,6 +743,15 @@ Return ONLY a valid JSON object with this exact structure:
                   onClick={handleAnalyze}
                   disabled={processingStep === 'analyzing' || !apiKey || actions.length === 0}
                   className="w-full py-3 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-700 hover:via-purple-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  title={
+                    !apiKey 
+                      ? 'Please configure your Gemini API key in Settings first'
+                      : actions.length === 0 
+                      ? 'Draw something on the canvas first'
+                      : processingStep === 'analyzing'
+                      ? 'Analysis in progress...'
+                      : 'Analyze your diagram with AI'
+                  }
                 >
                   {processingStep === 'analyzing' ? (
                     <>
@@ -737,6 +765,16 @@ Return ONLY a valid JSON object with this exact structure:
                     </>
                   )}
                 </button>
+                {!apiKey && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2 text-center">
+                    Configure your Gemini API key in Settings to enable analysis
+                  </p>
+                )}
+                {apiKey && actions.length === 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                    Draw a diagram on the canvas to analyze it
+                  </p>
+                )}
               </div>
             </div>
           </div>
