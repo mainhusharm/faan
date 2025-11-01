@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { 
-  BookOpen, 
   User, 
   LogOut, 
   Home, 
@@ -20,7 +19,8 @@ import {
   ChevronDown,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Camera
 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
@@ -89,6 +89,7 @@ const Navbar: React.FC = () => {
     { path: '/', label: 'Home', icon: Home, protected: false },
     { path: '/about', label: 'About', icon: Info, protected: false },
     { path: '/courses', label: 'Courses', icon: BookMarked, protected: true },
+    { path: '/homework', label: 'Homework', icon: Camera, protected: true },
     { path: '/practice', label: 'Practice', icon: TestTube, protected: true },
     { path: '/crash-course', label: 'Crash Course', icon: Zap, protected: true },
     { path: '/creative-learning', label: 'Creative', icon: Palette, protected: true },

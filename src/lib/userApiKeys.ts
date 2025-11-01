@@ -211,3 +211,9 @@ class UserApiKeysService {
 }
 
 export default UserApiKeysService;
+
+// Helper function for easy access
+export async function getUserApiKey(userId: string, serviceName: 'openai' | 'stability' | 'midjourney' | 'gemini'): Promise<string | null> {
+  const service = UserApiKeysService.getInstance();
+  return service.getApiKey(serviceName);
+}
