@@ -15,7 +15,6 @@ interface Viewport3DProps {
   cameraMode: 'perspective' | 'orthographic';
   autoRotate: boolean;
   backgroundColor: string;
-  onSceneCapture?: () => void;
 }
 
 export const Viewport3D: React.FC<Viewport3DProps> = ({
@@ -27,7 +26,6 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
   cameraMode,
   autoRotate,
   backgroundColor,
-  onSceneCapture
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

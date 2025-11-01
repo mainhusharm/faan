@@ -59,7 +59,7 @@ interface DiagramResult {
 const DiagramPage: React.FC = () => {
   const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('2d');
+  const [viewMode, setViewMode] = useState<ViewMode>('3d');
   const [selectedTool, setSelectedTool] = useState<Tool>('pencil');
   const [color, setColor] = useState('#000000');
   const [thickness, setThickness] = useState(3);

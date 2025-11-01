@@ -7,16 +7,12 @@ import {
   Hexagon,
   Type,
   Atom,
-  Pipette,
   Move3d,
   RotateCw,
   Maximize2,
   Camera,
   Grid3x3,
   Eye,
-  Sun,
-  Palette,
-  Trash2,
 } from 'lucide-react';
 
 interface Toolbar3DProps {
