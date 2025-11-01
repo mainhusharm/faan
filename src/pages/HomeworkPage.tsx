@@ -52,16 +52,16 @@ const HomeworkPage: React.FC = () => {
     if (!user) return;
     try {
       const key = await getUserApiKey(user.id, 'gemini');
-      // Fallback to environment variable if user hasn't configured their own key
-      const finalKey = key || import.meta.env.VITE_GEMINI_API_KEY || null;
-      setApiKey(finalKey);
-      console.log('🔑 API Key loaded:', !!finalKey);
+      setApiKey(key);
+      console.log('🔑 Gemini API Key loaded from user settings:', !!key);
+      if (key) {
+        console.log('🔑 API Key source: user-settings');
+      } else {
+        console.log('⚠️ No Gemini API key found in user settings');
+      }
     } catch (error) {
       console.error('Error loading API key:', error);
-      // Fallback to environment variable on error
-      const fallbackKey = import.meta.env.VITE_GEMINI_API_KEY || null;
-      setApiKey(fallbackKey);
-      console.log('🔑 Using fallback API key:', !!fallbackKey);
+      setApiKey(null);
     }
   };
 
@@ -121,20 +121,27 @@ const HomeworkPage: React.FC = () => {
     setError(null);
     
     try {
-      // Get API key from environment or user settings
-      const effectiveApiKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_API_KEY;
+      // Check if user has configured their Gemini API key
+      console.log('🔑 Checking for Gemini API Key...');
+      console.log('🔑 API Key from user settings:', !!apiKey);
       
-      console.log('🔑 API Key exists:', !!effectiveApiKey);
-      console.log('🔑 API Key source:', apiKey ? 'user-settings' : 'environment');
-      
-      if (!effectiveApiKey) {
-        console.error('❌ No VITE_GEMINI_API_KEY found in environment!');
-        alert('❌ No VITE_GEMINI_API_KEY found in environment!\n\nAdd it to your .env file or Netlify environment variables.');
+      if (!apiKey) {
+        console.error('❌ No Gemini API key found in user settings!');
+        const redirectToSettings = confirm(
+          '❌ No Gemini API key found!\n\n' +
+          'Please add your Gemini API key in Settings to use the AI Homework Helper.\n\n' +
+          'Click OK to go to API Settings now, or Cancel to stay here.'
+        );
+        
+        if (redirectToSettings) {
+          window.location.href = '/api-settings';
+        }
+        
         setProcessingStep('idle');
         return;
       }
       
-      console.log('✅ API key found, proceeding...');
+      console.log('✅ Gemini API key found from user settings, proceeding...');
       
       // Convert image to base64
       console.log('📸 Converting image to base64...');
@@ -152,11 +159,11 @@ const HomeworkPage: React.FC = () => {
       console.log('✅ Image converted to base64');
       console.log('📊 Base64 length:', base64Image.length);
       
-      // Call Gemini API directly with fetch
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveApiKey}`;
+      // Call Gemini API directly with fetch using user's API key
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       
-      console.log('📡 Calling Gemini API...');
-      console.log('🌐 URL:', url.replace(effectiveApiKey, 'API_KEY_HIDDEN'));
+      console.log('📡 Calling Gemini API with user API key...');
+      console.log('🌐 URL:', url.replace(apiKey, 'API_KEY_HIDDEN'));
       
       const response = await fetch(url, {
         method: 'POST',
@@ -186,6 +193,39 @@ const HomeworkPage: React.FC = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ API Error Response:', errorText);
+        
+        // Provide specific error messages based on status code
+        if (response.status === 400) {
+          const redirectToSettings = confirm(
+            '❌ Invalid API key!\n\n' +
+            'Your Gemini API key appears to be invalid or incorrectly configured.\n\n' +
+            'Click OK to go to API Settings and update your key, or Cancel to stay here.'
+          );
+          
+          if (redirectToSettings) {
+            window.location.href = '/api-settings';
+          }
+          
+          setProcessingStep('idle');
+          return;
+        } else if (response.status === 429) {
+          alert(
+            '❌ API Quota Exceeded!\n\n' +
+            'Your Gemini API key has exceeded its quota.\n' +
+            'Please check your usage at https://makersuite.google.com/app/apikey'
+          );
+          setProcessingStep('idle');
+          return;
+        } else if (response.status === 403) {
+          alert(
+            '❌ API Access Denied!\n\n' +
+            'Your Gemini API key does not have permission to access this API.\n' +
+            'Please check your API key configuration.'
+          );
+          setProcessingStep('idle');
+          return;
+        }
+        
         throw new Error(`Gemini API error: ${response.status}`);
       }
       
