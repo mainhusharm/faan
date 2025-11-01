@@ -443,6 +443,79 @@ export type Database = {
           practice_count?: number;
         };
       };
+      homework_uploads: {
+        Row: {
+          id: string;
+          user_id: string;
+          image_url: string;
+          file_name: string;
+          file_size: number;
+          format: string;
+          status: string;
+          metadata: Record<string, any>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          image_url: string;
+          file_name: string;
+          file_size: number;
+          format: string;
+          status?: string;
+          metadata?: Record<string, any>;
+        };
+        Update: {
+          status?: string;
+          metadata?: Record<string, any>;
+        };
+      };
+      homework_analysis: {
+        Row: {
+          id: string;
+          upload_id: string;
+          ocr_text: string | null;
+          content_type: string | null;
+          sub_topic: string | null;
+          question_type: string | null;
+          processing_metadata: Record<string, any>;
+          confidence: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          upload_id: string;
+          ocr_text?: string | null;
+          content_type?: string | null;
+          sub_topic?: string | null;
+          question_type?: string | null;
+          processing_metadata?: Record<string, any>;
+          confidence?: number | null;
+        };
+      };
+      homework_solutions: {
+        Row: {
+          id: string;
+          analysis_id: string;
+          explanation: string;
+          step_by_step_solution: Record<string, any>;
+          common_mistakes: string[];
+          related_concepts: string[];
+          practice_problems: Record<string, any>;
+          resources: Record<string, any>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          analysis_id: string;
+          explanation: string;
+          step_by_step_solution?: Record<string, any>;
+          common_mistakes?: string[];
+          related_concepts?: string[];
+          practice_problems?: Record<string, any>;
+          resources?: Record<string, any>;
+        };
+      };
     };
     Views: {
       active_concept_links: {

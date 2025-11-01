@@ -17,6 +17,7 @@ import TestVideoPage from './pages/TestVideoPage';
 import CreativeLearningPage from './pages/CreativeLearningPage';
 import SettingsPage from './pages/SettingsPage';
 import CourseCreationPage from './pages/CourseCreationPage';
+import HomeworkPage from './pages/HomeworkPage';
 
 function App() {
   return (
@@ -109,6 +110,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CourseCreationPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/homework" 
+              element={
+                <ProtectedRoute>
+                  <HomeworkPage />
                 </ProtectedRoute>
               } 
             />
