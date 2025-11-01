@@ -263,8 +263,8 @@ const HomeworkPage: React.FC = () => {
                     </button>
                     <button
                       onClick={handleProcess}
-                      disabled={!apiKey}
-                      className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-700 hover:via-purple-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      disabled={!selectedImage || !apiKey || processingStep !== 'idle'}
+                      className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-700 hover:via-purple-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
                     >
                       <Sparkles className="h-5 w-5" />
                       <span>Get AI Solution</span>

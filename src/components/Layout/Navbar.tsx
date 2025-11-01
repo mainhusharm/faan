@@ -42,13 +42,23 @@ const Navbar: React.FC = () => {
     }
   };
 
-  // Handle scroll effect
+  // Handle scroll effect with optimized state management
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      const isScrolled = window.scrollY > 20;
+      setScrolled((prevScrolled) => {
+        // Only update state if it actually changed to prevent unnecessary re-renders
+        if (prevScrolled !== isScrolled) {
+          return isScrolled;
+        }
+        return prevScrolled;
+      });
     };
 
-    window.addEventListener('scroll', handleScroll);
+    // Initial check
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -98,11 +108,16 @@ const Navbar: React.FC = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 overflow-hidden ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
           scrolled
-            ? 'bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl border-b border-slate-200/50 dark:border-gray-700/50'
-            : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-slate-200 dark:border-gray-700'
+            ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border-b border-gray-200/80 dark:border-gray-700/80'
+            : 'bg-white/98 dark:bg-gray-900/98 backdrop-blur-sm shadow-sm border-b border-transparent'
         }`}
+        style={{
+          boxShadow: scrolled 
+            ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' 
+            : '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 w-full min-w-0">
