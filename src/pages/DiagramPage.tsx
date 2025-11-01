@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Pencil, 
@@ -18,14 +18,21 @@ import {
   Sparkles,
   Grid3x3,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Box,
+  Layers
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getUserApiKey } from '../lib/userApiKeys';
 
+const Diagram3DContainer = lazy(() => 
+  import('../components/Diagram3D').then(module => ({ default: module.Diagram3DContainer }))
+);
+
 type Tool = 'pencil' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'line' | 'text';
 type BackgroundType = 'plain' | 'grid' | 'dots' | 'ruled';
 type ProcessingStep = 'idle' | 'analyzing' | 'completed' | 'error';
+type ViewMode = '2d' | '3d';
 
 interface Point {
   x: number;
@@ -52,6 +59,7 @@ interface DiagramResult {
 const DiagramPage: React.FC = () => {
   const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('2d');
   const [selectedTool, setSelectedTool] = useState<Tool>('pencil');
   const [color, setColor] = useState('#000000');
   const [thickness, setThickness] = useState(3);
@@ -669,17 +677,45 @@ Return ONLY a valid JSON object with this exact structure:
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Sparkles className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  AI Diagram Analysis
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Draw diagrams and get instant AI feedback and explanations
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                AI Diagram Analysis
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Draw diagrams and get instant AI feedback and explanations
-              </p>
+            
+            {/* Mode Toggle */}
+            <div className="flex items-center space-x-2 p-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+              <button
+                onClick={() => setViewMode('2d')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  viewMode === '2d'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Layers className="h-5 w-5" />
+                <span>2D Canvas</span>
+              </button>
+              <button
+                onClick={() => setViewMode('3d')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  viewMode === '3d'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Box className="h-5 w-5" />
+                <span>3D Viewport</span>
+              </button>
             </div>
           </div>
         </div>
@@ -709,9 +745,10 @@ Return ONLY a valid JSON object with this exact structure:
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Drawing Area */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-              {/* Toolbar */}
-              <div className="border-b border-gray-200 dark:border-gray-700 p-4">
+            {viewMode === '2d' ? (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                {/* Toolbar */}
+                <div className="border-b border-gray-200 dark:border-gray-700 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Drawing Tools */}
                   <div className="flex items-center space-x-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
@@ -878,15 +915,30 @@ Return ONLY a valid JSON object with this exact structure:
                 )}
               </div>
             </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" style={{ height: 'calc(100vh - 250px)', minHeight: '600px' }}>
+                <Suspense fallback={
+                  <div className="h-full flex items-center justify-center">
+                    <div className="flex flex-col items-center space-y-3">
+                      <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+                      <p className="text-gray-600 dark:text-gray-400">Loading 3D Environment...</p>
+                    </div>
+                  </div>
+                }>
+                  <Diagram3DContainer />
+                </Suspense>
+              </div>
+            )}
           </div>
 
           {/* Results Panel */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-indigo-600" />
-                <span>AI Analysis</span>
-              </h2>
+            {viewMode === '2d' ? (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
+                  <Sparkles className="h-5 w-5 text-indigo-600" />
+                  <span>AI Analysis</span>
+                </h2>
 
               {error && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl mb-4">
@@ -1007,6 +1059,72 @@ Return ONLY a valid JSON object with this exact structure:
                 </div>
               )}
             </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
+                  <Box className="h-5 w-5 text-indigo-600" />
+                  <span>3D Mode</span>
+                </h2>
+                <div className="space-y-4">
+                  <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+                    <h3 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-2">
+                      3D Viewport Active
+                    </h3>
+                    <p className="text-sm text-indigo-700 dark:text-indigo-300">
+                      Create and manipulate 3D objects, molecular structures, and geometric shapes. Use the tools on the left to add objects to your scene.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Quick Tips:
+                    </h3>
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      <li className="flex items-start space-x-2">
+                        <span className="text-indigo-600 font-bold">•</span>
+                        <span>Left click + drag to rotate camera</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-indigo-600 font-bold">•</span>
+                        <span>Right click + drag to pan</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-indigo-600 font-bold">•</span>
+                        <span>Scroll to zoom in/out</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-indigo-600 font-bold">•</span>
+                        <span>Click objects to select and edit</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-indigo-600 font-bold">•</span>
+                        <span>Use shape tools to add 3D objects</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-indigo-600 font-bold">•</span>
+                        <span>Click molecule tool for pre-built structures</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+                    <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 mb-2">
+                      Features Available:
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {['3D Shapes', '3D Text', 'Molecules', 'Atoms', 'Materials', 'Lighting', 'Camera'].map((feature) => (
+                        <span
+                          key={feature}
+                          className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
