@@ -38,9 +38,13 @@ const HomeworkPage: React.FC = () => {
     if (!user) return;
     try {
       const key = await getUserApiKey(user.id, 'gemini');
-      setApiKey(key);
+      // Fallback to environment variable if user hasn't configured their own key
+      const finalKey = key || import.meta.env.VITE_GEMINI_API_KEY || null;
+      setApiKey(finalKey);
     } catch (error) {
       console.error('Error loading API key:', error);
+      // Fallback to environment variable on error
+      setApiKey(import.meta.env.VITE_GEMINI_API_KEY || null);
     }
   };
 
@@ -263,8 +267,12 @@ const HomeworkPage: React.FC = () => {
                     </button>
                     <button
                       onClick={handleProcess}
-                      disabled={false}
-                      className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-700 hover:via-purple-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg transform hover:scale-105 cursor-pointer"
+                      disabled={!apiKey}
+                      className={`flex items-center space-x-2 px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg ${
+                        !apiKey
+                          ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed opacity-50'
+                          : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-700 hover:via-purple-700 hover:to-emerald-700 text-white transform hover:scale-105 cursor-pointer'
+                      }`}
                     >
                       <Sparkles className="h-5 w-5" />
                       <span>Get AI Solution</span>

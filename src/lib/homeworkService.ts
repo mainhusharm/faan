@@ -265,7 +265,22 @@ Return ONLY a valid JSON object with this exact structure:
     };
   } catch (error) {
     console.error('Error analyzing homework:', error);
-    throw error;
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('API key')) {
+        throw new Error('Invalid Gemini API key. Please check your settings and try again.');
+      } else if (error.message.includes('quota') || error.message.includes('429')) {
+        throw new Error('API quota exceeded. Please try again later or check your API key limits.');
+      } else if (error.message.includes('JSON')) {
+        throw new Error('Failed to process AI response. Please try again with a clearer image.');
+      } else if (error.message.includes('Failed to save')) {
+        throw new Error('Failed to save results to database. Please check your connection and try again.');
+      }
+      throw error;
+    }
+    
+    throw new Error('Failed to analyze homework. Please try again.');
   }
 }
 
