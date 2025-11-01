@@ -182,20 +182,6 @@ const DiagramPage: React.FC = () => {
     }
   }, [background]);
 
-  const redrawCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    drawBackground(ctx);
-
-    actions.forEach(action => {
-      drawAction(ctx, action);
-    });
-  }, [actions, drawBackground, drawAction]);
-
   const drawAction = useCallback((ctx: CanvasRenderingContext2D, action: DrawingAction) => {
     if (action.points.length === 0) return;
 
@@ -277,6 +263,20 @@ const DiagramPage: React.FC = () => {
       ctx.fillText(action.text, action.points[0].x, action.points[0].y);
     }
   }, []);
+
+  const redrawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    drawBackground(ctx);
+
+    actions.forEach(action => {
+      drawAction(ctx, action);
+    });
+  }, [actions, drawBackground, drawAction]);
 
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>): Point | null => {
     const canvas = canvasRef.current;
