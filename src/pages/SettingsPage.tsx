@@ -133,6 +133,11 @@ const SettingsPage: React.FC = () => {
       return;
     }
 
+    if (!user) {
+      alert('❌ Please sign in to save API keys.');
+      return;
+    }
+
     setSaving(true);
     
     try {
@@ -140,29 +145,9 @@ const SettingsPage: React.FC = () => {
       console.log('Service:', newApiKeyForm.service_name);
       console.log('Key name:', newApiKeyForm.key_name);
       console.log('API key length:', newApiKeyForm.api_key.length);
+      console.log('User ID:', user.id);
       
-      // For now, let's simulate saving to local state until database is ready
-      const newApiKey = {
-        id: Date.now().toString(),
-        user_id: 'demo-user',
-        service_name: newApiKeyForm.service_name,
-        api_key: newApiKeyForm.api_key.trim(),
-        key_name: newApiKeyForm.key_name.trim(),
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      // Add to local state immediately
-      setApiKeys(prevKeys => [...prevKeys, newApiKey]);
-      
-      // Save to localStorage for persistence
-      const updatedKeys = [...apiKeys, newApiKey];
-      localStorage.setItem('user_api_keys', JSON.stringify(updatedKeys));
-      
-      console.log('✅ API key added to local state and localStorage');
-      
-      // Try to save to database (but don't fail if it doesn't work)
+      // Save to database first (primary storage)
       try {
         await userApiKeysService.saveApiKeyWithName(
           newApiKeyForm.service_name,
@@ -171,8 +156,30 @@ const SettingsPage: React.FC = () => {
         );
         console.log('✅ API key saved to database');
       } catch (dbError) {
-        console.warn('⚠️ Database save failed, but key is saved locally:', dbError);
+        console.error('❌ Database save failed:', dbError);
+        throw new Error('Failed to save API key to database');
       }
+      
+      // Also save to localStorage for quick access (with actual user ID)
+      const newApiKey = {
+        id: Date.now().toString(),
+        user_id: user.id,
+        service_name: newApiKeyForm.service_name,
+        api_key: newApiKeyForm.api_key.trim(),
+        key_name: newApiKeyForm.key_name.trim(),
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Add to local state
+      setApiKeys(prevKeys => [...prevKeys, newApiKey]);
+      
+      // Save to localStorage for quick access
+      const updatedKeys = [...apiKeys, newApiKey];
+      localStorage.setItem('user_api_keys', JSON.stringify(updatedKeys));
+      
+      console.log('✅ API key also cached in localStorage');
       
       alert('API key saved successfully!');
       setNewApiKeyForm({ service_name: 'openai', api_key: '', key_name: '' });

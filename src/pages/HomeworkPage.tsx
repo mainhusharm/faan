@@ -51,16 +51,18 @@ const HomeworkPage: React.FC = () => {
   const loadApiKey = async () => {
     if (!user) return;
     try {
+      console.log('🔍 Fetching Gemini API key from database for user:', user.id);
       const key = await getUserApiKey(user.id, 'gemini');
       setApiKey(key);
-      console.log('🔑 Gemini API Key loaded from user settings:', !!key);
+      console.log('🔑 Gemini API Key loaded:', !!key);
       if (key) {
-        console.log('🔑 API Key source: user-settings');
+        console.log('✅ API Key source: DATABASE (user settings at /api-settings)');
       } else {
-        console.log('⚠️ No Gemini API key found in user settings');
+        console.log('⚠️ No Gemini API key found in database');
+        console.log('💡 Please add your API key at: /api-settings');
       }
     } catch (error) {
-      console.error('Error loading API key:', error);
+      console.error('❌ Error loading API key from database:', error);
       setApiKey(null);
     }
   };
@@ -121,15 +123,17 @@ const HomeworkPage: React.FC = () => {
     setError(null);
     
     try {
-      // Check if user has configured their Gemini API key
-      console.log('🔑 Checking for Gemini API Key...');
-      console.log('🔑 API Key from user settings:', !!apiKey);
+      // Check if user has configured their Gemini API key in DATABASE
+      console.log('🔑 Checking for Gemini API Key from DATABASE...');
+      console.log('🔑 API Key from database (saved at /api-settings):', !!apiKey);
       
       if (!apiKey) {
-        console.error('❌ No Gemini API key found in user settings!');
+        console.error('❌ No Gemini API key found in DATABASE!');
+        console.error('💡 User needs to add API key at: /api-settings');
         const redirectToSettings = confirm(
-          '❌ No Gemini API key found!\n\n' +
-          'Please add your Gemini API key in Settings to use the AI Homework Helper.\n\n' +
+          '❌ No Gemini API key found in your account!\n\n' +
+          'Please add your Gemini API key at /api-settings to use the AI Homework Helper.\n\n' +
+          'Note: API keys are stored in the database, NOT in environment variables.\n\n' +
           'Click OK to go to API Settings now, or Cancel to stay here.'
         );
         
@@ -141,7 +145,7 @@ const HomeworkPage: React.FC = () => {
         return;
       }
       
-      console.log('✅ Gemini API key found from user settings, proceeding...');
+      console.log('✅ Gemini API key found from DATABASE, proceeding with API call...');
       
       // Convert image to base64
       console.log('📸 Converting image to base64...');
@@ -159,11 +163,12 @@ const HomeworkPage: React.FC = () => {
       console.log('✅ Image converted to base64');
       console.log('📊 Base64 length:', base64Image.length);
       
-      // Call Gemini API directly with fetch using user's API key
+      // Call Gemini API directly with user's API key from DATABASE
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       
-      console.log('📡 Calling Gemini API with user API key...');
+      console.log('📡 Calling Gemini API with user API key from DATABASE...');
       console.log('🌐 URL:', url.replace(apiKey, 'API_KEY_HIDDEN'));
+      console.log('🔐 Using API key saved by user at /api-settings (NOT from .env file)');
       
       const response = await fetch(url, {
         method: 'POST',
@@ -196,10 +201,12 @@ const HomeworkPage: React.FC = () => {
         
         // Provide specific error messages based on status code
         if (response.status === 400) {
+          console.error('❌ API returned 400 - Invalid API key');
           const redirectToSettings = confirm(
             '❌ Invalid API key!\n\n' +
-            'Your Gemini API key appears to be invalid or incorrectly configured.\n\n' +
-            'Click OK to go to API Settings and update your key, or Cancel to stay here.'
+            'Your Gemini API key (from database) appears to be invalid or incorrectly configured.\n\n' +
+            'Please update your key at /api-settings.\n\n' +
+            'Click OK to go to API Settings now, or Cancel to stay here.'
           );
           
           if (redirectToSettings) {
@@ -209,6 +216,7 @@ const HomeworkPage: React.FC = () => {
           setProcessingStep('idle');
           return;
         } else if (response.status === 429) {
+          console.error('❌ API returned 429 - Quota exceeded');
           alert(
             '❌ API Quota Exceeded!\n\n' +
             'Your Gemini API key has exceeded its quota.\n' +
@@ -217,10 +225,11 @@ const HomeworkPage: React.FC = () => {
           setProcessingStep('idle');
           return;
         } else if (response.status === 403) {
+          console.error('❌ API returned 403 - Access denied');
           alert(
             '❌ API Access Denied!\n\n' +
             'Your Gemini API key does not have permission to access this API.\n' +
-            'Please check your API key configuration.'
+            'Please check your API key configuration at /api-settings.'
           );
           setProcessingStep('idle');
           return;
