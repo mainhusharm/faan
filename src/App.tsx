@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Layout/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import SignUpPage from './pages/SignUpPage';
@@ -125,9 +126,11 @@ function App() {
             <Route 
               path="/diagram" 
               element={
-                <ProtectedRoute>
-                  <DiagramPage />
-                </ProtectedRoute>
+                <ErrorBoundary>
+                  <ProtectedRoute>
+                    <DiagramPage />
+                  </ProtectedRoute>
+                </ErrorBoundary>
               } 
             />
               </Routes>

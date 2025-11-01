@@ -65,6 +65,7 @@ const DiagramPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [isCanvasReady, setIsCanvasReady] = useState(false);
 
   const colors = ['#000000', '#0000FF', '#FF0000', '#00FF00', '#FFA500', '#800080', '#FFFF00', '#8B4513'];
 
@@ -111,6 +112,8 @@ const DiagramPage: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    setIsCanvasReady(true);
+
     // Set canvas size
     const updateCanvasSize = () => {
       const container = canvas.parentElement;
@@ -130,8 +133,7 @@ const DiagramPage: React.FC = () => {
     return () => {
       window.removeEventListener('resize', updateCanvasSize);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [background]);
+  }, [background, drawBackground, redrawCanvas]);
 
   const drawBackground = useCallback((ctx: CanvasRenderingContext2D) => {
     const canvas = ctx.canvas;
