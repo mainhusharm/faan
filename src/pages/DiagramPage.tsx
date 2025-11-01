@@ -106,133 +106,149 @@ const DiagramPage: React.FC = () => {
   }, [loadApiKey]);
 
   const drawBackground = useCallback((ctx: CanvasRenderingContext2D) => {
-    const canvas = ctx.canvas;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!ctx || !ctx.canvas) return;
+    
+    try {
+      const canvas = ctx.canvas;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (background === 'grid') {
-      ctx.strokeStyle = '#e0e0e0';
-      ctx.lineWidth = 1;
-      const gridSize = 20;
-      
-      for (let x = 0; x <= canvas.width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-      }
-      
-      for (let y = 0; y <= canvas.height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
-    } else if (background === 'dots') {
-      ctx.fillStyle = '#d0d0d0';
-      const dotSize = 2;
-      const spacing = 20;
-      
-      for (let x = spacing; x < canvas.width; x += spacing) {
-        for (let y = spacing; y < canvas.height; y += spacing) {
+      if (background === 'grid') {
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 1;
+        const gridSize = 20;
+        
+        for (let x = 0; x <= canvas.width; x += gridSize) {
           ctx.beginPath();
-          ctx.arc(x, y, dotSize, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        
+        for (let y = 0; y <= canvas.height; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+      } else if (background === 'dots') {
+        ctx.fillStyle = '#d0d0d0';
+        const dotSize = 2;
+        const spacing = 20;
+        
+        for (let x = spacing; x < canvas.width; x += spacing) {
+          for (let y = spacing; y < canvas.height; y += spacing) {
+            ctx.beginPath();
+            ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      } else if (background === 'ruled') {
+        ctx.strokeStyle = '#d0d0d0';
+        ctx.lineWidth = 1;
+        const lineSpacing = 30;
+        
+        for (let y = lineSpacing; y < canvas.height; y += lineSpacing) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
         }
       }
-    } else if (background === 'ruled') {
-      ctx.strokeStyle = '#d0d0d0';
-      ctx.lineWidth = 1;
-      const lineSpacing = 30;
-      
-      for (let y = lineSpacing; y < canvas.height; y += lineSpacing) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
+    } catch (error) {
+      console.error('Error drawing background:', error);
     }
   }, [background]);
 
   const drawAction = useCallback((ctx: CanvasRenderingContext2D, action: DrawingAction) => {
-    if (action.points.length === 0) return;
+    if (!action || !action.points || action.points.length === 0) return;
 
-    ctx.strokeStyle = action.color;
-    ctx.fillStyle = action.color;
-    ctx.lineWidth = action.thickness;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    try {
+      ctx.strokeStyle = action.color || '#000000';
+      ctx.fillStyle = action.color || '#000000';
+      ctx.lineWidth = action.thickness || 1;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
 
-    if (action.tool === 'pencil') {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.beginPath();
-      ctx.moveTo(action.points[0].x, action.points[0].y);
-      action.points.forEach(point => {
-        ctx.lineTo(point.x, point.y);
-      });
-      ctx.stroke();
-    } else if (action.tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath();
-      ctx.moveTo(action.points[0].x, action.points[0].y);
-      action.points.forEach(point => {
-        ctx.lineTo(point.x, point.y);
-      });
-      ctx.stroke();
-      ctx.globalCompositeOperation = 'source-over';
-    } else if (action.points.length >= 2) {
-      const start = action.points[0];
-      const end = action.points[action.points.length - 1];
-      
-      if (action.tool === 'rectangle') {
-        const width = end.x - start.x;
-        const height = end.y - start.y;
-        ctx.strokeRect(start.x, start.y, width, height);
-      } else if (action.tool === 'circle') {
-        const radius = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+      if (action.tool === 'pencil') {
+        ctx.globalCompositeOperation = 'source-over';
         ctx.beginPath();
-        ctx.arc(start.x, start.y, radius, 0, Math.PI * 2);
+        ctx.moveTo(action.points[0].x, action.points[0].y);
+        action.points.forEach(point => {
+          if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
         ctx.stroke();
-      } else if (action.tool === 'triangle') {
-        const width = end.x - start.x;
+      } else if (action.tool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        ctx.moveTo(start.x + width / 2, start.y);
-        ctx.lineTo(start.x, end.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.closePath();
+        ctx.moveTo(action.points[0].x, action.points[0].y);
+        action.points.forEach(point => {
+          if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+            ctx.lineTo(point.x, point.y);
+          }
+        });
         ctx.stroke();
-      } else if (action.tool === 'line') {
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
-      } else if (action.tool === 'arrow') {
-        const headLength = 15;
-        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        ctx.globalCompositeOperation = 'source-over';
+      } else if (action.points.length >= 2) {
+        const start = action.points[0];
+        const end = action.points[action.points.length - 1];
         
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
+        if (!start || !end) return;
         
-        ctx.beginPath();
-        ctx.moveTo(end.x, end.y);
-        ctx.lineTo(
-          end.x - headLength * Math.cos(angle - Math.PI / 6),
-          end.y - headLength * Math.sin(angle - Math.PI / 6)
-        );
-        ctx.moveTo(end.x, end.y);
-        ctx.lineTo(
-          end.x - headLength * Math.cos(angle + Math.PI / 6),
-          end.y - headLength * Math.sin(angle + Math.PI / 6)
-        );
-        ctx.stroke();
+        if (action.tool === 'rectangle') {
+          const width = end.x - start.x;
+          const height = end.y - start.y;
+          ctx.strokeRect(start.x, start.y, width, height);
+        } else if (action.tool === 'circle') {
+          const radius = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+          ctx.beginPath();
+          ctx.arc(start.x, start.y, radius, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (action.tool === 'triangle') {
+          const width = end.x - start.x;
+          ctx.beginPath();
+          ctx.moveTo(start.x + width / 2, start.y);
+          ctx.lineTo(start.x, end.y);
+          ctx.lineTo(end.x, end.y);
+          ctx.closePath();
+          ctx.stroke();
+        } else if (action.tool === 'line') {
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(end.x, end.y);
+          ctx.stroke();
+        } else if (action.tool === 'arrow') {
+          const headLength = 15;
+          const angle = Math.atan2(end.y - start.y, end.x - start.x);
+          
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(end.x, end.y);
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(end.x, end.y);
+          ctx.lineTo(
+            end.x - headLength * Math.cos(angle - Math.PI / 6),
+            end.y - headLength * Math.sin(angle - Math.PI / 6)
+          );
+          ctx.moveTo(end.x, end.y);
+          ctx.lineTo(
+            end.x - headLength * Math.cos(angle + Math.PI / 6),
+            end.y - headLength * Math.sin(angle + Math.PI / 6)
+          );
+          ctx.stroke();
+        }
       }
-    }
 
-    if (action.tool === 'text' && action.text) {
-      ctx.font = `${action.thickness * 6}px Arial`;
-      ctx.fillText(action.text, action.points[0].x, action.points[0].y);
+      if (action.tool === 'text' && action.text && action.points[0]) {
+        ctx.font = `${(action.thickness || 3) * 6}px Arial`;
+        ctx.fillText(action.text, action.points[0].x, action.points[0].y);
+      }
+    } catch (error) {
+      console.error('Error drawing action:', error, action);
     }
   }, []);
 
@@ -243,11 +259,15 @@ const DiagramPage: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    drawBackground(ctx);
+    try {
+      drawBackground(ctx);
 
-    actions.forEach(action => {
-      drawAction(ctx, action);
-    });
+      actions.forEach(action => {
+        drawAction(ctx, action);
+      });
+    } catch (error) {
+      console.error('Error redrawing canvas:', error);
+    }
   }, [actions, drawBackground, drawAction]);
 
   useEffect(() => {
@@ -261,14 +281,30 @@ const DiagramPage: React.FC = () => {
 
     // Set canvas size
     const updateCanvasSize = () => {
-      const container = canvas.parentElement;
-      if (!container) return;
-      
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-      
-      // Redraw background and actions
-      redrawCanvas();
+      try {
+        const container = canvas.parentElement;
+        if (!container) return;
+        
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        // Only update if dimensions are valid
+        if (width > 0 && height > 0) {
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Redraw background and actions
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            drawBackground(ctx);
+            actions.forEach(action => {
+              drawAction(ctx, action);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error updating canvas size:', error);
+      }
     };
 
     updateCanvasSize();
@@ -277,95 +313,112 @@ const DiagramPage: React.FC = () => {
     return () => {
       window.removeEventListener('resize', updateCanvasSize);
     };
-  }, [background, actions, redrawCanvas]);
+  }, [background, actions, drawBackground, drawAction]);
 
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>): Point | null => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
 
-    const rect = canvas.getBoundingClientRect();
-    
-    if ('touches' in e) {
-      if (e.touches.length === 0) return null;
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top
-      };
-    } else {
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
+      const rect = canvas.getBoundingClientRect();
+      
+      if ('touches' in e) {
+        if (e.touches.length === 0) return null;
+        return {
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
+        };
+      } else {
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      }
+    } catch (error) {
+      console.error('Error getting mouse position:', error);
+      return null;
     }
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    const pos = getMousePos(e);
-    if (!pos) return;
+    if (!isCanvasReady) return;
+    
+    try {
+      const pos = getMousePos(e);
+      if (!pos) return;
 
-    if (selectedTool === 'text') {
-      const text = prompt('Enter text:');
-      if (text) {
-        const newAction: DrawingAction = {
-          tool: 'text',
-          points: [pos],
-          color,
-          thickness,
-          text
-        };
-        setActions([...actions, newAction]);
-        setUndoneActions([]);
+      if (selectedTool === 'text') {
+        const text = prompt('Enter text:');
+        if (text) {
+          const newAction: DrawingAction = {
+            tool: 'text',
+            points: [pos],
+            color,
+            thickness,
+            text
+          };
+          setActions([...actions, newAction]);
+          setUndoneActions([]);
+        }
+        return;
       }
-      return;
-    }
 
-    setIsDrawing(true);
-    setCurrentAction({
-      tool: selectedTool,
-      points: [pos],
-      color,
-      thickness
-    });
-    setUndoneActions([]);
+      setIsDrawing(true);
+      setCurrentAction({
+        tool: selectedTool,
+        points: [pos],
+        color,
+        thickness
+      });
+      setUndoneActions([]);
+    } catch (error) {
+      console.error('Error handling mouse down:', error);
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !currentAction) return;
+    if (!isDrawing || !currentAction || !isCanvasReady) return;
 
-    const pos = getMousePos(e);
-    if (!pos) return;
+    try {
+      const pos = getMousePos(e);
+      if (!pos) return;
 
-    if (selectedTool === 'pencil' || selectedTool === 'eraser') {
-      setCurrentAction({
-        ...currentAction,
-        points: [...currentAction.points, pos]
-      });
-      
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (selectedTool === 'pencil' || selectedTool === 'eraser') {
+        setCurrentAction({
+          ...currentAction,
+          points: [...currentAction.points, pos]
+        });
+        
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
 
-      drawAction(ctx, {
-        ...currentAction,
-        points: [...currentAction.points, pos]
-      });
-    } else {
-      setCurrentAction({
-        ...currentAction,
-        points: [currentAction.points[0], pos]
-      });
-      
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+        drawAction(ctx, {
+          ...currentAction,
+          points: [...currentAction.points, pos]
+        });
+      } else {
+        if (!currentAction.points || currentAction.points.length === 0) return;
+        
+        setCurrentAction({
+          ...currentAction,
+          points: [currentAction.points[0], pos]
+        });
+        
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
 
-      redrawCanvas();
-      drawAction(ctx, {
-        ...currentAction,
-        points: [currentAction.points[0], pos]
-      });
+        redrawCanvas();
+        drawAction(ctx, {
+          ...currentAction,
+          points: [currentAction.points[0], pos]
+        });
+      }
+    } catch (error) {
+      console.error('Error handling mouse move:', error);
     }
   };
 
@@ -396,28 +449,59 @@ const DiagramPage: React.FC = () => {
   };
 
   const confirmClear = () => {
-    setActions([]);
-    setUndoneActions([]);
-    setCurrentAction(null);
-    setResult(null);
-    setError(null);
-    setShowClearDialog(false);
-    redrawCanvas();
+    try {
+      setActions([]);
+      setUndoneActions([]);
+      setCurrentAction(null);
+      setResult(null);
+      setError(null);
+      setShowClearDialog(false);
+      
+      // Redraw canvas after state updates
+      setTimeout(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        drawBackground(ctx);
+      }, 0);
+    } catch (error) {
+      console.error('Error clearing canvas:', error);
+      setError('Failed to clear canvas. Please try again.');
+    }
   };
 
   const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        setError('Canvas not ready. Please try again.');
+        return;
+      }
 
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `diagram-${Date.now()}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
+      canvas.toBlob((blob) => {
+        try {
+          if (!blob) {
+            setError('Failed to create image. Please try again.');
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `diagram-${Date.now()}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error('Error downloading canvas:', error);
+          setError('Failed to download image. Please try again.');
+        }
+      });
+    } catch (error) {
+      console.error('Error preparing download:', error);
+      setError('Failed to prepare download. Please try again.');
+    }
   };
 
   const handleAnalyze = async () => {
@@ -432,7 +516,10 @@ const DiagramPage: React.FC = () => {
     }
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      setError('Canvas not ready. Please try again.');
+      return;
+    }
 
     setProcessingStep('analyzing');
     setError(null);
@@ -448,10 +535,27 @@ const DiagramPage: React.FC = () => {
           }
 
           const reader = new FileReader();
-          reader.readAsDataURL(blob);
+          
+          reader.onerror = () => {
+            console.error('Error reading canvas image');
+            setError('Failed to read canvas image. Please try again.');
+            setProcessingStep('error');
+          };
+          
           reader.onload = async () => {
             try {
-              const base64Data = (reader.result as string).split(',')[1];
+              if (!reader.result || typeof reader.result !== 'string') {
+                setError('Failed to process canvas image. Please try again.');
+                setProcessingStep('error');
+                return;
+              }
+
+              const base64Data = reader.result.split(',')[1];
+              if (!base64Data) {
+                setError('Failed to extract image data. Please try again.');
+                setProcessingStep('error');
+                return;
+              }
               
               const genAI = new GoogleGenerativeAI(apiKey);
               const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -502,33 +606,30 @@ Return ONLY a valid JSON object with this exact structure:
               const aiResponse = JSON.parse(jsonText);
 
               setResult({
-                description: aiResponse.description,
-                concept: aiResponse.concept,
-                errors: aiResponse.errors || [],
-                suggestions: aiResponse.suggestions || [],
-                explanation: aiResponse.explanation,
-                relatedTopics: aiResponse.related_topics || []
+                description: aiResponse.description || 'No description available',
+                concept: aiResponse.concept || 'Unknown concept',
+                errors: Array.isArray(aiResponse.errors) ? aiResponse.errors : [],
+                suggestions: Array.isArray(aiResponse.suggestions) ? aiResponse.suggestions : [],
+                explanation: aiResponse.explanation || 'No explanation available',
+                relatedTopics: Array.isArray(aiResponse.related_topics) ? aiResponse.related_topics : []
               });
 
               setProcessingStep('completed');
             } catch (error) {
               console.error('Error analyzing diagram:', error);
-              setError(error instanceof Error ? error.message : 'Failed to analyze diagram. Please try again.');
+              const errorMessage = error instanceof Error ? error.message : 'Failed to analyze diagram. Please try again.';
+              setError(errorMessage);
               setProcessingStep('error');
             }
           };
           
-          reader.onerror = () => {
-            console.error('Error reading canvas image');
-            setError('Failed to read canvas image. Please try again.');
-            setProcessingStep('error');
-          };
+          reader.readAsDataURL(blob);
         } catch (error) {
           console.error('Error in blob callback:', error);
           setError('Failed to process canvas image. Please try again.');
           setProcessingStep('error');
         }
-      });
+      }, 'image/png');
     } catch (error) {
       console.error('Error preparing diagram for analysis:', error);
       setError('Failed to prepare diagram for analysis. Please try again.');
