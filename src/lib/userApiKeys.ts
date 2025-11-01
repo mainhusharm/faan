@@ -215,5 +215,38 @@ export default UserApiKeysService;
 // Helper function for easy access
 export async function getUserApiKey(userId: string, serviceName: 'openai' | 'stability' | 'midjourney' | 'gemini'): Promise<string | null> {
   const service = UserApiKeysService.getInstance();
-  return service.getApiKey(serviceName);
+  
+  // Try to get from database first
+  const dbKey = await service.getApiKey(serviceName);
+  if (dbKey) {
+    return dbKey;
+  }
+  
+  // Fallback to localStorage (for keys saved before database was available)
+  try {
+    const savedKeys = localStorage.getItem('user_api_keys');
+    if (savedKeys) {
+      // LocalStorage stores plain api_key, not encrypted
+      interface LocalStorageApiKey {
+        id: string;
+        user_id: string;
+        service_name: string;
+        api_key: string;
+        key_name?: string;
+        is_active: boolean;
+        created_at: string;
+        updated_at: string;
+      }
+      const parsedKeys = JSON.parse(savedKeys) as LocalStorageApiKey[];
+      const key = parsedKeys.find((k) => k.service_name === serviceName && k.is_active);
+      if (key && key.api_key) {
+        console.log(`✅ Found ${serviceName} API key in localStorage`);
+        return key.api_key;
+      }
+    }
+  } catch (error) {
+    console.error('Error reading API keys from localStorage:', error);
+  }
+  
+  return null;
 }
