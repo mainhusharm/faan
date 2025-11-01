@@ -95,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       full_name: user?.user_metadata?.full_name || 'User',
       email: user?.email || '',
       points: 0,
+      role: 'student',
       created_at: new Date().toISOString()
     };
     setProfile(defaultProfile);
