@@ -13,7 +13,8 @@ import {
   getHomeworkResult,
   FullHomeworkResult,
 } from '../lib/homeworkService';
-import { getUserApiKey } from '../lib/userApiKeys';
+import { getUserApiKey, UserApiKey } from '../lib/userApiKeys';
+import { supabase } from '../lib/supabase';
 
 type ViewMode = 'upload' | 'history';
 type ProcessingStep = 'idle' | 'uploading' | 'analyzing' | 'generating' | 'completed' | 'error';
@@ -60,7 +61,7 @@ const HomeworkPage: React.FC = () => {
         try {
           const parsedKeys = JSON.parse(savedKeys);
           console.log('📦 Loaded API keys from localStorage:', parsedKeys.length);
-          const geminiKey = parsedKeys.find((k: any) => k.service_name === 'gemini' && k.is_active);
+          const geminiKey = parsedKeys.find((k: UserApiKey) => k.service_name === 'gemini' && k.is_active);
           if (geminiKey && geminiKey.api_key) {
             setApiKey(geminiKey.api_key);
             console.log('✅ Found Gemini API key in localStorage');
@@ -466,6 +467,203 @@ const HomeworkPage: React.FC = () => {
                   selectedImage={selectedImage}
                   onClear={handleClearImage}
                 />
+
+                {/* Debug Button */}
+                <div className="flex justify-center mb-4">
+                  <button
+                    onClick={async () => {
+                      console.clear();
+                      console.log('=== DEBUG: DATABASE INSPECTION ===');
+                      
+                      try {
+                        // Get user
+                        const { data: { user }, error: authError } = await supabase.auth.getUser();
+                        console.log('\n1. USER INFO:');
+                        console.log('User ID:', user?.id);
+                        console.log('User Email:', user?.email);
+                        console.log('Auth Error:', authError);
+                        
+                        if (!user) {
+                          alert('❌ Not logged in!');
+                          return;
+                        }
+                        
+                        // Get EVERYTHING from profiles table
+                        console.log('\n2. PROFILES TABLE:');
+                        const { data: profile, error: profileError } = await supabase
+                          .from('profiles')
+                          .select('*')
+                          .eq('id', user.id)
+                          .single();
+                        
+                        console.log('Profile Data:', profile);
+                        console.log('Profile Error:', profileError);
+                        
+                        if (profile) {
+                          console.log('\n3. ALL FIELDS IN PROFILE:');
+                          Object.keys(profile).forEach(key => {
+                            const value = profile[key];
+                            console.log(`  ${key}:`, typeof value === 'string' && value.length > 50 
+                              ? value.substring(0, 50) + '...' 
+                              : value
+                            );
+                          });
+                          
+                          console.log('\n4. CHECKING COMMON API KEY FIELDS:');
+                          const possibleFields = [
+                            'gemini_api_key',
+                            'api_key_encrypted', 
+                            'encrypted_api_key',
+                            'api_keys',
+                            'google_api_key',
+                            'encrypted_gemini_key',
+                            'gemini_key'
+                          ];
+                          
+                          possibleFields.forEach(field => {
+                            if (profile[field]) {
+                              console.log(`✅ FOUND: ${field} =`, 
+                                typeof profile[field] === 'string' 
+                                  ? profile[field].substring(0, 20) + '...'
+                                  : profile[field]
+                              );
+                            } else {
+                              console.log(`❌ EMPTY: ${field}`);
+                            }
+                          });
+                        }
+                        
+                        // Try other possible tables
+                        console.log('\n5. CHECKING OTHER TABLES:');
+                        
+                        const { data: settings, error: settingsError } = await supabase
+                          .from('user_settings')
+                          .select('*')
+                          .eq('user_id', user.id)
+                          .single();
+                        
+                        console.log('user_settings:', settings || 'Table does not exist or no data');
+                        console.log('user_settings error:', settingsError?.message);
+                        
+                        const { data: apiKeys, error: apiKeysError } = await supabase
+                          .from('user_api_keys')
+                          .select('*')
+                          .eq('user_id', user.id);
+                        
+                        console.log('user_api_keys:', apiKeys || 'Table does not exist or no data');
+                        console.log('user_api_keys error:', apiKeysError?.message);
+                        
+                        // Test Gemini API directly with a known key (if found)
+                        console.log('\n6. TESTING GEMINI API:');
+                        let testKey = null;
+                        
+                        // Check all possible sources
+                        if (profile?.gemini_api_key) {
+                          testKey = profile.gemini_api_key;
+                          console.log('Found key in: profile.gemini_api_key');
+                        } else if (profile?.api_key_encrypted) {
+                          testKey = profile.api_key_encrypted;
+                          console.log('Found key in: profile.api_key_encrypted (might be encrypted)');
+                        } else if (profile?.encrypted_api_key) {
+                          testKey = profile.encrypted_api_key;
+                          console.log('Found key in: profile.encrypted_api_key (might be encrypted)');
+                        } else if (profile?.api_keys?.gemini) {
+                          testKey = profile.api_keys.gemini;
+                          console.log('Found key in: profile.api_keys.gemini');
+                        } else if (apiKeys && apiKeys.length > 0) {
+                          const geminiKey = apiKeys.find(k => k.service_name === 'gemini');
+                          if (geminiKey) {
+                            testKey = geminiKey.api_key_encrypted;
+                            console.log('Found key in: user_api_keys.api_key_encrypted');
+                          }
+                        }
+                        
+                        if (testKey) {
+                          console.log('Testing with key:', testKey.substring(0, 15) + '...');
+                          
+                          // Try direct test first
+                          const testResponse = await fetch(
+                            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${testKey}`,
+                            {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                contents: [{ parts: [{ text: "Say hello" }] }]
+                              })
+                            }
+                          );
+                          
+                          console.log('Gemini API Response Status:', testResponse.status);
+                          
+                          if (testResponse.ok) {
+                            console.log('✅ API KEY WORKS!');
+                          } else {
+                            const error = await testResponse.text();
+                            console.log('❌ API KEY INVALID (might be encrypted):', error.substring(0, 100));
+                            
+                            // Try decrypting if it looks like base64
+                            try {
+                              const decrypted = atob(testKey);
+                              console.log('Attempting decryption...');
+                              console.log('Decrypted key preview:', decrypted.substring(0, 15) + '...');
+                              
+                              const testResponse2 = await fetch(
+                                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${decrypted}`,
+                                {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    contents: [{ parts: [{ text: "Say hello" }] }]
+                                  })
+                                }
+                              );
+                              
+                              console.log('Decrypted API Response Status:', testResponse2.status);
+                              
+                              if (testResponse2.ok) {
+                                console.log('✅ DECRYPTED API KEY WORKS!');
+                              } else {
+                                const error2 = await testResponse2.text();
+                                console.log('❌ DECRYPTED KEY ALSO INVALID:', error2.substring(0, 100));
+                              }
+                            } catch {
+                              console.log('Cannot decrypt (not base64)');
+                            }
+                          }
+                        } else {
+                          console.log('❌ No API key found to test');
+                        }
+                        
+                        // Check localStorage
+                        console.log('\n7. CHECKING LOCALSTORAGE:');
+                        const localKeys = localStorage.getItem('user_api_keys');
+                        if (localKeys) {
+                          try {
+                            const parsed = JSON.parse(localKeys);
+                            console.log('LocalStorage keys count:', parsed.length);
+                            parsed.forEach((k: UserApiKey) => {
+                              console.log(`  - ${k.service_name}: ${k.api_key ? k.api_key.substring(0, 15) + '...' : 'EMPTY'}`);
+                            });
+                          } catch {
+                            console.log('Failed to parse localStorage keys');
+                          }
+                        } else {
+                          console.log('No keys in localStorage');
+                        }
+                        
+                        alert('✅ Debug complete! Check browser console (F12) for detailed output.');
+                        
+                      } catch (error) {
+                        console.error('Debug error:', error);
+                        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                        alert('Debug error: ' + errorMessage);
+                      }
+                    }}
+                    className="w-full mb-4 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    🔍 DEBUG: Show Database Info
+                  </button>
+                </div>
 
                 {/* Action Buttons */}
                 {selectedImage && (
