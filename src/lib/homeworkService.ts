@@ -121,14 +121,19 @@ export async function updateHomeworkUploadStatus(
  * Convert file to base64 for AI analysis
  */
 async function fileToBase64(file: File): Promise<string> {
+  console.log('🔄 Converting file to base64:', file.name);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
       const base64 = (reader.result as string).split(',')[1];
+      console.log('✅ File converted to base64 successfully');
       resolve(base64);
     };
-    reader.onerror = error => reject(error);
+    reader.onerror = error => {
+      console.error('❌ Error converting file to base64:', error);
+      reject(error);
+    };
   });
 }
 
@@ -140,12 +145,21 @@ export async function analyzeHomeworkImage(
   uploadId: string,
   apiKey: string
 ): Promise<{ analysis: HomeworkAnalysis; solution: HomeworkSolution }> {
+  console.log('🤖 Starting analyzeHomeworkImage function');
+  console.log('📁 File details:', { name: file.name, size: file.size, type: file.type });
+  console.log('🆔 Upload ID:', uploadId);
+  console.log('🔑 API Key length:', apiKey.length);
+  
   try {
+    console.log('🔧 Initializing Google Generative AI...');
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    console.log('✅ Gemini model initialized');
 
+    console.log('🔄 Converting file to base64...');
     // Convert file to base64
     const base64Data = await fileToBase64(file);
+    console.log('✅ File converted to base64, length:', base64Data.length);
     
     // Create the prompt for comprehensive analysis
     const prompt = `You are an expert educational AI tutor. Analyze this homework problem image and provide a comprehensive response in JSON format.
@@ -195,6 +209,7 @@ Return ONLY a valid JSON object with this exact structure:
   ]
 }`;
 
+    console.log('📝 Preparing image parts for Gemini...');
     const imageParts = [
       {
         inlineData: {
@@ -203,21 +218,31 @@ Return ONLY a valid JSON object with this exact structure:
         }
       }
     ];
+    console.log('✅ Image parts prepared');
 
+    console.log('📡 Sending request to Gemini API...');
     const result = await model.generateContent([prompt, ...imageParts]);
+    console.log('✅ Got response from Gemini');
     const response = await result.response;
     const text = response.text();
+    console.log('✅ Response text length:', text.length);
+    console.log('📄 Raw response preview:', text.substring(0, 200) + '...');
     
     // Extract JSON from response (handle markdown code blocks)
     let jsonText = text;
     if (text.includes('```json')) {
       jsonText = text.split('```json')[1].split('```')[0].trim();
+      console.log('🔧 Extracted JSON from markdown code block');
     } else if (text.includes('```')) {
       jsonText = text.split('```')[1].split('```')[0].trim();
+      console.log('🔧 Extracted JSON from generic code block');
     }
     
+    console.log('🔧 Parsing JSON response...');
     const aiResponse = JSON.parse(jsonText);
+    console.log('✅ JSON parsed successfully');
 
+    console.log('💾 Creating analysis record in database...');
     // Create analysis record
     const { data: analysisData, error: analysisError } = await supabase
       .from('homework_analysis')
@@ -237,9 +262,12 @@ Return ONLY a valid JSON object with this exact structure:
       .single();
 
     if (analysisError) {
+      console.error('❌ Database error (analysis):', analysisError);
       throw new Error(`Failed to save analysis: ${analysisError.message}`);
     }
+    console.log('✅ Analysis record created:', analysisData.id);
 
+    console.log('💾 Creating solution record in database...');
     // Create solution record
     const { data: solutionData, error: solutionError } = await supabase
       .from('homework_solutions')
@@ -256,15 +284,22 @@ Return ONLY a valid JSON object with this exact structure:
       .single();
 
     if (solutionError) {
+      console.error('❌ Database error (solution):', solutionError);
       throw new Error(`Failed to save solution: ${solutionError.message}`);
     }
+    console.log('✅ Solution record created:', solutionData.id);
 
+    console.log('🎉 analyzeHomeworkImage completed successfully');
     return {
       analysis: analysisData,
       solution: solutionData
     };
   } catch (error) {
-    console.error('Error analyzing homework:', error);
+    console.error('❌ Error in analyzeHomeworkImage:', error);
+    console.error('❌ Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     
     // Provide more specific error messages
     if (error instanceof Error) {

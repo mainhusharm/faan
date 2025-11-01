@@ -31,8 +31,19 @@ const HomeworkPage: React.FC = () => {
 
   useEffect(() => {
     loadApiKey();
+    console.log('🏠 Homework component mounted');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Log when images change
+  useEffect(() => {
+    console.log('📸 Selected image updated:', selectedImage?.name);
+  }, [selectedImage]);
+
+  // Log when analyzing state changes  
+  useEffect(() => {
+    console.log('🔄 Processing state:', processingStep);
+  }, [processingStep]);
 
   const loadApiKey = async () => {
     if (!user) return;
@@ -41,14 +52,18 @@ const HomeworkPage: React.FC = () => {
       // Fallback to environment variable if user hasn't configured their own key
       const finalKey = key || import.meta.env.VITE_GEMINI_API_KEY || null;
       setApiKey(finalKey);
+      console.log('🔑 API Key loaded:', !!finalKey);
     } catch (error) {
       console.error('Error loading API key:', error);
       // Fallback to environment variable on error
-      setApiKey(import.meta.env.VITE_GEMINI_API_KEY || null);
+      const fallbackKey = import.meta.env.VITE_GEMINI_API_KEY || null;
+      setApiKey(fallbackKey);
+      console.log('🔑 Using fallback API key:', !!fallbackKey);
     }
   };
 
   const handleImageSelected = (file: File) => {
+    console.log('📸 Image selected:', file.name, file.size, file.type);
     setSelectedImage(file);
     setEditingImage(null);
     setResult(null);
@@ -79,21 +94,34 @@ const HomeworkPage: React.FC = () => {
   };
 
   const handleProcess = async () => {
-    if (!selectedImage || !user) return;
+    console.log('🔥 ANALYZE BUTTON CLICKED');
+    console.log('📸 Selected image:', selectedImage?.name, selectedImage?.size);
+    console.log('👤 User exists:', !!user);
+    console.log('🔑 API Key exists:', !!apiKey);
+    
+    if (!selectedImage || !user) {
+      console.log('❌ Missing required data:', { selectedImage: !!selectedImage, user: !!user });
+      return;
+    }
 
     // Check for API key
     if (!apiKey) {
+      console.log('❌ No API key available');
       setError('Please configure your Gemini API key in Settings first.');
       return;
     }
 
+    console.log('🚀 Starting analysis...');
     try {
       setProcessingStep('uploading');
       setError(null);
 
+      console.log('📤 Uploading image to storage...');
       // Upload image to storage
       const imageUrl = await uploadHomeworkImage(selectedImage, user.id);
+      console.log('✅ Image uploaded to:', imageUrl);
 
+      console.log('📝 Creating upload record...');
       // Create upload record
       const upload = await createHomeworkUpload(
         user.id,
@@ -102,23 +130,29 @@ const HomeworkPage: React.FC = () => {
         selectedImage.size,
         selectedImage.type
       );
+      console.log('✅ Upload record created:', upload.id);
 
+      console.log('🔄 Updating status to processing...');
       // Update status to processing
       await updateHomeworkUploadStatus(upload.id, 'processing');
       setProcessingStep('analyzing');
 
+      console.log('🤖 Calling AI analysis...');
       // Analyze with AI
       const { analysis, solution } = await analyzeHomeworkImage(
         selectedImage,
         upload.id,
         apiKey
       );
+      console.log('✅ AI analysis complete:', { analysis: !!analysis, solution: !!solution });
 
       setProcessingStep('generating');
 
+      console.log('✅ Updating status to completed...');
       // Update status to completed
       await updateHomeworkUploadStatus(upload.id, 'completed');
 
+      console.log('🎉 Setting result...');
       // Set result
       setResult({
         upload,
@@ -127,8 +161,9 @@ const HomeworkPage: React.FC = () => {
       });
 
       setProcessingStep('completed');
+      console.log('🎊 Process completed successfully!');
     } catch (error) {
-      console.error('Error processing homework:', error);
+      console.error('❌ Error processing homework:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to process homework. Please try again.';
       setError(errorMessage);
       setProcessingStep('error');
@@ -156,6 +191,45 @@ const HomeworkPage: React.FC = () => {
     setProcessingStep('idle');
     setError(null);
     setViewMode('upload');
+  };
+
+  // Debug test handlers
+  const handleTestButtonClick = () => {
+    console.log('🧪 TEST BUTTON CLICKED!');
+    alert('TEST BUTTON WORKS! Check console for logs.');
+    console.log('🔑 Current API Key:', !!apiKey);
+    console.log('📸 Selected Image:', !!selectedImage);
+    console.log('👤 User:', !!user);
+    console.log('🔄 Processing Step:', processingStep);
+  };
+
+  const handleTestGeminiAPI = async () => {
+    console.log('🚀 TESTING GEMINI API DIRECTLY...');
+    const testApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    console.log('🔑 Test API Key exists:', !!testApiKey);
+    
+    if (!testApiKey) {
+      alert('No VITE_GEMINI_API_KEY found in environment!');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${testApiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: "Say hello!" }]
+          }]
+        })
+      });
+      const data = await response.json();
+      console.log('✅ Gemini API Response:', data);
+      alert('Gemini API works! Check console for response.');
+    } catch (error) {
+      console.error('❌ Gemini API Error:', error);
+      alert('Gemini API failed: ' + error.message);
+    }
   };
 
   if (!user) {
