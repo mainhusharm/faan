@@ -10,7 +10,6 @@ import {
   uploadHomeworkImage,
   createHomeworkUpload,
   updateHomeworkUploadStatus,
-  analyzeHomeworkImage,
   getHomeworkResult,
   FullHomeworkResult,
 } from '../lib/homeworkService';
@@ -32,16 +31,20 @@ const HomeworkPage: React.FC = () => {
   useEffect(() => {
     loadApiKey();
     console.log('🏠 Homework component mounted');
+    console.log('👤 User:', user?.email || 'Not logged in');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Log when images change
   useEffect(() => {
-    console.log('📸 Selected image updated:', selectedImage?.name);
+    console.log('=== IMAGE STATE CHANGED ===');
+    console.log('📸 Selected image:', selectedImage?.name || 'None');
+    console.log('🔘 Button should be:', selectedImage ? 'ENABLED (blue)' : 'DISABLED (gray)');
   }, [selectedImage]);
 
   // Log when analyzing state changes  
   useEffect(() => {
+    console.log('=== PROCESSING STATE CHANGED ===');
     console.log('🔄 Processing state:', processingStep);
   }, [processingStep]);
 
@@ -63,11 +66,14 @@ const HomeworkPage: React.FC = () => {
   };
 
   const handleImageSelected = (file: File) => {
+    console.log('=== IMAGE SELECTED ===');
     console.log('📸 Image selected:', file.name, file.size, file.type);
+    console.log('✅ Setting selectedImage state');
     setSelectedImage(file);
     setEditingImage(null);
     setResult(null);
     setError(null);
+    console.log('✅ Button should now be ENABLED (blue)');
   };
 
   const handleClearImage = () => {
@@ -94,16 +100,20 @@ const HomeworkPage: React.FC = () => {
   };
 
   const handleProcess = async () => {
-    console.log('✅ Button clicked!');
+    console.log('=== ANALYZE BUTTON CLICKED ===');
     console.log('📷 Selected Image:', selectedImage?.name);
+    console.log('👤 User:', user?.email);
+    console.log('🔄 Processing Step:', processingStep);
     
     if (!selectedImage) {
-      alert('Please upload an image first');
+      console.error('❌ No image selected');
+      alert('❌ Please upload an image first');
       return;
     }
     
     if (!user) {
-      alert('Please sign in first');
+      console.error('❌ No user signed in');
+      alert('❌ Please sign in first');
       return;
     }
     
@@ -114,15 +124,20 @@ const HomeworkPage: React.FC = () => {
       // Get API key from environment or user settings
       const effectiveApiKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_API_KEY;
       
+      console.log('🔑 API Key exists:', !!effectiveApiKey);
+      console.log('🔑 API Key source:', apiKey ? 'user-settings' : 'environment');
+      
       if (!effectiveApiKey) {
-        alert('ERROR: No Gemini API key found!\n\nAdd VITE_GEMINI_API_KEY to your .env file or configure it in Settings.');
+        console.error('❌ No VITE_GEMINI_API_KEY found in environment!');
+        alert('❌ No VITE_GEMINI_API_KEY found in environment!\n\nAdd it to your .env file or Netlify environment variables.');
         setProcessingStep('idle');
         return;
       }
       
-      console.log('🔑 API key found');
+      console.log('✅ API key found, proceeding...');
       
       // Convert image to base64
+      console.log('📸 Converting image to base64...');
       const reader = new FileReader();
       
       const base64Promise = new Promise<string>((resolve, reject) => {
@@ -134,12 +149,14 @@ const HomeworkPage: React.FC = () => {
       const base64Data = await base64Promise;
       const base64Image = base64Data.split(',')[1]; // Remove data:image prefix
       
-      console.log('📸 Image converted to base64');
+      console.log('✅ Image converted to base64');
+      console.log('📊 Base64 length:', base64Image.length);
       
       // Call Gemini API directly with fetch
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveApiKey}`;
       
       console.log('📡 Calling Gemini API...');
+      console.log('🌐 URL:', url.replace(effectiveApiKey, 'API_KEY_HIDDEN'));
       
       const response = await fetch(url, {
         method: 'POST',
@@ -150,7 +167,7 @@ const HomeworkPage: React.FC = () => {
           contents: [{
             parts: [
               {
-                text: "You are a helpful tutor. Analyze this homework problem image and provide:\n\n1. **Subject & Topic**: What subject is this?\n2. **Problem**: Restate the problem clearly\n3. **Solution**: Step-by-step solution with explanations\n4. **Answer**: The final answer\n5. **Tips**: Key tips to remember\n\nFormat your response clearly with these sections."
+                text: "Analyze this homework problem and provide:\n\n1. SUBJECT & TOPIC: What is this about?\n2. PROBLEM: What is being asked?\n3. SOLUTION: Step-by-step solution\n4. ANSWER: Final answer\n5. TIPS: Key tips\n\nBe clear and detailed."
               },
               {
                 inline_data: {
@@ -163,19 +180,26 @@ const HomeworkPage: React.FC = () => {
         })
       });
       
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response OK:', response.ok);
+      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ API Error:', errorText);
-        throw new Error(`API failed: ${response.status} - ${errorText}`);
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`Gemini API error: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('✅ Got response:', data);
+      console.log('✅ Got response from Gemini');
+      console.log('📦 Response data:', data);
       
       // Extract the text from response
-      const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received';
+      const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No solution generated';
+      console.log('📝 Solution text length:', resultText.length);
+      console.log('📝 Solution preview:', resultText.substring(0, 100) + '...');
       
       // Upload image to storage and create records (for history)
+      console.log('💾 Saving to database...');
       setProcessingStep('uploading');
       const imageUrl = await uploadHomeworkImage(selectedImage, user.id);
       const upload = await createHomeworkUpload(
@@ -186,6 +210,7 @@ const HomeworkPage: React.FC = () => {
         selectedImage.type
       );
       await updateHomeworkUploadStatus(upload.id, 'completed');
+      console.log('✅ Saved to database');
       
       // Create simplified analysis and solution records
       setProcessingStep('generating');
@@ -228,13 +253,15 @@ const HomeworkPage: React.FC = () => {
       });
       
       setProcessingStep('completed');
+      console.log('✅✅✅ ANALYSIS COMPLETE! ✅✅✅');
       alert('✅ Analysis complete! Scroll down to see the solution.');
       
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('❌❌❌ ERROR OCCURRED ❌❌❌');
+      console.error('❌ Error details:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error analyzing image';
       setError(errorMessage);
-      alert('Error analyzing image: ' + errorMessage);
+      alert('❌ Error: ' + errorMessage);
       setProcessingStep('error');
     }
   };
@@ -260,45 +287,6 @@ const HomeworkPage: React.FC = () => {
     setProcessingStep('idle');
     setError(null);
     setViewMode('upload');
-  };
-
-  // Debug test handlers
-  const handleTestButtonClick = () => {
-    console.log('🧪 TEST BUTTON CLICKED!');
-    alert('TEST BUTTON WORKS! Check console for logs.');
-    console.log('🔑 Current API Key:', !!apiKey);
-    console.log('📸 Selected Image:', !!selectedImage);
-    console.log('👤 User:', !!user);
-    console.log('🔄 Processing Step:', processingStep);
-  };
-
-  const handleTestGeminiAPI = async () => {
-    console.log('🚀 TESTING GEMINI API DIRECTLY...');
-    const testApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    console.log('🔑 Test API Key exists:', !!testApiKey);
-    
-    if (!testApiKey) {
-      alert('No VITE_GEMINI_API_KEY found in environment!');
-      return;
-    }
-    
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${testApiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: "Say hello!" }]
-          }]
-        })
-      });
-      const data = await response.json();
-      console.log('✅ Gemini API Response:', data);
-      alert('Gemini API works! Check console for response.');
-    } catch (error) {
-      console.error('❌ Gemini API Error:', error);
-      alert('Gemini API failed: ' + error.message);
-    }
   };
 
   if (!user) {
@@ -413,10 +401,14 @@ const HomeworkPage: React.FC = () => {
                       disabled={!selectedImage || processingStep === 'analyzing' || processingStep === 'uploading' || processingStep === 'generating'}
                       className="flex items-center space-x-2 px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg"
                       style={{
-                        backgroundColor: (!selectedImage || processingStep === 'analyzing' || processingStep === 'uploading' || processingStep === 'generating') ? '#d1d5db' : '#2563eb',
+                        backgroundColor: (!selectedImage || processingStep === 'analyzing' || processingStep === 'uploading' || processingStep === 'generating') ? '#9ca3af' : '#2563eb',
                         color: 'white',
+                        padding: '12px 32px',
+                        fontSize: '18px',
+                        fontWeight: '600',
                         cursor: (!selectedImage || processingStep === 'analyzing' || processingStep === 'uploading' || processingStep === 'generating') ? 'not-allowed' : 'pointer',
-                        opacity: (!selectedImage || processingStep === 'analyzing' || processingStep === 'uploading' || processingStep === 'generating') ? 0.6 : 1,
+                        opacity: (!selectedImage || processingStep === 'analyzing' || processingStep === 'uploading' || processingStep === 'generating') ? 0.5 : 1,
+                        border: 'none',
                       }}
                     >
                       {processingStep === 'analyzing' || processingStep === 'uploading' || processingStep === 'generating' ? (
@@ -427,7 +419,7 @@ const HomeworkPage: React.FC = () => {
                       ) : (
                         <>
                           <Sparkles className="h-5 w-5" />
-                          <span>Analyze Problem with AI</span>
+                          <span>Analyze with AI</span>
                         </>
                       )}
                     </button>
