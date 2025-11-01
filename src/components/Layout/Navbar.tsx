@@ -20,7 +20,8 @@ import {
   Menu,
   X,
   Sparkles,
-  Camera
+  Camera,
+  Pencil
 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
@@ -100,6 +101,7 @@ const Navbar: React.FC = () => {
     { path: '/about', label: 'About', icon: Info, protected: false },
     { path: '/courses', label: 'Courses', icon: BookMarked, protected: true },
     { path: '/homework', label: 'Homework', icon: Camera, protected: true },
+    { path: '/diagram', label: 'Diagram', icon: Pencil, protected: true },
     { path: '/practice', label: 'Practice', icon: TestTube, protected: true },
     { path: '/crash-course', label: 'Crash Course', icon: Zap, protected: true },
     { path: '/creative-learning', label: 'Creative', icon: Palette, protected: true },
