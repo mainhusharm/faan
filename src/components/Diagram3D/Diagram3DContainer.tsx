@@ -5,35 +5,68 @@ import { PropertiesPanel } from './PropertiesPanel';
 import { MoleculePicker } from './MoleculePicker';
 import { Download, Save, FolderOpen } from 'lucide-react';
 import type { Object3DData, MaterialProperties, MoleculeTemplate } from './types';
-import { ELEMENT_COLORS, ELEMENT_RADII } from './types';
+import { ELEMENT_COLORS } from './types';
 
 interface Diagram3DContainerProps {
   onExportImage?: () => void;
 }
 
+const defaultMaterial: MaterialProperties = {
+  type: 'standard',
+  color: '#3b82f6',
+  opacity: 1,
+  metalness: 0.3,
+  roughness: 0.7,
+  emissive: '#000000',
+  emissiveIntensity: 0,
+  wireframe: false,
+};
+
+// Create initial demo objects to showcase 3D capabilities
+const createInitialObjects = (): Object3DData[] => {
+  return [
+    {
+      id: 'demo-cube-1',
+      type: 'cube',
+      position: [-1.5, 0.5, 0],
+      rotation: [0.3, 0.5, 0],
+      scale: [1, 1, 1],
+      material: { ...defaultMaterial, color: '#3b82f6' },
+      dimensions: { width: 1, height: 1, depth: 1 },
+    },
+    {
+      id: 'demo-sphere-1',
+      type: 'sphere',
+      position: [0, 0.5, 0],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+      material: { ...defaultMaterial, color: '#f97316' },
+      dimensions: { radius: 0.5, segments: 32 },
+    },
+    {
+      id: 'demo-cylinder-1',
+      type: 'cylinder',
+      position: [1.5, 0.5, 0],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+      material: { ...defaultMaterial, color: '#10b981' },
+      dimensions: { radius: 0.5, height: 1, segments: 32 },
+    },
+  ];
+};
+
 export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
   onExportImage,
 }) => {
-  const [objects, setObjects] = useState<Object3DData[]>([]);
+  const [objects, setObjects] = useState<Object3DData[]>(createInitialObjects());
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string>('cube');
   const [showGrid, setShowGrid] = useState(true);
   const [showAxes, setShowAxes] = useState(true);
   const [cameraMode, setCameraMode] = useState<'perspective' | 'orthographic'>('perspective');
-  const [autoRotate, setAutoRotate] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState('#f0f0f0');
   const [showMoleculePicker, setShowMoleculePicker] = useState(false);
-
-  const defaultMaterial: MaterialProperties = {
-    type: 'standard',
-    color: '#3b82f6',
-    opacity: 1,
-    metalness: 0.3,
-    roughness: 0.7,
-    emissive: '#000000',
-    emissiveIntensity: 0,
-    wireframe: false,
-  };
 
   const generateId = () => `obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -80,9 +113,9 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
         break;
     }
 
-    setObjects([...objects, newObject]);
+    setObjects((prevObjects) => [...prevObjects, newObject]);
     setSelectedObjectId(newObject.id);
-  }, [objects]);
+  }, []);
 
   const handleToolSelect = (tool: string) => {
     setSelectedTool(tool);
@@ -102,7 +135,7 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
     const atomIds: string[] = [];
 
     // Create atoms
-    molecule.atoms.forEach((atom, index) => {
+    molecule.atoms.forEach((atom) => {
       const atomId = generateId();
       atomIds.push(atomId);
       
@@ -156,7 +189,7 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
       });
     });
 
-    setObjects([...objects, ...newObjects]);
+    setObjects((prevObjects) => [...prevObjects, ...newObjects]);
   };
 
   const updateObject = useCallback((id: string, updates: Partial<Object3DData>) => {
@@ -168,22 +201,24 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
   const duplicateObject = useCallback(() => {
     if (!selectedObjectId) return;
     
-    const objectToDuplicate = objects.find((obj) => obj.id === selectedObjectId);
-    if (!objectToDuplicate) return;
+    setObjects((prevObjects) => {
+      const objectToDuplicate = prevObjects.find((obj) => obj.id === selectedObjectId);
+      if (!objectToDuplicate) return prevObjects;
 
-    const newObject: Object3DData = {
-      ...objectToDuplicate,
-      id: generateId(),
-      position: [
-        objectToDuplicate.position[0] + 1,
-        objectToDuplicate.position[1],
-        objectToDuplicate.position[2],
-      ],
-    };
+      const newObject: Object3DData = {
+        ...objectToDuplicate,
+        id: generateId(),
+        position: [
+          objectToDuplicate.position[0] + 1,
+          objectToDuplicate.position[1],
+          objectToDuplicate.position[2],
+        ],
+      };
 
-    setObjects([...objects, newObject]);
-    setSelectedObjectId(newObject.id);
-  }, [selectedObjectId, objects]);
+      setSelectedObjectId(newObject.id);
+      return [...prevObjects, newObject];
+    });
+  }, [selectedObjectId]);
 
   const deleteObject = useCallback(() => {
     if (!selectedObjectId) return;

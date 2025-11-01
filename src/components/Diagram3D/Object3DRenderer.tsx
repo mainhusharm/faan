@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Text3D, Center } from '@react-three/drei';
 import { Mesh } from 'three';
-import type { Object3DData, MaterialType } from './types';
+import type { Object3DData } from './types';
 import { ELEMENT_COLORS, ELEMENT_RADII } from './types';
 
 interface Object3DRendererProps {
@@ -133,7 +133,7 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
           />
         );
 
-      case 'atom':
+      case 'atom': {
         const element = object.element || 'C';
         const atomColor = ELEMENT_COLORS[element] || '#808080';
         const atomRadius = ELEMENT_RADII[element] || 0.4;
@@ -143,14 +143,16 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
             <meshStandardMaterial color={atomColor} metalness={0.3} roughness={0.7} />
           </>
         );
+      }
 
-      case 'bond':
+      case 'bond': {
         const bondRadius = object.bondType === 'single' ? 0.1 : object.bondType === 'double' ? 0.08 : 0.06;
         return (
           <>
             <cylinderGeometry args={[bondRadius, bondRadius, 1, 16]} />
           </>
         );
+      }
 
       default:
         return <boxGeometry args={[1, 1, 1]} />;

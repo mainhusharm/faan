@@ -1,5 +1,3 @@
-import { Vector3 } from 'three';
-
 export type Object3DType =
   | 'cube'
   | 'sphere'
