@@ -85,3 +85,8 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Supabase
+.supabase/
+supabase/.branches/
+supabase/.temp/

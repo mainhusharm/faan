@@ -9,6 +9,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export type LessonType = 'video' | 'reading' | 'interactive' | 'practice' | 'project';
+export type AssessmentType = 'quiz' | 'test' | 'assignment' | 'exam' | 'practice';
+export type ChatMode = 'tutor' | 'concept_explorer' | 'study_buddy' | 'homework_help';
+export type UserRole = 'student' | 'teacher' | 'guardian' | 'admin';
+export type MasteryLevel = 'not_started' | 'learning' | 'practicing' | 'mastered';
+
 export type Database = {
   public: {
     Tables: {
@@ -19,6 +25,7 @@ export type Database = {
           full_name: string;
           avatar_url?: string;
           points: number;
+          role: UserRole;
           created_at: string;
         };
         Insert: {
@@ -27,6 +34,7 @@ export type Database = {
           full_name: string;
           avatar_url?: string;
           points?: number;
+          role?: UserRole;
         };
         Update: {
           id?: string;
@@ -34,6 +42,7 @@ export type Database = {
           full_name?: string;
           avatar_url?: string;
           points?: number;
+          role?: UserRole;
         };
       };
       courses: {
@@ -79,6 +88,394 @@ export type Database = {
           completed: boolean;
           quiz_score?: number;
           created_at: string;
+        };
+      };
+      course_enrollments: {
+        Row: {
+          id: string;
+          course_id: string;
+          user_id: string;
+          role: UserRole;
+          enrolled_at: string;
+          completed_at?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id: string;
+          user_id: string;
+          role?: UserRole;
+          enrolled_at?: string;
+          completed_at?: string;
+        };
+        Update: {
+          role?: UserRole;
+          completed_at?: string;
+        };
+      };
+      lessons: {
+        Row: {
+          id: string;
+          course_id: string;
+          title: string;
+          description?: string;
+          lesson_type: LessonType;
+          content: Record<string, any>;
+          media_url?: string;
+          duration_minutes?: number;
+          order_index: number;
+          is_published: boolean;
+          prerequisites?: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id: string;
+          title: string;
+          description?: string;
+          lesson_type?: LessonType;
+          content?: Record<string, any>;
+          media_url?: string;
+          duration_minutes?: number;
+          order_index: number;
+          is_published?: boolean;
+          prerequisites?: string[];
+        };
+        Update: {
+          title?: string;
+          description?: string;
+          lesson_type?: LessonType;
+          content?: Record<string, any>;
+          media_url?: string;
+          duration_minutes?: number;
+          order_index?: number;
+          is_published?: boolean;
+          prerequisites?: string[];
+        };
+      };
+      lesson_chunks: {
+        Row: {
+          id: string;
+          lesson_id: string;
+          chunk_text: string;
+          chunk_index: number;
+          metadata: Record<string, any>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lesson_id: string;
+          chunk_text: string;
+          chunk_index: number;
+          metadata?: Record<string, any>;
+        };
+      };
+      assessments: {
+        Row: {
+          id: string;
+          course_id?: string;
+          lesson_id?: string;
+          title: string;
+          description?: string;
+          assessment_type: AssessmentType;
+          time_limit_minutes?: number;
+          passing_score?: number;
+          max_attempts?: number;
+          is_published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id?: string;
+          lesson_id?: string;
+          title: string;
+          description?: string;
+          assessment_type?: AssessmentType;
+          time_limit_minutes?: number;
+          passing_score?: number;
+          max_attempts?: number;
+          is_published?: boolean;
+        };
+        Update: {
+          title?: string;
+          description?: string;
+          assessment_type?: AssessmentType;
+          time_limit_minutes?: number;
+          passing_score?: number;
+          max_attempts?: number;
+          is_published?: boolean;
+        };
+      };
+      assessment_items: {
+        Row: {
+          id: string;
+          assessment_id: string;
+          question: string;
+          question_type: string;
+          options?: Record<string, any>;
+          correct_answer?: string;
+          explanation?: string;
+          points: number;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          assessment_id: string;
+          question: string;
+          question_type?: string;
+          options?: Record<string, any>;
+          correct_answer?: string;
+          explanation?: string;
+          points?: number;
+          order_index: number;
+        };
+      };
+      attempts: {
+        Row: {
+          id: string;
+          assessment_id: string;
+          user_id: string;
+          started_at: string;
+          completed_at?: string;
+          score?: number;
+          responses: Record<string, any>;
+          time_spent_seconds?: number;
+          is_passed?: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          assessment_id: string;
+          user_id: string;
+          started_at?: string;
+          completed_at?: string;
+          score?: number;
+          responses?: Record<string, any>;
+          time_spent_seconds?: number;
+          is_passed?: boolean;
+        };
+        Update: {
+          completed_at?: string;
+          score?: number;
+          responses?: Record<string, any>;
+          time_spent_seconds?: number;
+          is_passed?: boolean;
+        };
+      };
+      chat_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_id?: string;
+          lesson_id?: string;
+          mode: ChatMode;
+          title?: string;
+          messages: Array<Record<string, any>>;
+          context: Record<string, any>;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_id?: string;
+          lesson_id?: string;
+          mode?: ChatMode;
+          title?: string;
+          messages?: Array<Record<string, any>>;
+          context?: Record<string, any>;
+        };
+        Update: {
+          title?: string;
+          messages?: Array<Record<string, any>>;
+          context?: Record<string, any>;
+        };
+      };
+      flashcard_sets: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_id?: string;
+          lesson_id?: string;
+          title: string;
+          description?: string;
+          is_public: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_id?: string;
+          lesson_id?: string;
+          title: string;
+          description?: string;
+          is_public?: boolean;
+        };
+        Update: {
+          title?: string;
+          description?: string;
+          is_public?: boolean;
+        };
+      };
+      flashcards: {
+        Row: {
+          id: string;
+          set_id: string;
+          front_text: string;
+          back_text: string;
+          media_url?: string;
+          order_index?: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          set_id: string;
+          front_text: string;
+          back_text: string;
+          media_url?: string;
+          order_index?: number;
+        };
+        Update: {
+          front_text?: string;
+          back_text?: string;
+          media_url?: string;
+          order_index?: number;
+        };
+      };
+      mastery_states: {
+        Row: {
+          id: string;
+          user_id: string;
+          lesson_id: string;
+          mastery_level: MasteryLevel;
+          last_practiced_at?: string;
+          practice_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          lesson_id: string;
+          mastery_level?: MasteryLevel;
+          last_practiced_at?: string;
+          practice_count?: number;
+        };
+        Update: {
+          mastery_level?: MasteryLevel;
+          last_practiced_at?: string;
+          practice_count?: number;
+        };
+      };
+      concepts: {
+        Row: {
+          id: string;
+          name: string;
+          description?: string;
+          subject_area?: string;
+          difficulty_level: number;
+          metadata: Record<string, any>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string;
+          subject_area?: string;
+          difficulty_level?: number;
+          metadata?: Record<string, any>;
+        };
+        Update: {
+          name?: string;
+          description?: string;
+          subject_area?: string;
+          difficulty_level?: number;
+          metadata?: Record<string, any>;
+        };
+      };
+      concept_edges: {
+        Row: {
+          id: string;
+          from_concept_id: string;
+          to_concept_id: string;
+          relationship_type: string;
+          strength: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          from_concept_id: string;
+          to_concept_id: string;
+          relationship_type?: string;
+          strength?: number;
+        };
+      };
+      user_concept_mastery: {
+        Row: {
+          id: string;
+          user_id: string;
+          concept_id: string;
+          mastery_level: MasteryLevel;
+          confidence_score: number;
+          last_practiced_at?: string;
+          practice_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          concept_id: string;
+          mastery_level?: MasteryLevel;
+          confidence_score?: number;
+          last_practiced_at?: string;
+          practice_count?: number;
+        };
+        Update: {
+          mastery_level?: MasteryLevel;
+          confidence_score?: number;
+          last_practiced_at?: string;
+          practice_count?: number;
+        };
+      };
+    };
+    Views: {
+      active_concept_links: {
+        Row: {
+          id: string;
+          from_concept_id: string;
+          from_concept_name: string;
+          to_concept_id: string;
+          to_concept_name: string;
+          relationship_type: string;
+          strength: number;
+        };
+      };
+      outstanding_attempts: {
+        Row: {
+          id: string;
+          user_id: string;
+          user_name: string;
+          assessment_id: string;
+          assessment_title: string;
+          started_at: string;
+          minutes_elapsed: number;
+        };
+      };
+      user_mastery_summary: {
+        Row: {
+          user_id: string;
+          full_name: string;
+          total_concepts: number;
+          mastered_concepts: number;
+          practicing_concepts: number;
+          learning_concepts: number;
+          avg_confidence: number;
         };
       };
     };
