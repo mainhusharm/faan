@@ -15,6 +15,24 @@ The schema includes comprehensive tables for:
 
 ## Migration Files
 
+### 20250101000000_vector_support.sql
+Vector support migration enabling semantic search:
+- pgvector extension installation for vector operations
+- lesson_embeddings table with vector storage (1536 dimensions for OpenAI)
+- ivfflat index for efficient ANN similarity search
+- find_similar_lesson_chunks function for semantic search
+- RLS policies for secure embedding access
+- Trigger support for automatic embedding generation
+
+### 20250101000001_test_vector_support.sql
+Test migration verifying vector functionality:
+- pgvector extension verification
+- lesson_embeddings table structure validation
+- Sample data insertion and testing
+- Similarity search function validation
+- RLS policy verification
+- Index creation verification
+
 ### 20250120000000_learning_schema.sql
 Main schema migration creating:
 - 5 enum types (lesson_type, assessment_type, chat_mode, user_role, mastery_level)
@@ -88,6 +106,21 @@ Text chunks for RAG (Retrieval-Augmented Generation):
 - Metadata field for embeddings and tags
 - Linked to parent lesson
 
+#### `lesson_embeddings`
+Vector embeddings for semantic similarity search:
+- Stores 1536-dimensional vectors (configurable for different models)
+- Supports multiple embedding providers (OpenAI, Cohere, etc.)
+- ivfflat index for efficient ANN search
+- Metadata for filtering (concepts, difficulty, course context)
+- Automatically linked to lesson_chunks
+
+#### `embedding_queue`
+Job queue for asynchronous embedding generation:
+- Tracks lesson chunks needing embeddings
+- Retry mechanism with attempt counting
+- Error tracking and debugging information
+- Integrated with triggers for automatic processing
+
 #### `assessments` & `assessment_items`
 Multi-level assessment system:
 - Assessments can belong to courses or lessons
@@ -124,6 +157,195 @@ Personalized learning progress:
 - **`active_concept_links`**: Prerequisite relationships for learning paths
 - **`outstanding_attempts`**: Incomplete assessments needing attention
 - **`user_mastery_summary`**: Aggregate learning progress statistics
+
+## Vector Support & Semantic Search
+
+### Overview
+
+The vector support system enables semantic search over lesson content using pgvector and embeddings. This allows students to find relevant content based on meaning rather than just keywords, powering advanced features like:
+
+- **Content Discovery**: Find lessons similar to what they're currently studying
+- **Adaptive Learning**: Recommend content based on semantic similarity to mastered concepts
+- **Intelligent Search**: Natural language queries that understand intent
+- **Content Clustering**: Group related lessons automatically
+
+### Setup Requirements
+
+1. **pgvector Extension**: Automatically enabled via migration
+2. **Embedding Provider API Keys**: Configure in environment variables
+3. **Edge Functions**: Deploy ingestLesson function for embedding generation
+4. **Index Optimization**: Tune ivfflat parameters based on data size
+
+### Configuration
+
+#### Environment Variables
+
+```bash
+# Required for embedding generation
+VITE_OPENAI_API_KEY=sk-...
+VITE_COHERE_API_KEY=...
+
+# Default embedding settings
+VITE_EMBEDDING_PROVIDER=openai
+VITE_EMBEDDING_MODEL=text-embedding-ada-002
+```
+
+#### Supported Providers
+
+| Provider | Models | Dimensions |
+|----------|--------|------------|
+| OpenAI | text-embedding-ada-002, text-embedding-3-small, text-embedding-3-large | 1536, 1536, 3072 |
+| Cohere | embed-english-v3.0, embed-multilingual-v3.0 | 1024, 1024 |
+
+### Usage Examples
+
+#### Generating Embeddings
+
+```typescript
+// Call edge function to generate embedding
+const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/ingestLesson`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${supabaseClient.session.access_token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    lesson_chunk_id: 'uuid-of-chunk',
+    provider: 'openai',
+    model: 'text-embedding-ada-002',
+    metadata: {
+      concept_ids: ['concept-uuid-1', 'concept-uuid-2'],
+      difficulty: 5,
+      course_id: 'course-uuid'
+    }
+  })
+})
+```
+
+#### Semantic Search
+
+```sql
+-- Find similar lesson chunks
+SELECT * FROM find_similar_lesson_chunks(
+  query_embedding => '[0.1, 0.2, 0.3, ...]'::vector(1536),
+  match_threshold => 0.8,
+  match_count => 10,
+  course_id_filter => 'course-uuid',
+  difficulty_min => 3,
+  difficulty_max => 7
+);
+
+-- Raw similarity search
+SELECT 
+  lc.chunk_text,
+  l.title as lesson_title,
+  1 - (le.embedding <=> query_embedding) as similarity
+FROM lesson_embeddings le
+JOIN lesson_chunks lc ON lc.id = le.lesson_chunk_id
+JOIN lessons l ON l.id = lc.lesson_id
+WHERE 1 - (le.embedding <=> query_embedding) > 0.8
+ORDER BY similarity DESC
+LIMIT 10;
+```
+
+#### TypeScript Client Usage
+
+```typescript
+import { supabase } from './lib/supabase';
+
+// Find similar content
+const { data: similarChunks } = await supabase
+  .rpc('find_similar_lesson_chunks', {
+    query_embedding: embeddingArray,
+    match_threshold: 0.8,
+    match_count: 5,
+    course_id_filter: courseId
+  });
+
+// Get embeddings for a lesson
+const { data: embeddings } = await supabase
+  .from('lesson_embeddings')
+  .select(`
+    *,
+    lesson_chunks!inner(
+      chunk_text,
+      chunk_index,
+      lessons!inner(
+        title,
+        course_id,
+        is_published
+      )
+    )
+  `)
+  .eq('lesson_chunks.lessons.is_published', true);
+```
+
+### Performance Optimization
+
+#### Index Tuning
+
+```sql
+-- Recreate vector index with optimal parameters
+DROP INDEX IF EXISTS idx_lesson_embeddings_embedding;
+CREATE INDEX idx_lesson_embeddings_embedding 
+ON lesson_embeddings USING ivfflat (embedding vector_cosine_ops)
+WITH (lists = 100); -- Adjust based on row count
+
+-- For small datasets (< 10K rows): lists = rows / 100
+-- For large datasets (> 1M rows): lists = sqrt(rows)
+```
+
+#### Batch Processing
+
+```sql
+-- Generate embeddings for all chunks (via edge function)
+SELECT 
+  lc.id,
+  lc.chunk_text,
+  l.title as lesson_title
+FROM lesson_chunks lc
+JOIN lessons l ON l.id = lc.lesson_id
+WHERE NOT EXISTS (
+  SELECT 1 FROM lesson_embeddings le 
+  WHERE le.lesson_chunk_id = lc.id
+)
+AND l.is_published = true;
+```
+
+### Troubleshooting
+
+#### Common Issues
+
+1. **Extension Not Found**: Ensure pgvector is installed on your Supabase project
+2. **Index Creation Fails**: Vector indexes need data before creation
+3. **Memory Issues**: Large embeddings may require increased memory allocation
+4. **Slow Search**: Check index parameters and consider materialized views
+
+#### Monitoring Queries
+
+```sql
+-- Check index usage
+SELECT 
+  schemaname,
+  tablename,
+  indexname,
+  idx_scan,
+  idx_tup_read,
+  idx_tup_fetch
+FROM pg_stat_user_indexes
+WHERE tablename = 'lesson_embeddings'
+ORDER BY idx_scan DESC;
+
+-- Monitor embedding generation
+SELECT 
+  provider,
+  model,
+  COUNT(*) as total_embeddings,
+  MIN(created_at) as first_created,
+  MAX(created_at) as last_created
+FROM lesson_embeddings
+GROUP BY provider, model;
+```
 
 ## Row Level Security (RLS)
 
