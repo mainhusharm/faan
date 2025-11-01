@@ -18,6 +18,7 @@ import CreativeLearningPage from './pages/CreativeLearningPage';
 import SettingsPage from './pages/SettingsPage';
 import CourseCreationPage from './pages/CourseCreationPage';
 import HomeworkPage from './pages/HomeworkPage';
+import DiagramPage from './pages/DiagramPage';
 
 function App() {
   return (
@@ -118,6 +119,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <HomeworkPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/diagram" 
+              element={
+                <ProtectedRoute>
+                  <DiagramPage />
                 </ProtectedRoute>
               } 
             />
