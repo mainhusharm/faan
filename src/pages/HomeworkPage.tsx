@@ -155,12 +155,29 @@ const HomeworkPage: React.FC = () => {
     setError(null);
     
     try {
-      // Check if user has configured their Gemini API key in DATABASE
-      console.log('🔑 Checking for Gemini API Key from DATABASE...');
-      console.log('🔑 API Key from database (saved at /api-settings):', !!apiKey);
+      // Check if user has configured their Gemini API key - load fresh from storage
+      console.log('🔑 Checking for Gemini API Key (loading fresh)...');
       
-      if (!apiKey) {
-        console.error('❌ No Gemini API key found in DATABASE!');
+      // Load API key fresh from database/localStorage instead of using stale state
+      let currentApiKey = apiKey;
+      
+      // Try to get fresh key from getUserApiKey function
+      console.log('🔄 Loading fresh API key from database/localStorage...');
+      const freshKey = await getUserApiKey(user.id, 'gemini');
+      if (freshKey) {
+        console.log('✅ Found fresh Gemini API key');
+        console.log('🔑 Key preview:', freshKey.substring(0, 10) + '...');
+        currentApiKey = freshKey;
+        // Update state for future use
+        setApiKey(freshKey);
+      } else {
+        console.log('⚠️ No fresh key found, trying state...');
+      }
+      
+      console.log('🔑 API Key available:', !!currentApiKey);
+      
+      if (!currentApiKey) {
+        console.error('❌ No Gemini API key found!');
         console.error('💡 User needs to add API key at: /api-settings');
         const redirectToSettings = confirm(
           '❌ No Gemini API key found in your account!\n\n' +
@@ -177,7 +194,7 @@ const HomeworkPage: React.FC = () => {
         return;
       }
       
-      console.log('✅ Gemini API key found from DATABASE, proceeding with API call...');
+      console.log('✅ Gemini API key found, proceeding with API call...');
       
       // Convert image to base64
       console.log('📸 Converting image to base64...');
@@ -196,10 +213,10 @@ const HomeworkPage: React.FC = () => {
       console.log('📊 Base64 length:', base64Image.length);
       
       // Call Gemini API directly with user's API key from DATABASE
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${currentApiKey}`;
       
       console.log('📡 Calling Gemini API with user API key from DATABASE...');
-      console.log('🌐 URL:', url.replace(apiKey, 'API_KEY_HIDDEN'));
+      console.log('🌐 URL:', url.replace(currentApiKey, 'API_KEY_HIDDEN'));
       console.log('🔐 Using API key saved by user at /api-settings (NOT from .env file)');
       
       const response = await fetch(url, {
