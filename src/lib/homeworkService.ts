@@ -9,7 +9,7 @@ export interface HomeworkUpload {
   file_size: number;
   format: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
 }
 
@@ -20,7 +20,7 @@ export interface HomeworkAnalysis {
   content_type: string | null;
   sub_topic: string | null;
   question_type: string | null;
-  processing_metadata: Record<string, any>;
+  processing_metadata: Record<string, unknown>;
   confidence: number | null;
   created_at: string;
 }
@@ -77,7 +77,7 @@ export async function createHomeworkUpload(
   fileName: string,
   fileSize: number,
   format: string,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, unknown> = {}
 ): Promise<HomeworkUpload> {
   const { data, error } = await supabase
     .from('homework_uploads')
@@ -385,9 +385,15 @@ export async function searchHomeworkHistory(
     throw new Error(`Failed to search homework: ${error.message}`);
   }
 
-  return uploads.map((upload: any) => ({
+  interface UploadWithRelations extends HomeworkUpload {
+    homework_analysis?: Array<HomeworkAnalysis & {
+      homework_solutions?: HomeworkSolution[];
+    }>;
+  }
+
+  return (uploads as UploadWithRelations[]).map((upload) => ({
     upload,
     analysis: upload.homework_analysis?.[0],
     solution: upload.homework_analysis?.[0]?.homework_solutions?.[0]
-  })).filter((result: any) => result.analysis && result.solution);
+  })).filter((result): result is FullHomeworkResult => !!result.analysis && !!result.solution);
 }
