@@ -51,18 +51,49 @@ const HomeworkPage: React.FC = () => {
   const loadApiKey = async () => {
     if (!user) return;
     try {
-      console.log('🔍 Fetching Gemini API key from database for user:', user.id);
-      const key = await getUserApiKey(user.id, 'gemini');
-      setApiKey(key);
-      console.log('🔑 Gemini API Key loaded:', !!key);
-      if (key) {
-        console.log('✅ API Key source: DATABASE (user settings at /api-settings)');
+      console.log('🔄 Loading Gemini API key...');
+      
+      // EXACT SAME PATTERN AS SETTINGS PAGE:
+      // First try to load from localStorage (immediate)
+      const savedKeys = localStorage.getItem('user_api_keys');
+      if (savedKeys) {
+        try {
+          const parsedKeys = JSON.parse(savedKeys);
+          console.log('📦 Loaded API keys from localStorage:', parsedKeys.length);
+          const geminiKey = parsedKeys.find((k: any) => k.service_name === 'gemini' && k.is_active);
+          if (geminiKey && geminiKey.api_key) {
+            setApiKey(geminiKey.api_key);
+            console.log('✅ Found Gemini API key in localStorage');
+            console.log('🔑 Key preview:', geminiKey.api_key.substring(0, 10) + '...');
+          } else {
+            console.log('📦 No Gemini key in localStorage');
+          }
+        } catch (parseError) {
+          console.warn('⚠️ Failed to parse saved API keys:', parseError);
+        }
       } else {
-        console.log('⚠️ No Gemini API key found in database');
-        console.log('💡 Please add your API key at: /api-settings');
+        console.log('📦 No saved API keys in localStorage');
       }
+      
+      // Then try to load from database (background sync) - don't block UI
+      setTimeout(async () => {
+        try {
+          console.log('🔄 Attempting database sync...');
+          const key = await getUserApiKey(user.id, 'gemini');
+          if (key) {
+            setApiKey(key);
+            console.log('💾 Synced Gemini API key from database');
+            console.log('🔑 Key preview:', key.substring(0, 10) + '...');
+          } else {
+            console.log('💾 No Gemini API key in database');
+          }
+        } catch (dbError) {
+          console.warn('⚠️ Database load failed, using localStorage:', dbError);
+        }
+      }, 100);
+      
     } catch (error) {
-      console.error('❌ Error loading API key from database:', error);
+      console.error('❌ Error loading API key:', error);
       setApiKey(null);
     }
   };
