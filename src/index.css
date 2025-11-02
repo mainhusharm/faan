@@ -386,6 +386,47 @@ body {
   outline: none;
 }
 
+/* Fullscreen Mode Styles */
+#canvas-container-3d:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+#canvas-container-3d:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+#canvas-container-3d:-moz-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+#canvas-container-3d:-ms-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;

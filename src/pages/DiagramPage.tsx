@@ -128,6 +128,28 @@ const DiagramPage: React.FC = () => {
     loadApiKey();
   }, [loadApiKey]);
 
+  // Listen for fullscreen changes (ESC key, etc.)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).msFullscreenElement
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   const drawBackground = useCallback((ctx: CanvasRenderingContext2D) => {
     if (!ctx || !ctx.canvas) return;
     
@@ -811,8 +833,40 @@ Return ONLY a valid JSON object with this exact structure:
     }
   };
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+  const toggleFullscreen = async () => {
+    const canvasContainer = document.getElementById('canvas-container-3d');
+    
+    if (!isFullscreen) {
+      // Enter fullscreen
+      try {
+        if (canvasContainer) {
+          if (canvasContainer.requestFullscreen) {
+            await canvasContainer.requestFullscreen();
+          } else if ((canvasContainer as any).webkitRequestFullscreen) {
+            await (canvasContainer as any).webkitRequestFullscreen();
+          } else if ((canvasContainer as any).msRequestFullscreen) {
+            await (canvasContainer as any).msRequestFullscreen();
+          }
+        }
+        setIsFullscreen(true);
+      } catch (error) {
+        console.error('Error entering fullscreen:', error);
+      }
+    } else {
+      // Exit fullscreen
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
+        setIsFullscreen(false);
+      } catch (error) {
+        console.error('Error exiting fullscreen:', error);
+      }
+    }
   };
 
   const tools = [
@@ -1130,38 +1184,59 @@ Return ONLY a valid JSON object with this exact structure:
                     </h3>
                   </div>
                   
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="text"
-                      value={command}
-                      onChange={(e) => setCommand(e.target.value)}
-                      onKeyPress={handleCommandKeyPress}
-                      placeholder="Type a command: create sphere, make red cube, add water molecule..."
-                      className="flex-1 px-4 py-3 text-base border-2 border-gray-300 dark:border-gray-600 rounded-xl 
-                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm"
-                      disabled={isProcessingCommand}
-                    />
-                    <button
-                      onClick={handleCommandGenerate}
-                      disabled={isProcessingCommand || !command.trim()}
-                      className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 
-                                 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed 
-                                 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2"
-                    >
-                      {isProcessingCommand ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>Creating...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-5 w-5" />
-                          <span>Generate</span>
-                        </>
-                      )}
-                    </button>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="text"
+                        value={command}
+                        onChange={(e) => setCommand(e.target.value)}
+                        onKeyPress={handleCommandKeyPress}
+                        placeholder="Type a command: create sphere, make red cube, add water molecule..."
+                        className="flex-1 px-4 py-3 text-base border-2 border-gray-300 dark:border-gray-600 rounded-xl 
+                                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                                   bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                   placeholder-gray-500 dark:placeholder-gray-400 shadow-sm"
+                        disabled={isProcessingCommand}
+                      />
+                      <button
+                        onClick={handleCommandGenerate}
+                        disabled={isProcessingCommand || !command.trim()}
+                        className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 
+                                   hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed 
+                                   transition-all shadow-lg hover:shadow-xl flex items-center space-x-2"
+                      >
+                        {isProcessingCommand ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span>Creating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-5 w-5" />
+                            <span>Generate</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={toggleFullscreen}
+                        className="px-4 py-3 rounded-xl font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 
+                                   hover:bg-gray-200 dark:hover:bg-gray-600 transition-all shadow-lg hover:shadow-xl 
+                                   flex items-center space-x-2 border-2 border-gray-300 dark:border-gray-600"
+                        title={isFullscreen ? "Exit Fullscreen (ESC)" : "Enter Fullscreen"}
+                      >
+                        {isFullscreen ? (
+                          <>
+                            <Minimize2 className="h-5 w-5" />
+                            <span>Exit</span>
+                          </>
+                        ) : (
+                          <>
+                            <Maximize2 className="h-5 w-5" />
+                            <span>Fullscreen</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Feedback Message */}
@@ -1228,7 +1303,24 @@ Return ONLY a valid JSON object with this exact structure:
                 </div>
 
                 {/* 3D Viewport */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" style={{ height: isFullscreen ? 'calc(100vh - 180px)' : 'calc(100vh - 350px)', minHeight: '600px' }}>
+                <div 
+                  id="canvas-container-3d"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" 
+                  style={{ height: isFullscreen ? 'calc(100vh - 180px)' : 'calc(100vh - 350px)', minHeight: '600px' }}
+                >
+                  {/* Fullscreen Exit Button */}
+                  {isFullscreen && (
+                    <div className="absolute top-4 right-4 z-50">
+                      <button
+                        onClick={toggleFullscreen}
+                        className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gray-900/80 text-white hover:bg-gray-900 transition-colors shadow-xl"
+                      >
+                        <Minimize2 className="h-5 w-5" />
+                        <span className="font-medium">Exit Fullscreen</span>
+                      </button>
+                    </div>
+                  )}
+                  
                   <Suspense fallback={
                     <div className="h-full flex items-center justify-center">
                       <div className="flex flex-col items-center space-y-3">
@@ -1244,13 +1336,34 @@ Return ONLY a valid JSON object with this exact structure:
             ) : (
               // Draw-to-3D Mode
               <div className="space-y-4">
-                {/* Info Card */}
+                {/* Info Card with Fullscreen Button */}
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl shadow-xl p-6 border-2 border-purple-200 dark:border-purple-800">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <Wand2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Draw 2D Shapes → Convert to 3D
-                    </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <Wand2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Draw 2D Shapes → Convert to 3D
+                      </h3>
+                    </div>
+                    <button
+                      onClick={toggleFullscreen}
+                      className="px-4 py-2 rounded-xl font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 
+                                 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all shadow-lg hover:shadow-xl 
+                                 flex items-center space-x-2 border-2 border-purple-300 dark:border-purple-600"
+                      title={isFullscreen ? "Exit Fullscreen (ESC)" : "Enter Fullscreen"}
+                    >
+                      {isFullscreen ? (
+                        <>
+                          <Minimize2 className="h-5 w-5" />
+                          <span>Exit</span>
+                        </>
+                      ) : (
+                        <>
+                          <Maximize2 className="h-5 w-5" />
+                          <span>Fullscreen</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
                     Draw shapes on the canvas overlay below. The system will recognize what you drew and convert it to a 3D object!
@@ -1269,7 +1382,24 @@ Return ONLY a valid JSON object with this exact structure:
                 )}
 
                 {/* 3D Viewport with Drawing Overlay */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden relative" style={{ height: isFullscreen ? 'calc(100vh - 280px)' : 'calc(100vh - 350px)', minHeight: '600px' }}>
+                <div 
+                  id="canvas-container-3d"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden relative" 
+                  style={{ height: isFullscreen ? 'calc(100vh - 280px)' : 'calc(100vh - 350px)', minHeight: '600px' }}
+                >
+                  {/* Fullscreen Exit Button */}
+                  {isFullscreen && (
+                    <div className="absolute top-4 right-4 z-50">
+                      <button
+                        onClick={toggleFullscreen}
+                        className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gray-900/80 text-white hover:bg-gray-900 transition-colors shadow-xl"
+                      >
+                        <Minimize2 className="h-5 w-5" />
+                        <span className="font-medium">Exit Fullscreen</span>
+                      </button>
+                    </div>
+                  )}
+                  
                   <Suspense fallback={
                     <div className="h-full flex items-center justify-center">
                       <div className="flex flex-col items-center space-y-3">
