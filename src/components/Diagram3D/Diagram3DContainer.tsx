@@ -1,14 +1,19 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Viewport3D } from './Viewport3D';
 import { Toolbar3D } from './Toolbar3D';
 import { PropertiesPanel } from './PropertiesPanel';
 import { MoleculePicker } from './MoleculePicker';
 import { Download, Save, FolderOpen } from 'lucide-react';
 import type { Object3DData, MaterialProperties, MoleculeTemplate } from './types';
-import { ELEMENT_COLORS } from './types';
+import { ELEMENT_COLORS, MOLECULE_TEMPLATES } from './types';
 
 interface Diagram3DContainerProps {
   onExportImage?: () => void;
+}
+
+export interface Diagram3DHandle {
+  createObject: (type: string, color?: string, size?: number) => void;
+  createMolecule: (moleculeName: string) => void;
 }
 
 const defaultMaterial: MaterialProperties = {
@@ -55,9 +60,9 @@ const createInitialObjects = (): Object3DData[] => {
   ];
 };
 
-export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
+export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainerProps>(({
   onExportImage,
-}) => {
+}, ref) => {
   const [objects, setObjects] = useState<Object3DData[]>(createInitialObjects());
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string>('cube');
@@ -70,42 +75,47 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
 
   const generateId = () => `obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const addObject = useCallback((type: string) => {
+  const addObject = useCallback((type: string, customColor?: string, customSize?: number) => {
+    const size = customSize || 1;
     const newObject: Object3DData = {
       id: generateId(),
       type: type as Object3DData['type'],
-      position: [0, 0, 0],
+      position: [
+        Math.random() * 4 - 2,  // Random X position
+        size / 2,                // Above ground based on size
+        Math.random() * 4 - 2   // Random Z position
+      ],
       rotation: [0, 0, 0],
       scale: [1, 1, 1],
-      material: { ...defaultMaterial },
+      material: { ...defaultMaterial, color: customColor || defaultMaterial.color },
     };
 
     switch (type) {
       case 'cube':
-        newObject.dimensions = { width: 1, height: 1, depth: 1 };
+        newObject.dimensions = { width: size, height: size, depth: size };
         break;
       case 'sphere':
-        newObject.dimensions = { radius: 0.5, segments: 32 };
+        newObject.dimensions = { radius: size * 0.5, segments: 32 };
         break;
       case 'cylinder':
-        newObject.dimensions = { radius: 0.5, height: 1, segments: 32 };
+        newObject.dimensions = { radius: size * 0.5, height: size, segments: 32 };
         break;
       case 'cone':
-        newObject.dimensions = { radius: 0.5, height: 1, segments: 32 };
+        newObject.dimensions = { radius: size * 0.5, height: size, segments: 32 };
         break;
       case 'torus':
-        newObject.dimensions = { radius: 0.5, tube: 0.2, segments: 32 };
+        newObject.dimensions = { radius: size * 0.5, tube: size * 0.2, segments: 32 };
         break;
       case 'pyramid':
-        newObject.dimensions = { radius: 0.5 };
+        newObject.dimensions = { radius: size * 0.5 };
         break;
       case 'plane':
-        newObject.dimensions = { width: 2, height: 2 };
+        newObject.dimensions = { width: size * 2, height: size * 2 };
         break;
       case 'text3d':
         newObject.text = 'Hello';
-        newObject.fontSize = 0.5;
-        newObject.fontDepth = 0.2;
+        newObject.fontSize = size * 0.5;
+        newObject.fontDepth = size * 0.2;
         break;
       case 'atom':
         newObject.element = 'C';
@@ -191,6 +201,38 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
 
     setObjects((prevObjects) => [...prevObjects, ...newObjects]);
   };
+
+  const createMoleculeByName = useCallback((moleculeName: string) => {
+    const normalizedName = moleculeName.toLowerCase().trim();
+    let template: MoleculeTemplate | undefined;
+
+    // Find matching molecule template
+    if (normalizedName.includes('water') || normalizedName === 'h2o') {
+      template = MOLECULE_TEMPLATES.find(m => m.name === 'Water');
+    } else if (normalizedName.includes('methane') || normalizedName === 'ch4') {
+      template = MOLECULE_TEMPLATES.find(m => m.name === 'Methane');
+    } else if (normalizedName.includes('ethanol') || normalizedName.includes('alcohol')) {
+      template = MOLECULE_TEMPLATES.find(m => m.name === 'Ethanol');
+    } else if (normalizedName.includes('benzene')) {
+      template = MOLECULE_TEMPLATES.find(m => m.name === 'Benzene');
+    }
+
+    if (template) {
+      handleMoleculeSelect(template);
+      return true;
+    }
+    return false;
+  }, []);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    createObject: (type: string, color?: string, size?: number) => {
+      addObject(type, color, size);
+    },
+    createMolecule: (moleculeName: string) => {
+      return createMoleculeByName(moleculeName);
+    },
+  }), [addObject, createMoleculeByName]);
 
   const updateObject = useCallback((id: string, updates: Partial<Object3DData>) => {
     setObjects((prevObjects) =>
@@ -377,4 +419,6 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
       )}
     </div>
   );
-};
+});
+
+Diagram3DContainer.displayName = 'Diagram3DContainer';

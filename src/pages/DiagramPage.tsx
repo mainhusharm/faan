@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getUserApiKey } from '../lib/userApiKeys';
+import type { Diagram3DHandle } from '../components/Diagram3D';
 
 const Diagram3DContainer = lazy(() => 
   import('../components/Diagram3D').then(module => ({ default: module.Diagram3DContainer }))
@@ -59,6 +60,7 @@ interface DiagramResult {
 const DiagramPage: React.FC = () => {
   const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const diagram3DRef = useRef<Diagram3DHandle>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('3d');
   const [selectedTool, setSelectedTool] = useState<Tool>('pencil');
   const [color, setColor] = useState('#000000');
@@ -74,6 +76,11 @@ const DiagramPage: React.FC = () => {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [isCanvasReady, setIsCanvasReady] = useState(false);
+  
+  // 3D Command input state
+  const [command, setCommand] = useState('');
+  const [commandFeedback, setCommandFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [isProcessingCommand, setIsProcessingCommand] = useState(false);
 
   const colors = ['#000000', '#0000FF', '#FF0000', '#00FF00', '#FFA500', '#800080', '#FFFF00', '#8B4513'];
 
@@ -645,6 +652,136 @@ Return ONLY a valid JSON object with this exact structure:
     }
   };
 
+  // Command parsing helper functions for 3D mode
+  const extractColor = (input: string): string | undefined => {
+    const colorMap: Record<string, string> = {
+      red: '#FF0000',
+      blue: '#0000FF',
+      green: '#00FF00',
+      yellow: '#FFFF00',
+      orange: '#FFA500',
+      purple: '#800080',
+      pink: '#FFC0CB',
+      white: '#FFFFFF',
+      black: '#000000',
+      gray: '#808080',
+      grey: '#808080',
+      cyan: '#00FFFF',
+      magenta: '#FF00FF',
+      brown: '#8B4513',
+    };
+    
+    const lowerInput = input.toLowerCase();
+    for (const [colorName, colorHex] of Object.entries(colorMap)) {
+      if (lowerInput.includes(colorName)) {
+        return colorHex;
+      }
+    }
+    return undefined;
+  };
+
+  const extractSize = (input: string): number => {
+    const lowerInput = input.toLowerCase();
+    if (lowerInput.includes('large') || lowerInput.includes('big')) return 2;
+    if (lowerInput.includes('small') || lowerInput.includes('tiny')) return 0.5;
+    if (lowerInput.includes('huge') || lowerInput.includes('giant')) return 3;
+    return 1; // Default medium size
+  };
+
+  const handleCommandGenerate = () => {
+    if (!command.trim()) {
+      setCommandFeedback({ type: 'error', message: 'Please enter a command' });
+      setTimeout(() => setCommandFeedback(null), 3000);
+      return;
+    }
+
+    if (!diagram3DRef.current) {
+      setCommandFeedback({ type: 'error', message: '3D environment not ready yet' });
+      setTimeout(() => setCommandFeedback(null), 3000);
+      return;
+    }
+
+    setIsProcessingCommand(true);
+    const lowerCommand = command.toLowerCase().trim();
+    const color = extractColor(command);
+    const size = extractSize(command);
+
+    try {
+      // Check for molecules first
+      if (lowerCommand.includes('water') || lowerCommand.includes('h2o')) {
+        diagram3DRef.current.createMolecule('water');
+        setCommandFeedback({ type: 'success', message: '✅ Created water molecule (H₂O)' });
+        setCommand('');
+      } else if (lowerCommand.includes('methane') || lowerCommand.includes('ch4')) {
+        diagram3DRef.current.createMolecule('methane');
+        setCommandFeedback({ type: 'success', message: '✅ Created methane molecule (CH₄)' });
+        setCommand('');
+      } else if (lowerCommand.includes('ethanol') || lowerCommand.includes('alcohol')) {
+        diagram3DRef.current.createMolecule('ethanol');
+        setCommandFeedback({ type: 'success', message: '✅ Created ethanol molecule (C₂H₅OH)' });
+        setCommand('');
+      } else if (lowerCommand.includes('benzene')) {
+        diagram3DRef.current.createMolecule('benzene');
+        setCommandFeedback({ type: 'success', message: '✅ Created benzene molecule (C₆H₆)' });
+        setCommand('');
+      }
+      // Check for basic shapes
+      else if (lowerCommand.includes('sphere') || lowerCommand.includes('ball')) {
+        diagram3DRef.current.createObject('sphere', color, size);
+        const colorName = color ? `${Object.keys({ red: '#FF0000', blue: '#0000FF', green: '#00FF00', yellow: '#FFFF00', orange: '#FFA500', purple: '#800080' }).find(key => ({ red: '#FF0000', blue: '#0000FF', green: '#00FF00', yellow: '#FFFF00', orange: '#FFA500', purple: '#800080' }[key as keyof typeof color] === color))} ` : '';
+        const sizeName = size === 2 ? 'large ' : size === 0.5 ? 'small ' : '';
+        setCommandFeedback({ type: 'success', message: `✅ Created ${sizeName}${colorName}sphere` });
+        setCommand('');
+      } else if (lowerCommand.includes('cube') || lowerCommand.includes('box')) {
+        diagram3DRef.current.createObject('cube', color, size);
+        const colorDesc = color ? 'colored ' : '';
+        const sizeDesc = size === 2 ? 'large ' : size === 0.5 ? 'small ' : '';
+        setCommandFeedback({ type: 'success', message: `✅ Created ${sizeDesc}${colorDesc}cube` });
+        setCommand('');
+      } else if (lowerCommand.includes('cylinder')) {
+        diagram3DRef.current.createObject('cylinder', color, size);
+        setCommandFeedback({ type: 'success', message: '✅ Created cylinder' });
+        setCommand('');
+      } else if (lowerCommand.includes('cone')) {
+        diagram3DRef.current.createObject('cone', color, size);
+        setCommandFeedback({ type: 'success', message: '✅ Created cone' });
+        setCommand('');
+      } else if (lowerCommand.includes('torus') || lowerCommand.includes('donut') || lowerCommand.includes('ring')) {
+        diagram3DRef.current.createObject('torus', color, size);
+        setCommandFeedback({ type: 'success', message: '✅ Created torus' });
+        setCommand('');
+      } else if (lowerCommand.includes('pyramid')) {
+        diagram3DRef.current.createObject('pyramid', color, size);
+        setCommandFeedback({ type: 'success', message: '✅ Created pyramid' });
+        setCommand('');
+      } else if (lowerCommand.includes('plane') || lowerCommand.includes('floor') || lowerCommand.includes('platform')) {
+        diagram3DRef.current.createObject('plane', color, size);
+        setCommandFeedback({ type: 'success', message: '✅ Created plane' });
+        setCommand('');
+      } else {
+        setCommandFeedback({ 
+          type: 'error', 
+          message: '❌ Unknown command. Try: "create sphere", "make red cube", "add water molecule"' 
+        });
+      }
+
+      // Clear feedback after 3 seconds
+      setTimeout(() => setCommandFeedback(null), 3000);
+    } catch (error) {
+      console.error('Error executing command:', error);
+      setCommandFeedback({ type: 'error', message: '❌ Failed to execute command' });
+      setTimeout(() => setCommandFeedback(null), 3000);
+    } finally {
+      setIsProcessingCommand(false);
+    }
+  };
+
+  const handleCommandKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleCommandGenerate();
+    }
+  };
+
   const tools = [
     { id: 'pencil' as Tool, icon: Pencil, label: 'Pencil' },
     { id: 'eraser' as Tool, icon: Eraser, label: 'Eraser' },
@@ -916,17 +1053,126 @@ Return ONLY a valid JSON object with this exact structure:
               </div>
             </div>
             ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" style={{ height: 'calc(100vh - 250px)', minHeight: '600px' }}>
-                <Suspense fallback={
-                  <div className="h-full flex items-center justify-center">
-                    <div className="flex flex-col items-center space-y-3">
-                      <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
-                      <p className="text-gray-600 dark:text-gray-400">Loading 3D Environment...</p>
+              <div className="space-y-4">
+                {/* Command Input Box - CRITICAL! */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Sparkles className="h-5 w-5 text-indigo-600" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Create 3D Objects with Commands
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="text"
+                      value={command}
+                      onChange={(e) => setCommand(e.target.value)}
+                      onKeyPress={handleCommandKeyPress}
+                      placeholder="Type a command: create sphere, make red cube, add water molecule..."
+                      className="flex-1 px-4 py-3 text-base border-2 border-gray-300 dark:border-gray-600 rounded-xl 
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                                 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm"
+                      disabled={isProcessingCommand}
+                    />
+                    <button
+                      onClick={handleCommandGenerate}
+                      disabled={isProcessingCommand || !command.trim()}
+                      className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 
+                                 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed 
+                                 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2"
+                    >
+                      {isProcessingCommand ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>Creating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-5 w-5" />
+                          <span>Generate</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Feedback Message */}
+                  {commandFeedback && (
+                    <div className={`mt-3 p-3 rounded-lg ${
+                      commandFeedback.type === 'success' 
+                        ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
+                        : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                    }`}>
+                      <p className="text-sm font-medium">{commandFeedback.message}</p>
+                    </div>
+                  )}
+
+                  {/* Example Commands */}
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      📝 Try these commands:
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setCommand('create sphere')}
+                        className="text-left px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 
+                                   text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        "create sphere"
+                      </button>
+                      <button
+                        onClick={() => setCommand('make red cube')}
+                        className="text-left px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 
+                                   text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        "make red cube"
+                      </button>
+                      <button
+                        onClick={() => setCommand('add blue cylinder')}
+                        className="text-left px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 
+                                   text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        "add blue cylinder"
+                      </button>
+                      <button
+                        onClick={() => setCommand('create water molecule')}
+                        className="text-left px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 
+                                   text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        "create water molecule"
+                      </button>
+                      <button
+                        onClick={() => setCommand('make large green sphere')}
+                        className="text-left px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 
+                                   text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        "make large green sphere"
+                      </button>
+                      <button
+                        onClick={() => setCommand('add methane')}
+                        className="text-left px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 
+                                   text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        "add methane"
+                      </button>
                     </div>
                   </div>
-                }>
-                  <Diagram3DContainer />
-                </Suspense>
+                </div>
+
+                {/* 3D Viewport */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" style={{ height: 'calc(100vh - 480px)', minHeight: '500px' }}>
+                  <Suspense fallback={
+                    <div className="h-full flex items-center justify-center">
+                      <div className="flex flex-col items-center space-y-3">
+                        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+                        <p className="text-gray-600 dark:text-gray-400">Loading 3D Environment...</p>
+                      </div>
+                    </div>
+                  }>
+                    <Diagram3DContainer ref={diagram3DRef} />
+                  </Suspense>
+                </div>
               </div>
             )}
           </div>
@@ -1063,64 +1309,84 @@ Return ONLY a valid JSON object with this exact structure:
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
                   <Box className="h-5 w-5 text-indigo-600" />
-                  <span>3D Mode</span>
+                  <span>3D Command Guide</span>
                 </h2>
                 <div className="space-y-4">
                   <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
                     <h3 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-2">
-                      3D Viewport Active
+                      ✨ Create with Text Commands
                     </h3>
                     <p className="text-sm text-indigo-700 dark:text-indigo-300">
-                      Create and manipulate 3D objects, molecular structures, and geometric shapes. Use the tools on the left to add objects to your scene.
+                      Type commands in the box above to instantly create 3D objects and molecules.
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Quick Tips:
+                      📦 Shapes:
                     </h3>
-                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                      <li className="flex items-start space-x-2">
-                        <span className="text-indigo-600 font-bold">•</span>
-                        <span>Left click + drag to rotate camera</span>
-                      </li>
-                      <li className="flex items-start space-x-2">
-                        <span className="text-indigo-600 font-bold">•</span>
-                        <span>Right click + drag to pan</span>
-                      </li>
-                      <li className="flex items-start space-x-2">
-                        <span className="text-indigo-600 font-bold">•</span>
-                        <span>Scroll to zoom in/out</span>
-                      </li>
-                      <li className="flex items-start space-x-2">
-                        <span className="text-indigo-600 font-bold">•</span>
-                        <span>Click objects to select and edit</span>
-                      </li>
-                      <li className="flex items-start space-x-2">
-                        <span className="text-indigo-600 font-bold">•</span>
-                        <span>Use shape tools to add 3D objects</span>
-                      </li>
-                      <li className="flex items-start space-x-2">
-                        <span className="text-indigo-600 font-bold">•</span>
-                        <span>Click molecule tool for pre-built structures</span>
-                      </li>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• "create sphere"</li>
+                      <li>• "make cube"</li>
+                      <li>• "add cylinder"</li>
+                      <li>• "create cone"</li>
+                      <li>• "make torus"</li>
+                      <li>• "add pyramid"</li>
                     </ul>
                   </div>
 
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
-                    <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 mb-2">
-                      Features Available:
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      🎨 With Colors:
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {['3D Shapes', '3D Text', 'Molecules', 'Atoms', 'Materials', 'Lighting', 'Camera'].map((feature) => (
-                        <span
-                          key={feature}
-                          className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• "make red cube"</li>
+                      <li>• "create blue sphere"</li>
+                      <li>• "add green cylinder"</li>
+                      <li>• Colors: red, blue, green, yellow, orange, purple, pink, white, black, gray</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      📏 With Sizes:
+                    </h3>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• "make large sphere"</li>
+                      <li>• "create small cube"</li>
+                      <li>• "add huge cone"</li>
+                      <li>• Sizes: small, large, huge</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      🧪 Molecules:
+                    </h3>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• "create water molecule"</li>
+                      <li>• "add methane"</li>
+                      <li>• "make ethanol"</li>
+                      <li>• "add benzene"</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      🖱️ Camera Controls:
+                    </h3>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• Left drag: Rotate view</li>
+                      <li>• Right drag: Pan camera</li>
+                      <li>• Scroll: Zoom in/out</li>
+                      <li>• Click: Select objects</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      💡 Tip: Combine color and size! Try "make large red sphere" or "add small blue cube"
+                    </p>
                   </div>
                 </div>
               </div>
