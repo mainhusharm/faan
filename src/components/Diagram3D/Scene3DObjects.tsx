@@ -1,4 +1,5 @@
 import React from 'react';
+import { DragControls } from '@react-three/drei';
 import { Object3DRenderer } from './Object3DRenderer';
 import type { Object3DData } from './types';
 
@@ -6,15 +7,50 @@ interface Scene3DObjectsProps {
   objects: Object3DData[];
   selectedObjectId: string | null;
   onObjectSelect: (id: string | null) => void;
+  onObjectDrag: (id: string, newPosition: [number, number, number]) => void;
+  isDragging: boolean;
+  setIsDragging: (dragging: boolean) => void;
+  orbitControlsRef: React.RefObject<any>;
 }
 
 export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
   objects,
   selectedObjectId,
   onObjectSelect,
+  onObjectDrag,
+  isDragging,
+  setIsDragging,
+  orbitControlsRef,
 }) => {
   return (
-    <>
+    <DragControls
+      autoTransform={false}
+      onDragStart={(e) => {
+        e.stopPropagation();
+        setIsDragging(true);
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.enabled = false;
+        }
+      }}
+      onDrag={(worldMatrix, deltaWorldMatrix, object) => {
+        const newPosition: [number, number, number] = [
+          worldMatrix.elements[12],
+          worldMatrix.elements[13],
+          worldMatrix.elements[14],
+        ];
+        
+        const objectId = object.userData.id;
+        if (objectId) {
+          onObjectDrag(objectId, newPosition);
+        }
+      }}
+      onDragEnd={() => {
+        setIsDragging(false);
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.enabled = true;
+        }
+      }}
+    >
       {objects.map((obj) => (
         <Object3DRenderer
           key={obj.id}
@@ -23,6 +59,6 @@ export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
           onSelect={() => onObjectSelect(obj.id)}
         />
       ))}
-    </>
+    </DragControls>
   );
 };
