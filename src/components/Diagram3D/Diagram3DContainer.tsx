@@ -3,9 +3,14 @@ import { Viewport3D } from './Viewport3D';
 import { Toolbar3D } from './Toolbar3D';
 import { PropertiesPanel } from './PropertiesPanel';
 import { MoleculePicker } from './MoleculePicker';
+import { CommandInput } from './CommandInput';
 import { Download, Save, FolderOpen } from 'lucide-react';
 import type { Object3DData, MaterialProperties, MoleculeTemplate } from './types';
 import { ELEMENT_COLORS } from './types';
+import { parseCommand } from './commandParser';
+import { executeCommand } from './commandExecutor';
+import { useAuth } from '../../contexts/AuthContext';
+import { getUserApiKey } from '../../lib/userApiKeys';
 
 interface Diagram3DContainerProps {
   onExportImage?: () => void;
@@ -58,6 +63,7 @@ const createInitialObjects = (): Object3DData[] => {
 export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
   onExportImage,
 }) => {
+  const { user } = useAuth();
   const [objects, setObjects] = useState<Object3DData[]>(createInitialObjects());
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string>('cube');
@@ -67,6 +73,11 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
   const [autoRotate, setAutoRotate] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState('#f0f0f0');
   const [showMoleculePicker, setShowMoleculePicker] = useState(false);
+  const [isProcessingCommand, setIsProcessingCommand] = useState(false);
+  const [commandFeedback, setCommandFeedback] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
 
   const generateId = () => `obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -283,6 +294,68 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
     input.click();
   };
 
+  const handleCommand = useCallback(async (command: string) => {
+    setIsProcessingCommand(true);
+    setCommandFeedback(null);
+
+    try {
+      // Get API key for AI parsing
+      let apiKey: string | undefined;
+      if (user) {
+        try {
+          apiKey = (await getUserApiKey(user.id, 'gemini')) || undefined;
+        } catch (error) {
+          console.warn('Failed to get API key:', error);
+        }
+      }
+
+      // Parse command
+      const parsedCommand = await parseCommand(command, apiKey);
+
+      // Execute command
+      const result = executeCommand(parsedCommand);
+
+      if (result.success) {
+        // Handle clear action
+        if (parsedCommand.action === 'clear') {
+          setObjects([]);
+          setSelectedObjectId(null);
+        }
+        // Handle create action
+        else if (result.objects && result.objects.length > 0) {
+          setObjects((prevObjects) => [...prevObjects, ...result.objects!]);
+          // Select the first created object
+          if (result.objects[0]) {
+            setSelectedObjectId(result.objects[0].id);
+          }
+        }
+
+        setCommandFeedback({
+          type: 'success',
+          message: result.message,
+        });
+      } else {
+        setCommandFeedback({
+          type: 'error',
+          message: result.message,
+        });
+      }
+    } catch (error) {
+      console.error('Command execution failed:', error);
+      setCommandFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to execute command',
+      });
+    } finally {
+      setIsProcessingCommand(false);
+      
+      // Clear feedback after 5 seconds
+      setTimeout(() => {
+        setCommandFeedback(null);
+      }, 5000);
+    }
+  }, [user]);
+
   return (
     <div className="h-full flex flex-col">
       {/* Toolbar */}
@@ -336,6 +409,13 @@ export const Diagram3DContainer: React.FC<Diagram3DContainerProps> = ({
           />
         </div>
       </div>
+
+      {/* Command Input */}
+      <CommandInput
+        onCommand={handleCommand}
+        isProcessing={isProcessingCommand}
+        feedback={commandFeedback}
+      />
 
       {/* Bottom Actions */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
