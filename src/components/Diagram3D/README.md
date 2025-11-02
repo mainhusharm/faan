@@ -4,6 +4,29 @@ This directory contains the complete implementation of the 3D interactive whiteb
 
 ## Features
 
+### ✨ Natural Language Command Interface
+
+**NEW!** Create 3D objects using natural language commands:
+
+```
+create sphere
+make red cube
+add water molecule
+create 3D text "Hello"
+make large metallic sphere
+add 5 spheres in a circle
+```
+
+Features:
+- **Smart Parsing**: Understands colors, sizes, positions, materials
+- **AI-Powered**: Uses Google Gemini for complex commands
+- **Auto-Suggestions**: Real-time command suggestions as you type
+- **Command History**: Access previous commands with ↑↓ arrows
+- **Visual Feedback**: Success/error messages with details
+- **Help Panel**: Built-in examples and documentation
+
+See [COMMAND_PROMPT_FEATURE.md](./COMMAND_PROMPT_FEATURE.md) for complete documentation.
+
 ### 🎨 3D Creation Tools
 
 #### Basic Shapes
@@ -100,17 +123,21 @@ Three-point lighting setup:
 
 ```
 Diagram3D/
-├── README.md                    # This file
-├── index.ts                     # Export barrel
-├── types.ts                     # TypeScript definitions
-├── Diagram3DContainer.tsx       # Main container component
-├── Viewport3D.tsx               # 3D canvas viewport
-├── Scene3DObjects.tsx           # Scene object manager
-├── Object3DRenderer.tsx         # Individual object renderer
-├── Toolbar3D.tsx                # Tool selection toolbar
-├── PropertiesPanel.tsx          # Object properties editor
-├── MoleculePicker.tsx           # Molecule template selector
-└── Lighting.tsx                 # Scene lighting setup
+├── README.md                      # This file
+├── COMMAND_PROMPT_FEATURE.md      # Command prompt documentation
+├── index.ts                       # Export barrel
+├── types.ts                       # TypeScript definitions
+├── Diagram3DContainer.tsx         # Main container component
+├── Viewport3D.tsx                 # 3D canvas viewport
+├── Scene3DObjects.tsx             # Scene object manager
+├── Object3DRenderer.tsx           # Individual object renderer
+├── Toolbar3D.tsx                  # Tool selection toolbar
+├── PropertiesPanel.tsx            # Object properties editor
+├── MoleculePicker.tsx             # Molecule template selector
+├── CommandInput.tsx               # Command prompt UI component
+├── commandParser.ts               # Natural language parser
+├── commandExecutor.ts             # Command execution engine
+└── Lighting.tsx                   # Scene lighting setup
 ```
 
 ## Component Architecture

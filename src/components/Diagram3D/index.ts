@@ -3,4 +3,5 @@ export { Viewport3D } from './Viewport3D';
 export { Toolbar3D } from './Toolbar3D';
 export { PropertiesPanel } from './PropertiesPanel';
 export { MoleculePicker } from './MoleculePicker';
+export { CommandInput } from './CommandInput';
 export * from './types';
