@@ -27,49 +27,16 @@ const defaultMaterial: MaterialProperties = {
   wireframe: false,
 };
 
-// Create initial demo objects to showcase 3D capabilities
-const createInitialObjects = (): Object3DData[] => {
-  return [
-    {
-      id: 'demo-cube-1',
-      type: 'cube',
-      position: [-1.5, 0.5, 0],
-      rotation: [0.3, 0.5, 0],
-      scale: [1, 1, 1],
-      material: { ...defaultMaterial, color: '#3b82f6' },
-      dimensions: { width: 1, height: 1, depth: 1 },
-    },
-    {
-      id: 'demo-sphere-1',
-      type: 'sphere',
-      position: [0, 0.5, 0],
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
-      material: { ...defaultMaterial, color: '#f97316' },
-      dimensions: { radius: 0.5, segments: 32 },
-    },
-    {
-      id: 'demo-cylinder-1',
-      type: 'cylinder',
-      position: [1.5, 0.5, 0],
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
-      material: { ...defaultMaterial, color: '#10b981' },
-      dimensions: { radius: 0.5, height: 1, segments: 32 },
-    },
-  ];
-};
-
 export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainerProps>(({
   onExportImage,
 }, ref) => {
-  const [objects, setObjects] = useState<Object3DData[]>(createInitialObjects());
+  const [objects, setObjects] = useState<Object3DData[]>([]);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<string>('cube');
   const [showGrid, setShowGrid] = useState(true);
   const [showAxes, setShowAxes] = useState(true);
   const [cameraMode, setCameraMode] = useState<'perspective' | 'orthographic'>('perspective');
-  const [autoRotate, setAutoRotate] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState('#f0f0f0');
   const [showMoleculePicker, setShowMoleculePicker] = useState(false);
 
@@ -240,6 +207,10 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
     );
   }, []);
 
+  const handleObjectDrag = useCallback((id: string, newPosition: [number, number, number]) => {
+    updateObject(id, { position: newPosition });
+  }, [updateObject]);
+
   const duplicateObject = useCallback(() => {
     if (!selectedObjectId) return;
     
@@ -354,6 +325,7 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
             objects={objects}
             selectedObjectId={selectedObjectId}
             onObjectSelect={setSelectedObjectId}
+            onObjectDrag={handleObjectDrag}
             showGrid={showGrid}
             showAxes={showAxes}
             cameraMode={cameraMode}

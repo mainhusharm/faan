@@ -1,4 +1,4 @@
-import React, { Suspense, useRef } from 'react';
+import React, { Suspense, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, PerspectiveCamera, OrthographicCamera } from '@react-three/drei';
 import { Loader2 } from 'lucide-react';
@@ -10,6 +10,7 @@ interface Viewport3DProps {
   objects: Object3DData[];
   selectedObjectId: string | null;
   onObjectSelect: (id: string | null) => void;
+  onObjectDrag: (id: string, newPosition: [number, number, number]) => void;
   showGrid: boolean;
   showAxes: boolean;
   cameraMode: 'perspective' | 'orthographic';
@@ -21,6 +22,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
   objects,
   selectedObjectId,
   onObjectSelect,
+  onObjectDrag,
   showGrid,
   showAxes,
   cameraMode,
@@ -28,6 +30,8 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
   backgroundColor,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const orbitControlsRef = useRef<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   return (
     <div className="w-full h-full relative" style={{ backgroundColor }}>
@@ -74,10 +78,15 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
             objects={objects}
             selectedObjectId={selectedObjectId}
             onObjectSelect={onObjectSelect}
+            onObjectDrag={onObjectDrag}
+            isDragging={isDragging}
+            setIsDragging={setIsDragging}
+            orbitControlsRef={orbitControlsRef}
           />
 
           {/* Controls */}
           <OrbitControls
+            ref={orbitControlsRef}
             makeDefault
             autoRotate={autoRotate}
             autoRotateSpeed={1}
@@ -86,6 +95,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
             minDistance={2}
             maxDistance={50}
             maxPolarAngle={Math.PI / 2}
+            enabled={!isDragging}
           />
         </Suspense>
       </Canvas>

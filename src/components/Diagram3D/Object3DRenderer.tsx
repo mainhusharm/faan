@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Text3D, Center } from '@react-three/drei';
 import { Mesh } from 'three';
 import type { Object3DData } from './types';
@@ -10,13 +10,13 @@ interface Object3DRendererProps {
   onSelect: () => void;
 }
 
-const getMaterial = (material: Object3DData['material']) => {
+const getMaterial = (material: Object3DData['material'], isHovered?: boolean) => {
   const commonProps = {
     color: material.color,
     opacity: material.opacity,
     transparent: material.opacity < 1,
-    emissive: material.emissive,
-    emissiveIntensity: material.emissiveIntensity,
+    emissive: isHovered ? '#ffaa00' : material.emissive,
+    emissiveIntensity: isHovered ? 0.3 : material.emissiveIntensity,
     wireframe: material.wireframe,
   };
 
@@ -61,6 +61,7 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   onSelect,
 }) => {
   const meshRef = useRef<Mesh>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const renderShape = () => {
     const dims = object.dimensions || {};
@@ -161,7 +162,12 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
 
   if (object.type === 'text3d') {
     return (
-      <Center position={object.position} rotation={object.rotation} scale={object.scale}>
+      <Center 
+        position={object.position} 
+        rotation={object.rotation} 
+        scale={object.scale}
+        userData={{ id: object.id }}
+      >
         <Text3D
           font="/fonts/helvetiker_regular.typeface.json"
           size={object.fontSize || 0.5}
@@ -175,9 +181,18 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
             e.stopPropagation();
             onSelect();
           }}
+          onPointerEnter={(e) => {
+            e.stopPropagation();
+            setIsHovered(true);
+            document.body.style.cursor = 'grab';
+          }}
+          onPointerLeave={() => {
+            setIsHovered(false);
+            document.body.style.cursor = 'auto';
+          }}
         >
           {object.text || 'Text'}
-          {getMaterial(object.material)}
+          {getMaterial(object.material, isHovered)}
           {isSelected && (
             <meshBasicMaterial color="#00ff00" wireframe />
           )}
@@ -194,13 +209,23 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
       scale={object.scale}
       castShadow
       receiveShadow
+      userData={{ id: object.id }}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
+      onPointerEnter={(e) => {
+        e.stopPropagation();
+        setIsHovered(true);
+        document.body.style.cursor = 'grab';
+      }}
+      onPointerLeave={() => {
+        setIsHovered(false);
+        document.body.style.cursor = 'auto';
+      }}
     >
       {renderShape()}
-      {object.type !== 'atom' && getMaterial(object.material)}
+      {object.type !== 'atom' && getMaterial(object.material, isHovered)}
       
       {isSelected && (
         <lineSegments>
