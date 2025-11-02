@@ -848,7 +848,6 @@ Return ONLY a valid JSON object with this exact structure:
             await (canvasContainer as any).msRequestFullscreen();
           }
         }
-        setIsFullscreen(true);
       } catch (error) {
         console.error('Error entering fullscreen:', error);
       }
@@ -862,7 +861,6 @@ Return ONLY a valid JSON object with this exact structure:
         } else if ((document as any).msExitFullscreen) {
           await (document as any).msExitFullscreen();
         }
-        setIsFullscreen(false);
       } catch (error) {
         console.error('Error exiting fullscreen:', error);
       }
@@ -1306,7 +1304,11 @@ Return ONLY a valid JSON object with this exact structure:
                 <div 
                   id="canvas-container-3d"
                   className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" 
-                  style={{ height: isFullscreen ? 'calc(100vh - 180px)' : 'calc(100vh - 350px)', minHeight: '600px' }}
+                  style={{ 
+                    height: isFullscreen ? '100vh' : 'calc(100vh - 350px)', 
+                    minHeight: isFullscreen ? '100vh' : '600px',
+                    width: isFullscreen ? '100vw' : '100%'
+                  }}
                 >
                   {/* Fullscreen Exit Button */}
                   {isFullscreen && (
@@ -1385,7 +1387,11 @@ Return ONLY a valid JSON object with this exact structure:
                 <div 
                   id="canvas-container-3d"
                   className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden relative" 
-                  style={{ height: isFullscreen ? 'calc(100vh - 280px)' : 'calc(100vh - 350px)', minHeight: '600px' }}
+                  style={{ 
+                    height: isFullscreen ? '100vh' : 'calc(100vh - 350px)', 
+                    minHeight: isFullscreen ? '100vh' : '600px',
+                    width: isFullscreen ? '100vw' : '100%'
+                  }}
                 >
                   {/* Fullscreen Exit Button */}
                   {isFullscreen && (

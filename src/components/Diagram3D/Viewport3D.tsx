@@ -1,5 +1,5 @@
-import React, { Suspense, useRef, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { Suspense, useRef, useState, useEffect } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, PerspectiveCamera, OrthographicCamera } from '@react-three/drei';
 import { Loader2 } from 'lucide-react';
 import { Scene3DObjects } from './Scene3DObjects';
@@ -17,6 +17,45 @@ interface Viewport3DProps {
   autoRotate: boolean;
   backgroundColor: string;
 }
+
+const CanvasResizer: React.FC = () => {
+  const { camera, gl } = useThree();
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      if ('aspect' in camera) {
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      }
+      gl.setSize(width, height);
+    };
+
+    const handleFullscreenChange = () => {
+      setTimeout(() => {
+        handleResize();
+      }, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
+  }, [camera, gl]);
+
+  return null;
+};
 
 export const Viewport3D: React.FC<Viewport3DProps> = ({
   objects,
@@ -42,6 +81,9 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
         style={{ width: '100%', height: '100%' }}
       >
         <Suspense fallback={null}>
+          {/* Canvas Resizer - handles fullscreen and window resize */}
+          <CanvasResizer />
+
           {/* Camera */}
           {cameraMode === 'perspective' ? (
             <PerspectiveCamera makeDefault position={[5, 5, 5]} fov={50} />

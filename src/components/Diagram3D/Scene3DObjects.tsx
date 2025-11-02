@@ -24,13 +24,14 @@ export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
 }) => {
   return (
     <DragControls
-      autoTransform={false}
+      autoTransform={true}
       onDragStart={(e) => {
         e.stopPropagation();
         setIsDragging(true);
         if (orbitControlsRef.current) {
           orbitControlsRef.current.enabled = false;
         }
+        document.body.style.cursor = 'grabbing';
       }}
       onDrag={(worldMatrix, deltaWorldMatrix, object) => {
         const newPosition: [number, number, number] = [
@@ -49,6 +50,7 @@ export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
         if (orbitControlsRef.current) {
           orbitControlsRef.current.enabled = true;
         }
+        document.body.style.cursor = 'auto';
       }}
     >
       {objects.map((obj) => (
