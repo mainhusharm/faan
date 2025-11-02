@@ -37,7 +37,7 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
   const [showAxes, setShowAxes] = useState(true);
   const [cameraMode, setCameraMode] = useState<'perspective' | 'orthographic'>('perspective');
   const [autoRotate, setAutoRotate] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState('#f0f0f0');
+  const [backgroundColor, setBackgroundColor] = useState('#1a1a2e');
   const [showMoleculePicker, setShowMoleculePicker] = useState(false);
 
   const generateId = () => `obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -280,7 +280,7 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
           const sceneData = JSON.parse(event.target?.result as string);
           setObjects(sceneData.objects || []);
           if (sceneData.settings) {
-            setBackgroundColor(sceneData.settings.backgroundColor || '#f0f0f0');
+            setBackgroundColor(sceneData.settings.backgroundColor || '#1a1a2e');
             setShowGrid(sceneData.settings.showGrid !== false);
             setShowAxes(sceneData.settings.showAxes !== false);
             setCameraMode(sceneData.settings.cameraMode || 'perspective');

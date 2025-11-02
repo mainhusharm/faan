@@ -77,12 +77,19 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
       <Canvas
         ref={canvasRef}
         shadows
-        gl={{ preserveDrawingBuffer: true }}
+        gl={{ 
+          preserveDrawingBuffer: true,
+          antialias: true,
+          alpha: false
+        }}
         style={{ width: '100%', height: '100%' }}
       >
         <Suspense fallback={null}>
           {/* Canvas Resizer - handles fullscreen and window resize */}
           <CanvasResizer />
+          
+          {/* Scene Background */}
+          <color attach="background" args={[backgroundColor]} />
 
           {/* Camera */}
           {cameraMode === 'perspective' ? (
