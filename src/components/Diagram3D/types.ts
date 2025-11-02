@@ -142,10 +142,12 @@ export const MOLECULE_TEMPLATES: MoleculeTemplate[] = [
     description: 'Methane molecule',
     atoms: [
       { element: 'C', position: [0, 0, 0] },
-      { element: 'H', position: [0.63, 0.63, 0.63] },
-      { element: 'H', position: [-0.63, -0.63, 0.63] },
-      { element: 'H', position: [-0.63, 0.63, -0.63] },
-      { element: 'H', position: [0.63, -0.63, -0.63] },
+      // Tetrahedral geometry with 109.5° bond angles
+      // Bond length ~1.09 Angstrom scaled
+      { element: 'H', position: [0, 1.09, 0] },  // Top
+      { element: 'H', position: [1.028, -0.363, 0] },  // Front-right
+      { element: 'H', position: [-0.514, -0.363, 0.89] },  // Back-left
+      { element: 'H', position: [-0.514, -0.363, -0.89] },  // Front-left
     ],
     bonds: [
       { atom1: 0, atom2: 1, type: 'single' },

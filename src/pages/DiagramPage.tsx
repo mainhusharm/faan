@@ -134,18 +134,22 @@ const DiagramPage: React.FC = () => {
       const isCurrentlyFullscreen = !!(
         document.fullscreenElement ||
         (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
         (document as any).msFullscreenElement
       );
+      console.log('Fullscreen state changed:', isCurrentlyFullscreen);
       setIsFullscreen(isCurrentlyFullscreen);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('msfullscreenchange', handleFullscreenChange);
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('msfullscreenchange', handleFullscreenChange);
     };
   }, []);
@@ -836,33 +840,60 @@ Return ONLY a valid JSON object with this exact structure:
   const toggleFullscreen = async () => {
     const canvasContainer = document.getElementById('canvas-container-3d');
     
-    if (!isFullscreen) {
+    if (!canvasContainer) {
+      console.error('Canvas container not found');
+      setCommandFeedback({ type: 'error', message: '❌ Canvas container not ready' });
+      setTimeout(() => setCommandFeedback(null), 3000);
+      return;
+    }
+    
+    if (!document.fullscreenElement) {
       // Enter fullscreen
+      console.log('Entering fullscreen mode...');
       try {
-        if (canvasContainer) {
-          if (canvasContainer.requestFullscreen) {
-            await canvasContainer.requestFullscreen();
-          } else if ((canvasContainer as any).webkitRequestFullscreen) {
-            await (canvasContainer as any).webkitRequestFullscreen();
-          } else if ((canvasContainer as any).msRequestFullscreen) {
-            await (canvasContainer as any).msRequestFullscreen();
-          }
+        if (canvasContainer.requestFullscreen) {
+          await canvasContainer.requestFullscreen();
+          console.log('✅ Fullscreen activated');
+        } else if ((canvasContainer as any).webkitRequestFullscreen) {
+          await (canvasContainer as any).webkitRequestFullscreen();
+          console.log('✅ Fullscreen activated (webkit)');
+        } else if ((canvasContainer as any).mozRequestFullScreen) {
+          await (canvasContainer as any).mozRequestFullScreen();
+          console.log('✅ Fullscreen activated (moz)');
+        } else if ((canvasContainer as any).msRequestFullscreen) {
+          await (canvasContainer as any).msRequestFullscreen();
+          console.log('✅ Fullscreen activated (ms)');
+        } else {
+          console.error('Fullscreen API not supported');
+          setCommandFeedback({ type: 'error', message: '❌ Fullscreen not supported in this browser' });
+          setTimeout(() => setCommandFeedback(null), 3000);
         }
       } catch (error) {
         console.error('Error entering fullscreen:', error);
+        setCommandFeedback({ type: 'error', message: `❌ Fullscreen failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+        setTimeout(() => setCommandFeedback(null), 3000);
       }
     } else {
       // Exit fullscreen
+      console.log('Exiting fullscreen mode...');
       try {
         if (document.exitFullscreen) {
           await document.exitFullscreen();
+          console.log('✅ Exited fullscreen');
         } else if ((document as any).webkitExitFullscreen) {
           await (document as any).webkitExitFullscreen();
+          console.log('✅ Exited fullscreen (webkit)');
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+          console.log('✅ Exited fullscreen (moz)');
         } else if ((document as any).msExitFullscreen) {
           await (document as any).msExitFullscreen();
+          console.log('✅ Exited fullscreen (ms)');
         }
       } catch (error) {
         console.error('Error exiting fullscreen:', error);
+        setCommandFeedback({ type: 'error', message: `❌ Exit fullscreen failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+        setTimeout(() => setCommandFeedback(null), 3000);
       }
     }
   };

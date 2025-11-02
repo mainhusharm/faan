@@ -151,6 +151,7 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
         return (
           <>
             <cylinderGeometry args={[bondRadius, bondRadius, 1, 16]} />
+            <meshStandardMaterial color="#808080" metalness={0.5} roughness={0.5} />
           </>
         );
       }
@@ -225,7 +226,7 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
       }}
     >
       {renderShape()}
-      {object.type !== 'atom' && getMaterial(object.material, isHovered)}
+      {object.type !== 'atom' && object.type !== 'bond' && getMaterial(object.material, isHovered)}
       
       {isSelected && (
         <lineSegments>
