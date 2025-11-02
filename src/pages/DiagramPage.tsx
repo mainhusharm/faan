@@ -20,11 +20,15 @@ import {
   AlertCircle,
   CheckCircle2,
   Box,
-  Layers
+  Layers,
+  Maximize2,
+  Minimize2,
+  Wand2
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getUserApiKey } from '../lib/userApiKeys';
 import type { Diagram3DHandle } from '../components/Diagram3D';
+import { DrawingOverlay } from '../components/DrawingOverlay';
 
 const Diagram3DContainer = lazy(() => 
   import('../components/Diagram3D').then(module => ({ default: module.Diagram3DContainer }))
@@ -33,7 +37,7 @@ const Diagram3DContainer = lazy(() =>
 type Tool = 'pencil' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'line' | 'text';
 type BackgroundType = 'plain' | 'grid' | 'dots' | 'ruled';
 type ProcessingStep = 'idle' | 'analyzing' | 'completed' | 'error';
-type ViewMode = '2d' | '3d';
+type ViewMode = '2d' | '3d' | 'draw-to-3d';
 
 interface Point {
   x: number;
@@ -81,6 +85,10 @@ const DiagramPage: React.FC = () => {
   const [command, setCommand] = useState('');
   const [commandFeedback, setCommandFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [isProcessingCommand, setIsProcessingCommand] = useState(false);
+  
+  // Draw-to-3D state
+  const [drawTo3DColor, setDrawTo3DColor] = useState('#0000FF');
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const colors = ['#000000', '#0000FF', '#FF0000', '#00FF00', '#FFA500', '#800080', '#FFFF00', '#8B4513'];
 
@@ -782,6 +790,31 @@ Return ONLY a valid JSON object with this exact structure:
     }
   };
 
+  const handleShapeRecognized = (objectType: string, color: string, size: number, shapeName: string) => {
+    if (!diagram3DRef.current) {
+      setCommandFeedback({ type: 'error', message: '3D environment not ready' });
+      setTimeout(() => setCommandFeedback(null), 3000);
+      return;
+    }
+
+    try {
+      diagram3DRef.current.createObject(objectType, color, size);
+      setCommandFeedback({ 
+        type: 'success', 
+        message: `✅ Created ${objectType} from ${shapeName}!` 
+      });
+      setTimeout(() => setCommandFeedback(null), 3000);
+    } catch (error) {
+      console.error('Error creating 3D object:', error);
+      setCommandFeedback({ type: 'error', message: '❌ Failed to create 3D object' });
+      setTimeout(() => setCommandFeedback(null), 3000);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   const tools = [
     { id: 'pencil' as Tool, icon: Pencil, label: 'Pencil' },
     { id: 'eraser' as Tool, icon: Eraser, label: 'Eraser' },
@@ -840,7 +873,7 @@ Return ONLY a valid JSON object with this exact structure:
                 }`}
               >
                 <Layers className="h-5 w-5" />
-                <span>2D Canvas</span>
+                <span>2D Draw</span>
               </button>
               <button
                 onClick={() => setViewMode('3d')}
@@ -851,7 +884,18 @@ Return ONLY a valid JSON object with this exact structure:
                 }`}
               >
                 <Box className="h-5 w-5" />
-                <span>3D Viewport</span>
+                <span>3D Scene</span>
+              </button>
+              <button
+                onClick={() => setViewMode('draw-to-3d')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  viewMode === 'draw-to-3d'
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Wand2 className="h-5 w-5" />
+                <span>Draw→3D</span>
               </button>
             </div>
           </div>
@@ -879,9 +923,25 @@ Return ONLY a valid JSON object with this exact structure:
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 p-4' : ''}`}>
+          {isFullscreen && (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Diagram Workspace
+              </h2>
+              <button
+                onClick={toggleFullscreen}
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Minimize2 className="h-5 w-5" />
+                <span>Exit Fullscreen</span>
+              </button>
+            </div>
+          )}
+
+        <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
           {/* Drawing Area */}
-          <div className="lg:col-span-2">
+          <div className={isFullscreen ? 'col-span-1' : 'lg:col-span-2'}>
             {viewMode === '2d' ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                 {/* Toolbar */}
@@ -992,12 +1052,19 @@ Return ONLY a valid JSON object with this exact structure:
                     >
                       <Download className="h-5 w-5" />
                     </button>
+                    <button
+                      onClick={toggleFullscreen}
+                      className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                      title="Toggle Fullscreen"
+                    >
+                      {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+                    </button>
                   </div>
                 </div>
               </div>
 
               {/* Canvas */}
-              <div className="relative bg-white" style={{ height: 'calc(100vh - 400px)', minHeight: '400px' }}>
+              <div className="relative bg-white" style={{ height: isFullscreen ? 'calc(100vh - 180px)' : 'calc(100vh - 250px)', minHeight: '600px' }}>
                 <canvas
                   ref={canvasRef}
                   onMouseDown={handleMouseDown}
@@ -1052,7 +1119,7 @@ Return ONLY a valid JSON object with this exact structure:
                 )}
               </div>
             </div>
-            ) : (
+            ) : viewMode === '3d' ? (
               <div className="space-y-4">
                 {/* Command Input Box - CRITICAL! */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
@@ -1161,7 +1228,7 @@ Return ONLY a valid JSON object with this exact structure:
                 </div>
 
                 {/* 3D Viewport */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" style={{ height: 'calc(100vh - 480px)', minHeight: '500px' }}>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden" style={{ height: isFullscreen ? 'calc(100vh - 180px)' : 'calc(100vh - 350px)', minHeight: '600px' }}>
                   <Suspense fallback={
                     <div className="h-full flex items-center justify-center">
                       <div className="flex flex-col items-center space-y-3">
@@ -1174,10 +1241,60 @@ Return ONLY a valid JSON object with this exact structure:
                   </Suspense>
                 </div>
               </div>
+            ) : (
+              // Draw-to-3D Mode
+              <div className="space-y-4">
+                {/* Info Card */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl shadow-xl p-6 border-2 border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Wand2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Draw 2D Shapes → Convert to 3D
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Draw shapes on the canvas overlay below. The system will recognize what you drew and convert it to a 3D object!
+                  </p>
+                </div>
+
+                {/* Feedback Message */}
+                {commandFeedback && (
+                  <div className={`p-4 rounded-xl ${
+                    commandFeedback.type === 'success' 
+                      ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
+                      : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                  }`}>
+                    <p className="text-sm font-medium">{commandFeedback.message}</p>
+                  </div>
+                )}
+
+                {/* 3D Viewport with Drawing Overlay */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden relative" style={{ height: isFullscreen ? 'calc(100vh - 280px)' : 'calc(100vh - 350px)', minHeight: '600px' }}>
+                  <Suspense fallback={
+                    <div className="h-full flex items-center justify-center">
+                      <div className="flex flex-col items-center space-y-3">
+                        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+                        <p className="text-gray-600 dark:text-gray-400">Loading 3D Environment...</p>
+                      </div>
+                    </div>
+                  }>
+                    <Diagram3DContainer ref={diagram3DRef} />
+                  </Suspense>
+                  
+                  {/* Drawing Overlay */}
+                  <DrawingOverlay
+                    isActive={viewMode === 'draw-to-3d'}
+                    selectedColor={drawTo3DColor}
+                    onColorChange={setDrawTo3DColor}
+                    onShapeRecognized={handleShapeRecognized}
+                  />
+                </div>
+              </div>
             )}
           </div>
 
           {/* Results Panel */}
+          {!isFullscreen && (
           <div className="lg:col-span-1">
             {viewMode === '2d' ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
@@ -1305,7 +1422,7 @@ Return ONLY a valid JSON object with this exact structure:
                 </div>
               )}
             </div>
-            ) : (
+            ) : viewMode === '3d' ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
                   <Box className="h-5 w-5 text-indigo-600" />
@@ -1390,8 +1507,85 @@ Return ONLY a valid JSON object with this exact structure:
                   </div>
                 </div>
               </div>
+            ) : (
+              // Draw-to-3D Guide
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
+                  <Wand2 className="h-5 w-5 text-purple-600" />
+                  <span>Draw→3D Guide</span>
+                </h2>
+                <div className="space-y-4">
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+                    <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 mb-2">
+                      ✨ Magic Drawing Mode
+                    </h3>
+                    <p className="text-sm text-purple-700 dark:text-purple-300">
+                      Draw 2D shapes and watch them transform into 3D objects automatically!
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      🎨 Shape Recognition:
+                    </h3>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• Circle → Creates 3D Sphere</li>
+                      <li>• Square → Creates 3D Cube</li>
+                      <li>• Rectangle → Creates 3D Box</li>
+                      <li>• Triangle → Creates 3D Cone</li>
+                      <li>• Line → Creates 3D Cylinder</li>
+                      <li>• Arrow → Creates 3D Arrow</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      🖱️ How to Use:
+                    </h3>
+                    <ol className="space-y-1 text-xs text-gray-600 dark:text-gray-400 list-decimal list-inside">
+                      <li>Select a color from the palette</li>
+                      <li>Draw a shape on the overlay</li>
+                      <li>System recognizes the shape</li>
+                      <li>Click "Convert to 3D" button</li>
+                      <li>3D object appears in scene!</li>
+                    </ol>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      💡 Tips:
+                    </h3>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• Draw smooth, closed shapes for best recognition</li>
+                      <li>• Larger drawings create larger 3D objects</li>
+                      <li>• Use different colors for variety</li>
+                      <li>• Clear button removes your drawing</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      🖱️ 3D Controls:
+                    </h3>
+                    <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      <li>• Left drag: Rotate 3D view</li>
+                      <li>• Right drag: Pan camera</li>
+                      <li>• Scroll: Zoom in/out</li>
+                      <li>• Click objects: Select & edit</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      🌟 Pro Tip: Draw multiple shapes in sequence to build complex 3D scenes!
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
+          )}
+        </div>
         </div>
       </div>
 
