@@ -14,7 +14,8 @@ interface Diagram3DContainerProps {
 
 export interface Diagram3DHandle {
   createObject: (type: string, color?: string, size?: number) => void;
-  createMolecule: (moleculeName: string) => void;
+  createMolecule: (moleculeName: string) => boolean;
+  createAnimal: (animalName: string) => boolean;
 }
 
 const defaultMaterial: MaterialProperties = {
@@ -215,6 +216,34 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
     return false;
   }, []);
 
+  const createAnimalByName = useCallback((animalName: string) => {
+    const normalizedName = animalName.toLowerCase().trim();
+    let template: AnimalTemplate | undefined;
+
+    // Find matching animal template
+    if (normalizedName.includes('dog') || normalizedName.includes('puppy')) {
+      template = ANIMAL_TEMPLATES.find(a => a.name === 'dog');
+    } else if (normalizedName.includes('cat') || normalizedName.includes('kitten')) {
+      template = ANIMAL_TEMPLATES.find(a => a.name === 'cat');
+    } else if (normalizedName.includes('bird') || normalizedName.includes('eagle') || normalizedName.includes('hawk')) {
+      template = ANIMAL_TEMPLATES.find(a => a.name === 'bird');
+    } else if (normalizedName.includes('fish') || normalizedName.includes('salmon')) {
+      template = ANIMAL_TEMPLATES.find(a => a.name === 'fish');
+    } else if (normalizedName.includes('elephant')) {
+      template = ANIMAL_TEMPLATES.find(a => a.name === 'elephant');
+    } else if (normalizedName.includes('monkey') || normalizedName.includes('ape') || normalizedName.includes('primate')) {
+      template = ANIMAL_TEMPLATES.find(a => a.name === 'monkey');
+    } else if (normalizedName.includes('zebra')) {
+      template = ANIMAL_TEMPLATES.find(a => a.name === 'zebra');
+    }
+
+    if (template) {
+      handleAnimalSelect(template);
+      return true;
+    }
+    return false;
+  }, []);
+
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     createObject: (type: string, color?: string, size?: number) => {
@@ -223,7 +252,10 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
     createMolecule: (moleculeName: string) => {
       return createMoleculeByName(moleculeName);
     },
-  }), [addObject, createMoleculeByName]);
+    createAnimal: (animalName: string) => {
+      return createAnimalByName(animalName);
+    },
+  }), [addObject, createMoleculeByName, createAnimalByName]);
 
   const updateObject = useCallback((id: string, updates: Partial<Object3DData>) => {
     setObjects((prevObjects) =>
