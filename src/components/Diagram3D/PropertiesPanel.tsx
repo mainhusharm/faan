@@ -310,6 +310,29 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         </div>
       )}
 
+      {/* Animal-specific properties */}
+      {selectedObject.type === 'animal' && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+            Animal Properties
+          </h3>
+          
+          <div className="mb-3">
+            <label className="text-xs text-gray-600 dark:text-gray-400">Animal Type</label>
+            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300">
+              {selectedObject.animalName ? selectedObject.animalName.charAt(0).toUpperCase() + selectedObject.animalName.slice(1) : 'Unknown'}
+            </div>
+          </div>
+          
+          <div className="mb-3">
+            <label className="text-xs text-gray-600 dark:text-gray-400">Parts</label>
+            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300">
+              {selectedObject.animalParts?.length || 0} parts
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex space-x-2">
         <button

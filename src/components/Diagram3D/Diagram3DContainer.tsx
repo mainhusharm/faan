@@ -3,9 +3,10 @@ import { Viewport3D } from './Viewport3D';
 import { Toolbar3D } from './Toolbar3D';
 import { PropertiesPanel } from './PropertiesPanel';
 import { MoleculePicker } from './MoleculePicker';
+import { AnimalPicker } from './AnimalPicker';
 import { Download, Save, FolderOpen } from 'lucide-react';
-import type { Object3DData, MaterialProperties, MoleculeTemplate } from './types';
-import { ELEMENT_COLORS, MOLECULE_TEMPLATES } from './types';
+import type { Object3DData, MaterialProperties, MoleculeTemplate, AnimalTemplate } from './types';
+import { ELEMENT_COLORS, MOLECULE_TEMPLATES, ANIMAL_TEMPLATES } from './types';
 
 interface Diagram3DContainerProps {
   onExportImage?: () => void;
@@ -39,6 +40,7 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
   const [autoRotate, setAutoRotate] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState('#1a1a2e');
   const [showMoleculePicker, setShowMoleculePicker] = useState(false);
+  const [showAnimalPicker, setShowAnimalPicker] = useState(false);
 
   const generateId = () => `obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -99,6 +101,8 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
     
     if (tool === 'molecule') {
       setShowMoleculePicker(true);
+    } else if (tool === 'animal') {
+      setShowAnimalPicker(true);
     } else if (['move', 'rotate', 'scale'].includes(tool)) {
       // Transform tools - don't create objects
       return;
@@ -167,6 +171,26 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
     });
 
     setObjects((prevObjects) => [...prevObjects, ...newObjects]);
+  };
+
+  const handleAnimalSelect = (animal: AnimalTemplate) => {
+    const newObject: Object3DData = {
+      id: generateId(),
+      type: 'animal',
+      position: [
+        Math.random() * 4 - 2,
+        1,
+        Math.random() * 4 - 2,
+      ],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+      material: { ...defaultMaterial, color: animal.color },
+      animalName: animal.name,
+      animalParts: animal.parts,
+    };
+
+    setObjects((prevObjects) => [...prevObjects, newObject]);
+    setSelectedObjectId(newObject.id);
   };
 
   const createMoleculeByName = useCallback((moleculeName: string) => {
@@ -387,6 +411,14 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
         <MoleculePicker
           onSelectMolecule={handleMoleculeSelect}
           onClose={() => setShowMoleculePicker(false)}
+        />
+      )}
+
+      {/* Animal Picker Dialog */}
+      {showAnimalPicker && (
+        <AnimalPicker
+          onSelectAnimal={handleAnimalSelect}
+          onClose={() => setShowAnimalPicker(false)}
         />
       )}
     </div>

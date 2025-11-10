@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Text3D, Center } from '@react-three/drei';
-import { Mesh } from 'three';
-import type { Object3DData } from './types';
+import { Mesh, Group } from 'three';
+import type { Object3DData, AnimalPart } from './types';
 import { ELEMENT_COLORS, ELEMENT_RADII } from './types';
 
 interface Object3DRendererProps {
@@ -52,6 +52,21 @@ const getMaterial = (material: Object3DData['material'], isHovered?: boolean) =>
       return <meshBasicMaterial {...commonProps} wireframe />;
     default:
       return <meshStandardMaterial {...commonProps} />;
+  }
+};
+
+const renderAnimalPart = (part: AnimalPart) => {
+  switch (part.type) {
+    case 'sphere':
+      return <sphereGeometry args={[0.5, 32, 32]} />;
+    case 'cylinder':
+      return <cylinderGeometry args={[0.5, 0.5, 1, 32]} />;
+    case 'cone':
+      return <coneGeometry args={[0.5, 1, 32]} />;
+    case 'cube':
+      return <boxGeometry args={[1, 1, 1]} />;
+    default:
+      return <sphereGeometry args={[0.5, 32, 32]} />;
   }
 };
 
@@ -156,10 +171,64 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
         );
       }
 
+      case 'animal': {
+        return null;
+      }
+
       default:
         return <boxGeometry args={[1, 1, 1]} />;
     }
   };
+
+  if (object.type === 'animal') {
+    return (
+      <group
+        position={object.position}
+        rotation={object.rotation}
+        scale={object.scale}
+        userData={{ id: object.id }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+        onPointerEnter={(e) => {
+          e.stopPropagation();
+          setIsHovered(true);
+          document.body.style.cursor = 'grab';
+        }}
+        onPointerLeave={() => {
+          setIsHovered(false);
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        {object.animalParts?.map((part, index) => (
+          <mesh
+            key={`${object.id}-${part.name}`}
+            position={part.position}
+            rotation={part.rotation}
+            scale={part.scale}
+            castShadow
+            receiveShadow
+          >
+            {renderAnimalPart(part)}
+            <meshStandardMaterial 
+              color={part.color}
+              metalness={0.3}
+              roughness={0.7}
+              emissive={isHovered ? '#ffaa00' : '#000000'}
+              emissiveIntensity={isHovered ? 0.3 : 0}
+            />
+          </mesh>
+        ))}
+        {isSelected && (
+          <mesh>
+            <boxGeometry args={[2, 2, 2]} />
+            <meshBasicMaterial color="#00ff00" wireframe />
+          </mesh>
+        )}
+      </group>
+    );
+  }
 
   if (object.type === 'text3d') {
     return (
