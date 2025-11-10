@@ -13,6 +13,7 @@ import {
   Camera,
   Grid3x3,
   Eye,
+  Zap,
 } from 'lucide-react';
 
 interface Toolbar3DProps {
@@ -55,6 +56,7 @@ export const Toolbar3D: React.FC<Toolbar3DProps> = ({
     { id: 'text3d', icon: Type, label: '3D Text' },
     { id: 'atom', icon: Atom, label: 'Atom' },
     { id: 'molecule', icon: Hexagon, label: 'Molecule' },
+    { id: 'animal', icon: Zap, label: 'Animal' },
   ];
 
   const transformTools = [
