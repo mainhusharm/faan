@@ -186,6 +186,9 @@ const Navbar: React.FC = () => {
               {/* Other Links Dropdown - Hidden on small screens */}
               <div className="hidden lg:block relative" ref={navDropdownRef}>
                 <button
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsNavDropdownOpen(!isNavDropdownOpen);
@@ -262,6 +265,9 @@ const Navbar: React.FC = () => {
                   {/* Profile Dropdown - Enhanced */}
                   <div className="relative" ref={dropdownRef}>
                     <button
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsProfileDropdownOpen(!isProfileDropdownOpen);
