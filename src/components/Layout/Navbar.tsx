@@ -186,7 +186,10 @@ const Navbar: React.FC = () => {
               {/* Other Links Dropdown - Hidden on small screens */}
               <div className="hidden lg:block relative" ref={navDropdownRef}>
                 <button
-                  onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsNavDropdownOpen(!isNavDropdownOpen);
+                  }}
                   className="flex items-center space-x-2 text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg lg:rounded-xl text-sm font-semibold transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
                 >
                   <span>More</span>
@@ -259,7 +262,10 @@ const Navbar: React.FC = () => {
                   {/* Profile Dropdown - Enhanced */}
                   <div className="relative" ref={dropdownRef}>
                     <button
-                      onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsProfileDropdownOpen(!isProfileDropdownOpen);
+                      }}
                       className="hidden md:flex items-center space-x-1 lg:space-x-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 lg:px-3 py-2 rounded-lg lg:rounded-xl transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
                     >
                       <div className="relative">
