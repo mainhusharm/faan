@@ -96,7 +96,7 @@ export function calculateArea(points: Point[]): number {
 /**
  * Detect corners in a path using angle detection
  */
-export function detectCorners(points: Point[], angleThreshold: number = 2.5): number {
+export function detectCorners(points: Point[], angleThreshold: number = 1.2): number {
   if (points.length < 3) return 0;
 
   // Simplify points first by removing very close consecutive points
@@ -122,7 +122,9 @@ export function detectCorners(points: Point[], angleThreshold: number = 2.5): nu
       angleDiff = 2 * Math.PI - angleDiff;
     }
 
-    // If angle is sharp enough, it's a corner
+    // If angle is sharp enough, it's a corner (more lenient threshold)
+    // ~90 degrees = 1.57 radians, ~70 degrees = 1.22 radians
+    // Using 1.2 radians (~69 degrees) catches more realistic hand-drawn corners
     if (angleDiff > angleThreshold) {
       corners++;
     }
@@ -158,8 +160,9 @@ export function isStraightLine(points: Point[], threshold: number = 0.15): boole
   const bbox = getBoundingBox(points);
   const aspectRatio = bbox.width / (bbox.height || 1);
 
-  // Very wide or very tall bounding box suggests a line
-  if (aspectRatio > 5 || aspectRatio < 0.2) {
+  // Very wide or very tall bounding box suggests a line (more lenient ratios)
+  // Changed from 5/0.2 to 6/0.167 to better distinguish lines from shapes
+  if (aspectRatio > 6 || aspectRatio < 0.167) {
     // Calculate deviation from straight line
     const start = points[0];
     const end = points[points.length - 1];
@@ -219,7 +222,10 @@ export function recognizeShape(points: Point[]): RecognizedShape {
   const aspectRatio = bbox.width / (bbox.height || 1);
   
   // Check if closed loop (start and end are close)
-  const isClosed = distance(points[0], points[points.length - 1]) < 20;
+  // Use adaptive threshold based on drawing size to handle different scale drawings
+  const avgDimension = (bbox.width + bbox.height) / 2;
+  const closureThreshold = Math.max(30, avgDimension * 0.12); // 12% of average dimension, min 30px
+  const isClosed = distance(points[0], points[points.length - 1]) < closureThreshold;
 
   // Check for line first (open path)
   if (!isClosed) {
@@ -266,6 +272,14 @@ export function recognizeShape(points: Point[]): RecognizedShape {
       }
       return 'rectangle';
     }
+    if (corners === 2) {
+      // Two corners could be a very acute triangle or degenerate shape
+      // Check aspect ratio to guess intent
+      if (aspectRatio > 2 || aspectRatio < 0.5) {
+        return 'rectangle'; // User probably meant a rectangle
+      }
+      return 'triangle';
+    }
   }
 
   if (corners === 5) {
@@ -278,6 +292,21 @@ export function recognizeShape(points: Point[]): RecognizedShape {
 
   // If high circularity but didn't match circle (maybe imperfect circle)
   if (circularity > 0.6) {
+    return 'circle';
+  }
+
+  // Additional fallback: if we have a closed shape but no clear corners/circularity match
+  // Use aspect ratio to guess the intended shape
+  if (isClosed) {
+    if (aspectRatio > 0.8 && aspectRatio < 1.2) {
+      // Nearly square aspect ratio
+      return 'square';
+    }
+    if (aspectRatio > 0.3 && aspectRatio < 3) {
+      // Reasonable rectangle aspect ratio
+      return 'rectangle';
+    }
+    // Default for other closed shapes
     return 'circle';
   }
 
