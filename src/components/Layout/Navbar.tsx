@@ -126,7 +126,7 @@ const Navbar: React.FC = () => {
             : '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         }}
       >
-        <div className="w-full px-4 sm:px-6 lg:px-8 overflow-x-auto">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center gap-2 sm:gap-3 lg:gap-4 w-full min-w-0 py-4">
             {/* Logo Section - Enhanced */}
