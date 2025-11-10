@@ -155,46 +155,75 @@ const Navbar: React.FC = () => {
               </Link>
             </div>
 
-            {/* Desktop Navigation Dropdown - Enhanced */}
-            <div className="hidden sm:flex items-center justify-center flex-1 px-1 min-w-0 relative" ref={navDropdownRef}>
-              <button
-                onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
-                className="flex items-center space-x-2 text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg lg:rounded-xl text-sm font-semibold transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
+            {/* Desktop Navigation - Home and About in Center */}
+            <div className="hidden md:flex items-center justify-center flex-1 gap-2 lg:gap-4">
+              {/* Home Link */}
+              <Link
+                to="/"
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg lg:rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/')
+                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 text-white shadow-lg'
+                    : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800'
+                }`}
               >
-                <span>Menu</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+                <Home className={`h-4 w-4 ${isActive('/') ? 'animate-pulse' : ''}`} />
+                <span>Home</span>
+              </Link>
 
-              {/* Navigation Dropdown Menu */}
-              {isNavDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transform origin-top-left transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
-                  <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
-                  
-                  <div className="py-2">
-                    {navLinks.map((link) => {
-                      if (link.protected && !user) return null;
-                      const Icon = link.icon;
-                      const active = isActive(link.path);
+              {/* About Link */}
+              <Link
+                to="/about"
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg lg:rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  isActive('/about')
+                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 text-white shadow-lg'
+                    : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Info className={`h-4 w-4 ${isActive('/about') ? 'animate-pulse' : ''}`} />
+                <span>About Us</span>
+              </Link>
 
-                      return (
-                        <Link
-                          key={link.path}
-                          to={link.path}
-                          onClick={() => setIsNavDropdownOpen(false)}
-                          className={`flex items-center space-x-3 px-5 py-3 text-sm font-medium transition-all duration-200 group w-full ${
-                            active
-                              ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 text-white'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20'
-                          }`}
-                        >
-                          <Icon className={`h-4 w-4 flex-shrink-0 ${active ? 'animate-pulse' : ''}`} />
-                          <span>{link.label}</span>
-                        </Link>
-                      );
-                    })}
+              {/* Other Links Dropdown - Hidden on small screens */}
+              <div className="hidden lg:block relative" ref={navDropdownRef}>
+                <button
+                  onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+                  className="flex items-center space-x-2 text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg lg:rounded-xl text-sm font-semibold transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
+                >
+                  <span>More</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Navigation Dropdown Menu */}
+                {isNavDropdownOpen && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
+                    <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
+                    
+                    <div className="py-2">
+                      {navLinks.slice(2).map((link) => {
+                        if (link.protected && !user) return null;
+                        const Icon = link.icon;
+                        const active = isActive(link.path);
+
+                        return (
+                          <Link
+                            key={link.path}
+                            to={link.path}
+                            onClick={() => setIsNavDropdownOpen(false)}
+                            className={`flex items-center space-x-3 px-5 py-3 text-sm font-medium transition-all duration-200 group w-full ${
+                              active
+                                ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 text-white'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20'
+                            }`}
+                          >
+                            <Icon className={`h-4 w-4 flex-shrink-0 ${active ? 'animate-pulse' : ''}`} />
+                            <span>{link.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Right Section - Enhanced */}
