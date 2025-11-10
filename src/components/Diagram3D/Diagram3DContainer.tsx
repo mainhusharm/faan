@@ -13,7 +13,7 @@ interface Diagram3DContainerProps {
 }
 
 export interface Diagram3DHandle {
-  createObject: (type: string, color?: string, size?: number) => void;
+  createObject: (type: string, color?: string, size?: number, aspectRatio?: number) => void;
   createMolecule: (moleculeName: string) => boolean;
   createAnimal: (animalName: string) => boolean;
 }
@@ -45,7 +45,7 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
 
   const generateId = () => `obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const addObject = useCallback((type: string, customColor?: string, customSize?: number) => {
+  const addObject = useCallback((type: string, customColor?: string, customSize?: number, customAspectRatio?: number) => {
     const size = customSize || 1;
     const newObject: Object3DData = {
       id: generateId(),
@@ -61,9 +61,20 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
     };
 
     switch (type) {
-      case 'cube':
-        newObject.dimensions = { width: size, height: size, depth: size };
+      case 'cube': {
+        // For cubes created from rectangles, use aspect ratio to set width/depth
+        if (customAspectRatio && customAspectRatio !== 1) {
+          const baseSize = size * 0.7;
+          newObject.dimensions = { 
+            width: baseSize * customAspectRatio, 
+            height: baseSize,
+            depth: baseSize 
+          };
+        } else {
+          newObject.dimensions = { width: size, height: size, depth: size };
+        }
         break;
+      }
       case 'sphere':
         newObject.dimensions = { radius: size * 0.5, segments: 32 };
         break;
@@ -246,8 +257,8 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
 
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
-    createObject: (type: string, color?: string, size?: number) => {
-      addObject(type, color, size);
+    createObject: (type: string, color?: string, size?: number, aspectRatio?: number) => {
+      addObject(type, color, size, aspectRatio);
     },
     createMolecule: (moleculeName: string) => {
       return createMoleculeByName(moleculeName);
