@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Trash2, Check, Palette } from 'lucide-react';
-import { recognizeShape, estimateSize, shapeToObject3D, type Point } from '../lib/shapeRecognition';
+import { recognizeShape, estimateSize, shapeToObject3D, getBoundingBox, type Point } from '../lib/shapeRecognition';
 
 interface DrawingOverlayProps {
   isActive: boolean;
   selectedColor: string;
   onColorChange: (color: string) => void;
-  onShapeRecognized: (objectType: string, color: string, size: number, shapeName: string) => void;
+  onShapeRecognized: (objectType: string, color: string, size: number, shapeName: string, aspectRatio?: number) => void;
 }
 
 export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
@@ -154,8 +154,10 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
 
     const objectType = shapeToObject3D(recognizedShape);
     const size = estimateSize(points);
+    const bbox = getBoundingBox(points);
+    const aspectRatio = bbox.height > 0 ? bbox.width / bbox.height : 1;
     
-    onShapeRecognized(objectType, selectedColor, size, recognizedShape);
+    onShapeRecognized(objectType, selectedColor, size, recognizedShape, aspectRatio);
     
     // Clear canvas after conversion
     setTimeout(() => {

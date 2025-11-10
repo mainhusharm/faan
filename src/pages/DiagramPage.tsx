@@ -846,7 +846,7 @@ Return ONLY a valid JSON object with this exact structure:
     }
   };
 
-  const handleShapeRecognized = (objectType: string, color: string, size: number, shapeName: string) => {
+  const handleShapeRecognized = (objectType: string, color: string, size: number, shapeName: string, aspectRatio?: number) => {
     if (!diagram3DRef.current) {
       setCommandFeedback({ type: 'error', message: '3D environment not ready' });
       setTimeout(() => setCommandFeedback(null), 3000);
@@ -854,7 +854,7 @@ Return ONLY a valid JSON object with this exact structure:
     }
 
     try {
-      diagram3DRef.current.createObject(objectType, color, size);
+      diagram3DRef.current.createObject(objectType, color, size, aspectRatio);
       setCommandFeedback({ 
         type: 'success', 
         message: `✅ Created ${objectType} from ${shapeName}!` 
