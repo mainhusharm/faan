@@ -110,7 +110,7 @@ const Navbar: React.FC = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out overflow-hidden ${
           scrolled
             ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg border-b border-gray-200/80 dark:border-gray-700/80'
             : 'bg-white/98 dark:bg-gray-900/98 backdrop-blur-sm shadow-sm border-b border-transparent'
@@ -121,8 +121,9 @@ const Navbar: React.FC = () => {
             : '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center gap-4 w-full min-w-0 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 overflow-x-auto">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center gap-2 sm:gap-3 lg:gap-4 w-full min-w-0 py-4">
             {/* Logo Section - Enhanced */}
             <div className="flex items-center space-x-3 flex-shrink-0">
               <Link 
@@ -130,7 +131,7 @@ const Navbar: React.FC = () => {
                 className="flex items-center space-x-3 group relative"
               >
                 {/* Animated logo background */}
-                <div className="absolute -inset-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-2xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-2xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500 scale-110" />
                 
                 <div className="relative w-12 h-12 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                   <GraduationCap className="h-7 w-7 text-white animate-pulse" />
@@ -150,8 +151,8 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Desktop Navigation - Enhanced */}
-            <div className="hidden lg:flex items-center justify-center flex-1 px-2 min-w-0">
-              <div className="flex flex-wrap items-center justify-center gap-1 lg:gap-2 xl:gap-3 w-full min-w-0">
+            <div className="hidden lg:flex items-center justify-center flex-1 px-1 min-w-0">
+              <div className="flex items-center justify-center gap-0.5 lg:gap-1 xl:gap-2 w-full min-w-0">
                 {navLinks.map((link) => {
                   if (link.protected && !user) return null;
                   const Icon = link.icon;
@@ -161,7 +162,7 @@ const Navbar: React.FC = () => {
                     <Link
                       key={link.path}
                       to={link.path}
-                      className={`group relative px-2.5 xl:px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2 whitespace-nowrap ${
+                      className={`group relative px-2 lg:px-2.5 xl:px-3 py-2 rounded-lg lg:rounded-xl text-xs lg:text-sm font-semibold transition-all duration-300 flex items-center space-x-1 lg:space-x-2 whitespace-nowrap ${
                         active
                           ? 'text-white dark:text-white'
                           : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
@@ -169,12 +170,12 @@ const Navbar: React.FC = () => {
                     >
                       {/* Active state background with gradient */}
                       {active && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-xl shadow-lg transform scale-100 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-lg lg:rounded-xl shadow-lg transform scale-100 transition-transform duration-300" />
                       )}
                       
                       {/* Hover background */}
                       {!active && (
-                        <div className="absolute inset-0 bg-slate-100 dark:bg-gray-800 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-slate-100 dark:bg-gray-800 rounded-lg lg:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       )}
 
                       <Icon className={`h-4 w-4 relative z-10 ${active ? 'animate-pulse' : ''}`} />
@@ -191,14 +192,14 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Right Section - Enhanced */}
-            <div className="flex items-center space-x-3 flex-shrink-0">
+            <div className="flex items-center space-x-2 lg:space-x-3 flex-shrink-0">
               {/* Theme Toggle - Enhanced */}
               <button
                 onClick={toggleTheme}
-                className="relative p-3 rounded-xl text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-all duration-300 group transform hover:scale-110"
+                className="relative p-2 lg:p-3 rounded-lg lg:rounded-xl text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-all duration-300 group transform hover:scale-110"
                 title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl opacity-0 group-hover:opacity-20 blur transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg lg:rounded-xl opacity-0 group-hover:opacity-20 blur transition-opacity duration-300" />
                 {isDarkMode ? (
                   <Sun className="h-5 w-5 relative z-10 transform group-hover:rotate-180 transition-transform duration-500" />
                 ) : (
@@ -209,22 +210,22 @@ const Navbar: React.FC = () => {
               {user ? (
                 <div className="flex items-center space-x-3">
                   {/* Points Badge - Enhanced */}
-                  <div className="relative hidden sm:block">
+                   <div className="relative hidden lg:block">
                     <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-full opacity-30 blur animate-pulse" />
-                    <div className="relative bg-gradient-to-r from-indigo-100 via-purple-100 to-emerald-100 dark:from-indigo-900/50 dark:via-purple-900/50 dark:to-emerald-900/50 text-indigo-800 dark:text-indigo-200 text-sm font-bold px-4 py-2 rounded-full backdrop-blur-sm border border-indigo-200 dark:border-indigo-700 shadow-lg">
+                    <div className="relative bg-gradient-to-r from-indigo-100 via-purple-100 to-emerald-100 dark:from-indigo-900/50 dark:via-purple-900/50 dark:to-emerald-900/50 text-indigo-800 dark:text-indigo-200 text-xs lg:text-sm font-bold px-3 lg:px-4 py-2 rounded-full backdrop-blur-sm border border-indigo-200 dark:border-indigo-700 shadow-lg">
                       <span className="flex items-center space-x-1">
-                        <Sparkles className="h-3.5 w-3.5" />
+                        <Sparkles className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                         <span>{profile?.points || 0}</span>
                         <span className="text-xs font-medium">pts</span>
                       </span>
                     </div>
-                  </div>
+                   </div>
 
                   {/* Profile Dropdown - Enhanced */}
                   <div className="relative" ref={dropdownRef}>
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      className="hidden md:flex items-center space-x-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-xl transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
+                      className="hidden md:flex items-center space-x-1 lg:space-x-2 text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 lg:px-3 py-2 rounded-lg lg:rounded-xl transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
                     >
                       <div className="relative">
                         <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-full opacity-0 group-hover:opacity-50 blur transition-opacity duration-300" />
@@ -232,7 +233,7 @@ const Navbar: React.FC = () => {
                           <User className="h-5 w-5 text-white" />
                         </div>
                       </div>
-                      <span className="text-sm font-semibold max-w-[120px] truncate">
+                      <span className="text-xs lg:text-sm font-semibold max-w-[100px] lg:max-w-[120px] truncate">
                         {profile?.full_name || user.email?.split('@')[0]}
                       </span>
                       <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
@@ -240,7 +241,7 @@ const Navbar: React.FC = () => {
 
                     {/* Dropdown Menu - Enhanced */}
                     {isProfileDropdownOpen && (
-                      <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transform origin-top-right transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transform origin-top-right transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
                         {/* Gradient top bar */}
                         <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
                         
@@ -332,7 +333,7 @@ const Navbar: React.FC = () => {
               {/* Mobile Menu Button - Enhanced */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-3 rounded-xl text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-all duration-300 transform hover:scale-110"
+                className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-all duration-300 transform hover:scale-110"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
@@ -342,9 +343,10 @@ const Navbar: React.FC = () => {
                 )}
               </button>
             </div>
-          </div>
-        </div>
-      </nav>
+            </div>
+            </div>
+            </div>
+            </nav>
 
       {/* Mobile Menu - Enhanced with smooth animations */}
       <div
