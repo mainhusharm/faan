@@ -31,8 +31,10 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavDropdownOpen, setIsNavDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navDropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     try {
@@ -68,6 +70,9 @@ const Navbar: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileDropdownOpen(false);
+      }
+      if (navDropdownRef.current && !navDropdownRef.current.contains(event.target as Node)) {
+        setIsNavDropdownOpen(false);
       }
     };
 
@@ -150,45 +155,46 @@ const Navbar: React.FC = () => {
               </Link>
             </div>
 
-            {/* Desktop Navigation - Enhanced */}
-            <div className="hidden lg:flex items-center justify-center flex-1 px-1 min-w-0">
-              <div className="flex items-center justify-center gap-0.5 lg:gap-1 xl:gap-2 w-full min-w-0">
-                {navLinks.map((link) => {
-                  if (link.protected && !user) return null;
-                  const Icon = link.icon;
-                  const active = isActive(link.path);
+            {/* Desktop Navigation Dropdown - Enhanced */}
+            <div className="hidden sm:flex items-center justify-center flex-1 px-1 min-w-0 relative" ref={navDropdownRef}>
+              <button
+                onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+                className="flex items-center space-x-2 text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg lg:rounded-xl text-sm font-semibold transition-all duration-300 hover:bg-slate-100 dark:hover:bg-gray-800 group"
+              >
+                <span>Menu</span>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-                  return (
-                    <Link
-                      key={link.path}
-                      to={link.path}
-                      className={`group relative px-2 lg:px-2.5 xl:px-3 py-2 rounded-lg lg:rounded-xl text-xs lg:text-sm font-semibold transition-all duration-300 flex items-center space-x-1 lg:space-x-2 whitespace-nowrap ${
-                        active
-                          ? 'text-white dark:text-white'
-                          : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
-                      }`}
-                    >
-                      {/* Active state background with gradient */}
-                      {active && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 rounded-lg lg:rounded-xl shadow-lg transform scale-100 transition-transform duration-300" />
-                      )}
-                      
-                      {/* Hover background */}
-                      {!active && (
-                        <div className="absolute inset-0 bg-slate-100 dark:bg-gray-800 rounded-lg lg:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      )}
+              {/* Navigation Dropdown Menu */}
+              {isNavDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transform origin-top-left transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
+                  <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
+                  
+                  <div className="py-2">
+                    {navLinks.map((link) => {
+                      if (link.protected && !user) return null;
+                      const Icon = link.icon;
+                      const active = isActive(link.path);
 
-                      <Icon className={`h-4 w-4 relative z-10 ${active ? 'animate-pulse' : ''}`} />
-                      <span className="relative z-10">{link.label}</span>
-
-                      {/* Active indicator line */}
-                      {active && (
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-white to-transparent rounded-full" />
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
+                      return (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          onClick={() => setIsNavDropdownOpen(false)}
+                          className={`flex items-center space-x-3 px-5 py-3 text-sm font-medium transition-all duration-200 group w-full ${
+                            active
+                              ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 text-white'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20'
+                          }`}
+                        >
+                          <Icon className={`h-4 w-4 flex-shrink-0 ${active ? 'animate-pulse' : ''}`} />
+                          <span>{link.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Section - Enhanced */}
