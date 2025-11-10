@@ -122,7 +122,7 @@ const Navbar: React.FC = () => {
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20 w-full min-w-0">
+          <div className="flex justify-between items-center gap-4 w-full min-w-0 py-4">
             {/* Logo Section - Enhanced */}
             <div className="flex items-center space-x-3 flex-shrink-0">
               <Link 
@@ -151,7 +151,7 @@ const Navbar: React.FC = () => {
 
             {/* Desktop Navigation - Enhanced */}
             <div className="hidden lg:flex items-center justify-center flex-1 px-2 min-w-0">
-              <div className="flex items-center space-x-1 overflow-x-auto max-w-full">
+              <div className="flex flex-wrap items-center justify-center gap-1 lg:gap-2 xl:gap-3 w-full min-w-0">
                 {navLinks.map((link) => {
                   if (link.protected && !user) return null;
                   const Icon = link.icon;
@@ -161,7 +161,7 @@ const Navbar: React.FC = () => {
                     <Link
                       key={link.path}
                       to={link.path}
-                      className={`group relative px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2 whitespace-nowrap ${
+                      className={`group relative px-2.5 xl:px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center space-x-2 whitespace-nowrap ${
                         active
                           ? 'text-white dark:text-white'
                           : 'text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
