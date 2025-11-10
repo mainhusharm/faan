@@ -13,10 +13,10 @@ interface Diagram3DContainerProps {
 }
 
 export interface Diagram3DHandle {
-  createObject: (type: string, color?: string, size?: number, aspectRatio?: number) => void;
-  createMolecule: (moleculeName: string) => boolean;
-  createAnimal: (animalName: string) => boolean;
-}
+   createObject: (type: string, color?: string, size?: number, aspectRatio?: number, points?: Array<{ x: number; y: number }>) => void;
+   createMolecule: (moleculeName: string) => boolean;
+   createAnimal: (animalName: string) => boolean;
+ }
 
 const defaultMaterial: MaterialProperties = {
   type: 'standard',
@@ -45,7 +45,7 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
 
   const generateId = () => `obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const addObject = useCallback((type: string, customColor?: string, customSize?: number, customAspectRatio?: number) => {
+  const addObject = useCallback((type: string, customColor?: string, customSize?: number, customAspectRatio?: number, customPoints?: Array<{ x: number; y: number }>) => {
     const size = customSize || 1;
     const newObject: Object3DData = {
       id: generateId(),
@@ -102,11 +102,16 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
         newObject.element = 'C';
         newObject.material.color = ELEMENT_COLORS['C'];
         break;
-    }
+      case 'custom_drawing':
+        if (customPoints && customPoints.length > 0) {
+          newObject.drawingPoints = customPoints;
+        }
+        break;
+      }
 
-    setObjects((prevObjects) => [...prevObjects, newObject]);
-    setSelectedObjectId(newObject.id);
-  }, []);
+      setObjects((prevObjects) => [...prevObjects, newObject]);
+      setSelectedObjectId(newObject.id);
+      }, []);
 
   const handleToolSelect = (tool: string) => {
     setSelectedTool(tool);
@@ -257,8 +262,8 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
 
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
-    createObject: (type: string, color?: string, size?: number, aspectRatio?: number) => {
-      addObject(type, color, size, aspectRatio);
+    createObject: (type: string, color?: string, size?: number, aspectRatio?: number, points?: Array<{ x: number; y: number }>) => {
+      addObject(type, color, size, aspectRatio, points);
     },
     createMolecule: (moleculeName: string) => {
       return createMoleculeByName(moleculeName);

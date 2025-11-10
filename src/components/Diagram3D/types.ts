@@ -1,16 +1,17 @@
 export type Object3DType =
-  | 'cube'
-  | 'sphere'
-  | 'cylinder'
-  | 'cone'
-  | 'torus'
-  | 'pyramid'
-  | 'plane'
-  | 'text3d'
-  | 'atom'
-  | 'bond'
-  | 'molecule'
-  | 'animal';
+   | 'cube'
+   | 'sphere'
+   | 'cylinder'
+   | 'cone'
+   | 'torus'
+   | 'pyramid'
+   | 'plane'
+   | 'text3d'
+   | 'atom'
+   | 'bond'
+   | 'molecule'
+   | 'animal'
+   | 'custom_drawing';
 
 export type MaterialType = 'standard' | 'phong' | 'basic' | 'wireframe' | 'glass' | 'metallic';
 
@@ -65,9 +66,12 @@ export interface Object3DData {
   bonds?: string[];
   
   // Animal-specific properties
-  animalName?: string;
-  animalParts?: AnimalPart[];
-}
+   animalName?: string;
+   animalParts?: AnimalPart[];
+
+   // Custom drawing-specific properties
+   drawingPoints?: Array<{ x: number; y: number }>;
+  }
 
 export interface AnimalPart {
   name: string;
