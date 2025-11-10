@@ -759,6 +759,36 @@ Return ONLY a valid JSON object with this exact structure:
         setCommandFeedback({ type: 'success', message: '✅ Created benzene molecule (C₆H₆)' });
         setCommand('');
       }
+      // Check for animals
+      else if (lowerCommand.includes('zebra')) {
+        diagram3DRef.current.createAnimal('zebra');
+        setCommandFeedback({ type: 'success', message: '✅ Created zebra' });
+        setCommand('');
+      } else if (lowerCommand.includes('dog') || lowerCommand.includes('puppy')) {
+        diagram3DRef.current.createAnimal('dog');
+        setCommandFeedback({ type: 'success', message: '✅ Created dog' });
+        setCommand('');
+      } else if (lowerCommand.includes('cat') || lowerCommand.includes('kitten')) {
+        diagram3DRef.current.createAnimal('cat');
+        setCommandFeedback({ type: 'success', message: '✅ Created cat' });
+        setCommand('');
+      } else if (lowerCommand.includes('bird') || lowerCommand.includes('eagle') || lowerCommand.includes('hawk')) {
+        diagram3DRef.current.createAnimal('bird');
+        setCommandFeedback({ type: 'success', message: '✅ Created bird' });
+        setCommand('');
+      } else if (lowerCommand.includes('fish') || lowerCommand.includes('salmon')) {
+        diagram3DRef.current.createAnimal('fish');
+        setCommandFeedback({ type: 'success', message: '✅ Created fish' });
+        setCommand('');
+      } else if (lowerCommand.includes('elephant')) {
+        diagram3DRef.current.createAnimal('elephant');
+        setCommandFeedback({ type: 'success', message: '✅ Created elephant' });
+        setCommand('');
+      } else if (lowerCommand.includes('monkey') || lowerCommand.includes('ape') || lowerCommand.includes('primate')) {
+        diagram3DRef.current.createAnimal('monkey');
+        setCommandFeedback({ type: 'success', message: '✅ Created monkey' });
+        setCommand('');
+      }
       // Check for basic shapes
       else if (lowerCommand.includes('sphere') || lowerCommand.includes('ball')) {
         diagram3DRef.current.createObject('sphere', color, size);
@@ -795,7 +825,7 @@ Return ONLY a valid JSON object with this exact structure:
       } else {
         setCommandFeedback({ 
           type: 'error', 
-          message: '❌ Unknown command. Try: "create sphere", "make red cube", "add water molecule"' 
+          message: '❌ Unknown command. Try: "create sphere", "make red cube", "add water molecule", or "create zebra"' 
         });
       }
 

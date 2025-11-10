@@ -404,4 +404,34 @@ export const ANIMAL_TEMPLATES: AnimalTemplate[] = [
       { name: 'tail', type: 'cylinder', position: [0, 0.4, 0.6], scale: [0.1, 0.9, 0.1], rotation: [0.2, 0, 0], color: '#8B4513' },
     ],
   },
+  {
+    name: 'zebra',
+    displayName: '🦓 Zebra',
+    description: 'A simple 3D zebra model with stripes',
+    color: '#000000',
+    parts: [
+      // Body
+      { name: 'body', type: 'cylinder', position: [0, 0.6, 0], scale: [0.7, 1.3, 0.4], rotation: [Math.PI / 2, 0, 0], color: '#FFFFFF' },
+      // Head
+      { name: 'head', type: 'sphere', position: [0, 1.5, -0.7], scale: [0.5, 0.6, 0.5], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Snout
+      { name: 'snout', type: 'cylinder', position: [0, 1.25, -1.1], scale: [0.25, 0.35, 0.3], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Left ear
+      { name: 'leftEar', type: 'cone', position: [-0.3, 2, -0.5], scale: [0.2, 0.4, 0.2], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Right ear
+      { name: 'rightEar', type: 'cone', position: [0.3, 2, -0.5], scale: [0.2, 0.4, 0.2], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Front left leg
+      { name: 'frontLeftLeg', type: 'cylinder', position: [-0.35, 0.15, -0.25], scale: [0.18, 0.85, 0.18], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Front right leg
+      { name: 'frontRightLeg', type: 'cylinder', position: [0.35, 0.15, -0.25], scale: [0.18, 0.85, 0.18], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Back left leg
+      { name: 'backLeftLeg', type: 'cylinder', position: [-0.35, 0.15, 0.5], scale: [0.18, 0.85, 0.18], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Back right leg
+      { name: 'backRightLeg', type: 'cylinder', position: [0.35, 0.15, 0.5], scale: [0.18, 0.85, 0.18], rotation: [0, 0, 0], color: '#FFFFFF' },
+      // Neck stripe
+      { name: 'neckStripe', type: 'cylinder', position: [-0.15, 1.2, -0.3], scale: [0.08, 0.5, 0.4], rotation: [0, 0, 0], color: '#000000' },
+      // Tail
+      { name: 'tail', type: 'cylinder', position: [0, 0.7, 1.2], scale: [0.1, 1, 0.1], rotation: [0.2, 0, 0], color: '#FFFFFF' },
+    ],
+  },
 ];
