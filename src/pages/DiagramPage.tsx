@@ -23,7 +23,9 @@ import {
   Layers,
   Maximize2,
   Minimize2,
-  Wand2
+  Wand2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getUserApiKey } from '../lib/userApiKeys';
@@ -89,6 +91,9 @@ const DiagramPage: React.FC = () => {
   // Draw-to-3D state
   const [drawTo3DColor, setDrawTo3DColor] = useState('#0000FF');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // How-to panel collapse state
+  const [isHowToCollapsed, setIsHowToCollapsed] = useState(false);
 
   const colors = ['#000000', '#0000FF', '#FF0000', '#00FF00', '#FFA500', '#800080', '#FFFF00', '#8B4513'];
 
@@ -1052,9 +1057,9 @@ Return ONLY a valid JSON object with this exact structure:
             </div>
           )}
 
-        <div className={`grid ${isFullscreen ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
+        <div className={`grid ${isFullscreen ? 'grid-cols-1' : isHowToCollapsed ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
           {/* Drawing Area */}
-          <div className={isFullscreen ? 'col-span-1' : 'lg:col-span-2'}>
+          <div className={isFullscreen ? 'col-span-1' : isHowToCollapsed ? 'col-span-1' : 'lg:col-span-2'}>
             {viewMode === '2d' ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                 {/* Toolbar */}
@@ -1491,14 +1496,23 @@ Return ONLY a valid JSON object with this exact structure:
           </div>
 
           {/* Results Panel */}
-          {!isFullscreen && (
+          {!isFullscreen && !isHowToCollapsed && (
           <div className="lg:col-span-1">
             {viewMode === '2d' ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
-                  <Sparkles className="h-5 w-5 text-indigo-600" />
-                  <span>AI Analysis</span>
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                    <Sparkles className="h-5 w-5 text-indigo-600" />
+                    <span>AI Analysis</span>
+                  </h2>
+                  <button
+                    onClick={() => setIsHowToCollapsed(true)}
+                    className="p-1 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Collapse panel"
+                  >
+                    <ChevronUp className="h-5 w-5" />
+                  </button>
+                </div>
 
               {error && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl mb-4">
@@ -1621,10 +1635,19 @@ Return ONLY a valid JSON object with this exact structure:
             </div>
             ) : viewMode === '3d' ? (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
-                  <Box className="h-5 w-5 text-indigo-600" />
-                  <span>3D Command Guide</span>
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                    <Box className="h-5 w-5 text-indigo-600" />
+                    <span>3D Command Guide</span>
+                  </h2>
+                  <button
+                    onClick={() => setIsHowToCollapsed(true)}
+                    className="p-1 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Collapse panel"
+                  >
+                    <ChevronUp className="h-5 w-5" />
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
                     <h3 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-2">
@@ -1707,10 +1730,19 @@ Return ONLY a valid JSON object with this exact structure:
             ) : (
               // Draw-to-3D Guide
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
-                  <Wand2 className="h-5 w-5 text-purple-600" />
-                  <span>Draw→3D Guide</span>
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                    <Wand2 className="h-5 w-5 text-purple-600" />
+                    <span>Draw→3D Guide</span>
+                  </h2>
+                  <button
+                    onClick={() => setIsHowToCollapsed(true)}
+                    className="p-1 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Collapse panel"
+                  >
+                    <ChevronUp className="h-5 w-5" />
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
                     <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 mb-2">
@@ -1784,9 +1816,21 @@ Return ONLY a valid JSON object with this exact structure:
           )}
         </div>
         </div>
-      </div>
+        </div>
 
-      {/* Clear Confirmation Dialog */}
+        {/* Expand How-To Panel Button */}
+        {!isFullscreen && isHowToCollapsed && (
+        <button
+          onClick={() => setIsHowToCollapsed(false)}
+          className="fixed bottom-8 right-8 flex items-center space-x-2 px-4 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl z-40"
+          title="Expand how-to panel"
+        >
+          <ChevronDown className="h-5 w-5" />
+          <span>Show Guide</span>
+        </button>
+        )}
+
+        {/* Clear Confirmation Dialog */}
       {showClearDialog && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
