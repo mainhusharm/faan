@@ -171,7 +171,17 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   onSelect,
 }) => {
   const meshRef = useRef<Mesh>(null);
+  const groupRef = useRef<any>(null);
   const [isHovered, setIsHovered] = useState(false);
+
+  React.useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.userData.id = object.id;
+    }
+    if (groupRef.current) {
+      groupRef.current.userData.id = object.id;
+    }
+  }, [object.id]);
 
   const renderShape = () => {
     const dims = object.dimensions || {};
@@ -286,10 +296,10 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   if (object.type === 'animal') {
     return (
       <group
+        ref={groupRef}
         position={object.position}
         rotation={object.rotation}
         scale={object.scale}
-        userData={{ id: object.id }}
         onClick={(e) => {
           e.stopPropagation();
           onSelect();
@@ -335,42 +345,44 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
 
   if (object.type === 'text3d') {
     return (
-      <Center 
-        position={object.position} 
-        rotation={object.rotation} 
+      <group
+        ref={groupRef}
+        position={object.position}
+        rotation={object.rotation}
         scale={object.scale}
-        userData={{ id: object.id }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+        onPointerEnter={(e) => {
+          e.stopPropagation();
+          setIsHovered(true);
+          document.body.style.cursor = 'grab';
+        }}
+        onPointerLeave={() => {
+          setIsHovered(false);
+          document.body.style.cursor = 'auto';
+        }}
       >
-        <Text3D
-          font="/fonts/helvetiker_regular.typeface.json"
-          size={object.fontSize || 0.5}
-          height={object.fontDepth || 0.2}
-          curveSegments={12}
-          bevelEnabled
-          bevelThickness={0.01}
-          bevelSize={0.01}
-          bevelSegments={5}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
-          onPointerEnter={(e) => {
-            e.stopPropagation();
-            setIsHovered(true);
-            document.body.style.cursor = 'grab';
-          }}
-          onPointerLeave={() => {
-            setIsHovered(false);
-            document.body.style.cursor = 'auto';
-          }}
-        >
-          {object.text || 'Text'}
-          {getMaterial(object.material, isHovered)}
-          {isSelected && (
-            <meshBasicMaterial color="#00ff00" wireframe />
-          )}
-        </Text3D>
-      </Center>
+        <Center>
+          <Text3D
+            font="/fonts/helvetiker_regular.typeface.json"
+            size={object.fontSize || 0.5}
+            height={object.fontDepth || 0.2}
+            curveSegments={12}
+            bevelEnabled
+            bevelThickness={0.01}
+            bevelSize={0.01}
+            bevelSegments={5}
+          >
+            {object.text || 'Text'}
+            {getMaterial(object.material, isHovered)}
+            {isSelected && (
+              <meshBasicMaterial color="#00ff00" wireframe />
+            )}
+          </Text3D>
+        </Center>
+      </group>
     );
   }
 
