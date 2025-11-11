@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useState, useEffect } from 'react';
+import React, { Suspense, useRef, useState, useEffect, useCallback } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, PerspectiveCamera, OrthographicCamera } from '@react-three/drei';
 import { Loader2 } from 'lucide-react';
@@ -67,10 +67,17 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
   cameraMode,
   autoRotate,
   backgroundColor,
+  onDragStateChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const orbitControlsRef = useRef<any>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Notify parent when drag state changes
+  const handleDragStateChange = useCallback((dragging: boolean) => {
+    setIsDragging(dragging);
+    onDragStateChange?.(dragging);
+  }, [onDragStateChange]);
 
   return (
     <div className="w-full h-full relative" style={{ backgroundColor }}>
@@ -129,7 +136,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
             onObjectSelect={onObjectSelect}
             onObjectDrag={onObjectDrag}
             isDragging={isDragging}
-            setIsDragging={setIsDragging}
+            setIsDragging={handleDragStateChange}
             orbitControlsRef={orbitControlsRef}
           />
 
