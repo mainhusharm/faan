@@ -94,7 +94,7 @@ const DiagramPage: React.FC = () => {
   const [isDragging3D, setIsDragging3D] = useState(false);
   
   // How-to panel collapse state
-  const [isHowToCollapsed, setIsHowToCollapsed] = useState(false);
+  const [isHowToCollapsed, setIsHowToCollapsed] = useState(true);
 
   const colors = ['#000000', '#0000FF', '#FF0000', '#00FF00', '#FFA500', '#800080', '#FFFF00', '#8B4513'];
 
