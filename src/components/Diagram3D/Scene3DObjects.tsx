@@ -22,6 +22,19 @@ export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
   setIsDragging,
   orbitControlsRef,
 }) => {
+  const findObjectWithId = (obj: any): any => {
+    if (obj?.userData?.id) {
+      return obj;
+    }
+    if (obj?.children && Array.isArray(obj.children)) {
+      for (const child of obj.children) {
+        const found = findObjectWithId(child);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   return (
     <DragControls
       autoTransform={true}
@@ -40,7 +53,13 @@ export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
           worldMatrix.elements[14],
         ];
         
-        const objectId = object.userData.id;
+        let objectId = object?.userData?.id;
+        
+        if (!objectId) {
+          const found = findObjectWithId(object);
+          objectId = found?.userData?.id;
+        }
+        
         if (objectId) {
           onObjectDrag(objectId, newPosition);
         }
