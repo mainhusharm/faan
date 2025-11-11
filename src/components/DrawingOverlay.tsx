@@ -6,7 +6,7 @@ interface DrawingOverlayProps {
   isActive: boolean;
   selectedColor: string;
   onColorChange: (color: string) => void;
-  onShapeRecognized: (objectType: string, color: string, size: number, shapeName: string, aspectRatio?: number) => void;
+  onShapeRecognized: (objectType: string, color: string, size: number, shapeName: string, aspectRatio?: number, points?: Point[]) => void;
 }
 
 export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
@@ -142,23 +142,23 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
 
     setIsDrawing(false);
 
-    // Recognize shape after drawing completes
+    // Show drawing ready to convert (without recognition)
     if (points.length > 5) {
-      const shape = recognizeShape(points);
-      setRecognizedShape(shape);
+      setRecognizedShape('drawing');
     }
   };
 
   const handleConvert = () => {
-    if (!recognizedShape || points.length === 0) return;
+    if (points.length === 0) return;
 
-    const objectType = shapeToObject3D(recognizedShape);
+    const objectType = 'custom_drawing';
     const size = estimateSize(points);
     const bbox = getBoundingBox(points);
     const aspectRatio = bbox.height > 0 ? bbox.width / bbox.height : 1;
-    
-    onShapeRecognized(objectType, selectedColor, size, recognizedShape, aspectRatio);
-    
+    const shapeName = recognizedShape || 'custom drawing';
+
+    onShapeRecognized(objectType, selectedColor, size, shapeName, aspectRatio, points);
+
     // Clear canvas after conversion
     setTimeout(() => {
       clearCanvas();
@@ -197,7 +197,7 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
           </div>
           
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            Draw a shape on the canvas. It will be automatically recognized and converted to a 3D object.
+            Draw any shape on the canvas. Your drawing will be converted to a 3D mesh that matches your input.
           </p>
 
           <div className="flex items-center space-x-2 mb-3">
@@ -244,21 +244,21 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
             </div>
           )}
 
-          {/* Shape Recognition Result */}
+          {/* Drawing Ready to Convert */}
           {recognizedShape && (
-            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-green-700 dark:text-green-300">
-                    Recognized: <span className="capitalize">{recognizedShape}</span>
+                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                    ✓ Drawing Ready
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    Will create: {shapeToObject3D(recognizedShape)}
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    Click to convert your drawing to a 3D mesh
                   </p>
                 </div>
                 <button
                   onClick={handleConvert}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
+                  className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                 >
                   <Check className="h-4 w-4" />
                   <span className="text-xs font-medium">Convert to 3D</span>
@@ -270,15 +270,12 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
           {/* Shape Guide */}
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              📝 Shape Guide:
+              📝 How to Use:
             </p>
-            <div className="grid grid-cols-2 gap-1 text-xs text-gray-600 dark:text-gray-400">
-              <div>• Circle → Sphere</div>
-              <div>• Square → Cube</div>
-              <div>• Triangle → Cone</div>
-              <div>• Line → Cylinder</div>
-              <div>• Rectangle → Box</div>
-              <div>• Arrow → Cone</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              <div>✏️ Draw any shape on the canvas</div>
+              <div>🎯 Your drawing will be converted to a 3D mesh</div>
+              <div>🖱️ Click "Convert to 3D" when ready</div>
             </div>
           </div>
         </div>

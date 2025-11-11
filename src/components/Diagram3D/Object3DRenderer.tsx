@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Text3D, Center } from '@react-three/drei';
-import { Mesh, Group } from 'three';
+import { Mesh, Group, BufferGeometry, BufferAttribute, Vector3, LatheGeometry, Curve } from 'three';
 import type { Object3DData, AnimalPart } from './types';
 import { ELEMENT_COLORS, ELEMENT_RADII } from './types';
 
@@ -55,20 +55,80 @@ const getMaterial = (material: Object3DData['material'], isHovered?: boolean) =>
   }
 };
 
-const renderAnimalPart = (part: AnimalPart) => {
-  switch (part.type) {
-    case 'sphere':
-      return <sphereGeometry args={[0.5, 32, 32]} />;
-    case 'cylinder':
-      return <cylinderGeometry args={[0.5, 0.5, 1, 32]} />;
-    case 'cone':
-      return <coneGeometry args={[0.5, 1, 32]} />;
-    case 'cube':
-      return <boxGeometry args={[1, 1, 1]} />;
-    default:
-      return <sphereGeometry args={[0.5, 32, 32]} />;
+const createDrawingGeometryBuffer = (points: Array<{ x: number; y: number }> | undefined) => {
+  if (!points || points.length < 2) {
+    return null;
   }
+
+  // Normalize points to canvas-like coordinates
+  let minX = points[0].x, maxX = points[0].x;
+  let minY = points[0].y, maxY = points[0].y;
+
+  for (const p of points) {
+    minX = Math.min(minX, p.x);
+    maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y);
+    maxY = Math.max(maxY, p.y);
+  }
+
+  const width = maxX - minX || 1;
+  const height = maxY - minY || 1;
+  const depth = 0.3;
+
+  // Create extruded geometry from the drawing path
+  const vertices = [];
+  const indices = [];
+
+  for (let i = 0; i < points.length; i++) {
+    const normalizedX = (points[i].x - minX) / width - 0.5;
+    const normalizedY = (points[i].y - minY) / height - 0.5;
+    
+    // Front face (z = depth/2)
+    vertices.push(normalizedX * 0.8, normalizedY * 0.8, depth / 2);
+    // Back face (z = -depth/2)
+    vertices.push(normalizedX * 0.8, normalizedY * 0.8, -depth / 2);
+  }
+
+  // Create faces
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = i * 2;
+    const b = i * 2 + 1;
+    const c = (i + 1) * 2;
+    const d = (i + 1) * 2 + 1;
+
+    // Front and back faces
+    indices.push(a, c, b);
+    indices.push(c, d, b);
+    indices.push(b, c, a);
+    indices.push(b, d, c);
+
+    // Side walls
+    indices.push(a, b, c);
+    indices.push(b, d, c);
+  }
+
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(vertices), 3));
+  geometry.setIndex(new BufferAttribute(new Uint32Array(indices), 1));
+  geometry.computeVertexNormals();
+
+  return geometry;
 };
+
+const renderAnimalPart = (part: AnimalPart) => {
+   switch (part.type) {
+     case 'sphere':
+       return <sphereGeometry args={[0.5, 32, 32]} />;
+     case 'cylinder':
+       return <cylinderGeometry args={[0.5, 0.5, 1, 32]} />;
+     case 'cone':
+       return <coneGeometry args={[0.5, 1, 32]} />;
+     case 'cube':
+       return <boxGeometry args={[1, 1, 1]} />;
+     default:
+       return <sphereGeometry args={[0.5, 32, 32]} />;
+   }
+ };
 
 export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   object,
@@ -175,10 +235,18 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
         return null;
       }
 
+      case 'custom_drawing': {
+        const geom = createDrawingGeometryBuffer(object.drawingPoints);
+        if (geom) {
+          return <primitive object={geom} attach="geometry" />;
+        }
+        return <boxGeometry args={[1, 1, 1]} />;
+      }
+
       default:
         return <boxGeometry args={[1, 1, 1]} />;
-    }
-  };
+      }
+      };
 
   if (object.type === 'animal') {
     return (
