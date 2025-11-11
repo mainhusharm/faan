@@ -387,37 +387,51 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   }
 
   return (
-    <mesh
-      ref={meshRef}
-      position={object.position}
-      rotation={object.rotation}
-      scale={object.scale}
-      castShadow
-      receiveShadow
-      userData={{ id: object.id }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}
-      onPointerEnter={(e) => {
-        e.stopPropagation();
-        setIsHovered(true);
-        document.body.style.cursor = 'grab';
-      }}
-      onPointerLeave={() => {
-        setIsHovered(false);
-        document.body.style.cursor = 'auto';
-      }}
-    >
-      {renderShape()}
-      {object.type !== 'atom' && object.type !== 'bond' && getMaterial(object.material, isHovered)}
-      
-      {isSelected && (
-        <lineSegments>
-          <edgesGeometry args={[meshRef.current?.geometry]} />
-          <lineBasicMaterial color="#00ff00" linewidth={2} />
-        </lineSegments>
+    <>
+      <mesh
+        ref={meshRef}
+        position={object.position}
+        rotation={object.rotation}
+        scale={object.scale}
+        castShadow
+        receiveShadow
+        userData={{ id: object.id }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+        onPointerEnter={(e) => {
+          e.stopPropagation();
+          setIsHovered(true);
+          document.body.style.cursor = 'grab';
+        }}
+        onPointerLeave={() => {
+          setIsHovered(false);
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        {renderShape()}
+        {object.type !== 'atom' && object.type !== 'bond' && getMaterial(object.material, isHovered)}
+        
+        {isSelected && object.type !== 'custom_drawing' && (
+          <lineSegments>
+            <edgesGeometry args={[meshRef.current?.geometry]} />
+            <lineBasicMaterial color="#00ff00" linewidth={2} />
+          </lineSegments>
+        )}
+      </mesh>
+
+      {isSelected && object.type === 'custom_drawing' && (
+        <mesh
+          position={object.position}
+          rotation={object.rotation}
+          scale={object.scale}
+          pointerEvents="none"
+        >
+          <boxGeometry args={[2.5, 2.5, 2.5]} />
+          <meshBasicMaterial color="#00ff00" wireframe emissive="#00ff00" />
+        </mesh>
       )}
-    </mesh>
+    </>
   );
 };
