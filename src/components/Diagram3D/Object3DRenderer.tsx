@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Text3D, Center } from '@react-three/drei';
 import { Mesh, BufferGeometry, BufferAttribute } from 'three';
 import type { Object3DData, AnimalPart } from './types';
@@ -8,6 +8,7 @@ interface Object3DRendererProps {
   object: Object3DData;
   isSelected: boolean;
   onSelect: () => void;
+  meshRefsRef?: React.MutableRefObject<Map<string, any>>;
 }
 
 const getMaterial = (material: Object3DData['material'], isHovered?: boolean) => {
@@ -134,9 +135,21 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   object,
   isSelected,
   onSelect,
+  meshRefsRef,
 }) => {
   const meshRef = useRef<Mesh>(null);
+  const groupRef = useRef<any>(null);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (meshRefsRef && (meshRef.current || groupRef.current)) {
+      const ref = meshRef.current || groupRef.current;
+      meshRefsRef.current.set(object.id, ref);
+      return () => {
+        meshRefsRef.current.delete(object.id);
+      };
+    }
+  }, [object.id, meshRefsRef]);
 
   const renderShape = () => {
     const dims = object.dimensions || {};
@@ -251,6 +264,7 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   if (object.type === 'animal') {
     return (
       <group
+        ref={groupRef}
         position={object.position}
         rotation={object.rotation}
         scale={object.scale}
