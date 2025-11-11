@@ -201,7 +201,7 @@ const Navbar: React.FC = () => {
 
                 {/* Navigation Dropdown Menu */}
                 {isNavDropdownOpen && (
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 backdrop-blur-xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
                     <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
                     
                     <div className="py-2">
@@ -288,7 +288,7 @@ const Navbar: React.FC = () => {
 
                     {/* Dropdown Menu - Enhanced */}
                     {isProfileDropdownOpen && (
-                      <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden backdrop-blur-xl transform origin-top-right transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
+                      <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 backdrop-blur-xl transform origin-top-right transition-all duration-300 animate-in fade-in slide-in-from-top-2 z-50">
                         {/* Gradient top bar */}
                         <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600" />
                         
