@@ -207,10 +207,6 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
             </h3>
           </div>
           
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            Draw any shape on the canvas. Your drawing will be converted to a 3D mesh that matches your input.
-          </p>
-
           <div className="flex items-center space-x-2 mb-3">
             <button
               onClick={() => setShowColorPicker(!showColorPicker)}
@@ -278,19 +274,8 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
             </div>
           )}
 
-          {/* Shape Guide */}
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              📝 How to Use:
-            </p>
-            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-              <div>✏️ Draw any shape on the canvas</div>
-              <div>🎯 Your drawing will be converted to a 3D mesh</div>
-              <div>🖱️ Click "Convert to 3D" when ready</div>
-            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+          </div>
+          </div>
+          );
+          };
