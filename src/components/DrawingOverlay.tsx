@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Trash2, Check, Palette } from 'lucide-react';
-import { recognizeShape, estimateSize, shapeToObject3D, getBoundingBox, type Point } from '../lib/shapeRecognition';
+import { estimateSize, getBoundingBox, type Point } from '../lib/shapeRecognition';
+import { DRAWING_PRESETS, type DrawingPreset } from '../lib/drawingPresets';
 
 interface DrawingOverlayProps {
   isActive: boolean;
@@ -22,21 +23,7 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
   const [points, setPoints] = useState<Point[]>([]);
   const [recognizedShape, setRecognizedShape] = useState<string | null>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
-
-  const colors = [
-    { name: 'Red', hex: '#FF0000' },
-    { name: 'Blue', hex: '#0000FF' },
-    { name: 'Green', hex: '#00FF00' },
-    { name: 'Yellow', hex: '#FFFF00' },
-    { name: 'Orange', hex: '#FFA500' },
-    { name: 'Purple', hex: '#800080' },
-    { name: 'Pink', hex: '#FFC0CB' },
-    { name: 'Cyan', hex: '#00FFFF' },
-    { name: 'Magenta', hex: '#FF00FF' },
-    { name: 'White', hex: '#FFFFFF' },
-    { name: 'Black', hex: '#000000' },
-    { name: 'Gray', hex: '#808080' },
-  ];
+  const [selectedPreset, setSelectedPreset] = useState<DrawingPreset | null>(null);
 
   // Initialize canvas
   useEffect(() => {
@@ -57,13 +44,6 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
 
-  // Clear canvas when not active
-  useEffect(() => {
-    if (!isActive) {
-      clearCanvas();
-    }
-  }, [isActive]);
-
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -75,6 +55,13 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
     setPoints([]);
     setRecognizedShape(null);
   }, []);
+
+  // Clear canvas when not active
+  useEffect(() => {
+    if (!isActive) {
+      clearCanvas();
+    }
+  }, [isActive, clearCanvas]);
 
   const drawLine = useCallback((ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
     ctx.strokeStyle = selectedColor;
@@ -110,6 +97,9 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isActive || isDragging3D) return;
+
+    // Require preset selection before drawing
+    if (!selectedPreset) return;
 
     const point = getCanvasPoint(e);
     if (!point) return;
@@ -166,7 +156,12 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
     const size = estimateSize(points);
     const bbox = getBoundingBox(points);
     const aspectRatio = bbox.height > 0 ? bbox.width / bbox.height : 1;
-    const shapeName = recognizedShape || 'custom drawing';
+    
+    // Use preset name if available, otherwise use generic name
+    let shapeName = selectedPreset?.name || 'custom drawing';
+    if (recognizedShape && recognizedShape !== 'unknown') {
+      shapeName = `${selectedPreset?.name || 'drawing'} (${recognizedShape})`;
+    }
 
     onShapeRecognized(objectType, selectedColor, size, shapeName, aspectRatio, points);
 
@@ -198,84 +193,131 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
       />
 
       {/* UI Overlay */}
-      <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 max-w-md">
-          <div className="flex items-center space-x-2 mb-3">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              🖊️ Draw Mode Active
-            </h3>
-          </div>
-          
-          <div className="flex items-center space-x-2 mb-3">
-            <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              <Palette className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Color</span>
-              <div
-                className="w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600"
-                style={{ backgroundColor: selectedColor }}
-              />
-            </button>
-            
-            <button
-              onClick={clearCanvas}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="text-xs font-medium">Clear</span>
-            </button>
-          </div>
-
-          {/* Color Picker */}
-          {showColorPicker && (
-            <div className="grid grid-cols-6 gap-2 mb-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-              {colors.map((color) => (
-                <button
-                  key={color.hex}
-                  onClick={() => {
-                    onColorChange(color.hex);
-                    setShowColorPicker(false);
-                  }}
-                  className={`w-8 h-8 rounded-lg border-2 transition-all ${
-                    selectedColor === color.hex
-                      ? 'border-indigo-600 scale-110 shadow-lg'
-                      : 'border-gray-300 dark:border-gray-600 hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: color.hex }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Drawing Ready to Convert */}
-          {recognizedShape && (
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-                    ✓ Drawing Ready
-                  </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    Click to convert your drawing to a 3D mesh
-                  </p>
-                </div>
-                <button
-                  onClick={handleConvert}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                >
-                  <Check className="h-4 w-4" />
-                  <span className="text-xs font-medium">Convert to 3D</span>
-                </button>
+      <div className="absolute top-4 left-4 right-4 flex items-start justify-between pointer-events-auto flex-wrap gap-4">
+        {/* Preset Selector or Active Drawing Controls */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 max-w-2xl">
+          {!selectedPreset ? (
+            // Preset Selection View
+            <div>
+              <div className="flex items-center space-x-2 mb-3">
+                <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  📋 Select a Drawing Preset
+                </h3>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                Choose what you want to draw, then sketch it on the canvas
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {DRAWING_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => {
+                      setSelectedPreset(preset);
+                      onColorChange(preset.defaultColor);
+                    }}
+                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 hover:shadow-lg hover:scale-105 transition-all border-2 border-transparent hover:border-indigo-400 dark:hover:border-indigo-500"
+                    title={preset.description}
+                  >
+                    <span className="text-2xl mb-1">{preset.icon}</span>
+                    <span className="text-xs font-medium text-gray-900 dark:text-white text-center">
+                      {preset.name}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
-          )}
+          ) : (
+            // Active Drawing View
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    🖊️ Drawing: {selectedPreset.icon} {selectedPreset.name}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedPreset(null);
+                    clearCanvas();
+                  }}
+                  className="text-xs px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  Change Preset
+                </button>
+              </div>
 
-          </div>
-          </div>
-          </div>
-          );
-          };
+              <div className="flex items-center space-x-2 mb-3">
+                <button
+                  onClick={() => setShowColorPicker(!showColorPicker)}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Palette className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Color</span>
+                  <div
+                    className="w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600"
+                    style={{ backgroundColor: selectedColor }}
+                  />
+                </button>
+
+                <button
+                  onClick={clearCanvas}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="text-xs font-medium">Clear</span>
+                </button>
+              </div>
+
+              {/* Color Picker */}
+              {showColorPicker && (
+                <div className="grid grid-cols-6 gap-2 mb-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  {selectedPreset.suggestedColors?.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => {
+                        onColorChange(color);
+                        setShowColorPicker(false);
+                      }}
+                      className={`w-8 h-8 rounded-lg border-2 transition-all ${
+                        selectedColor === color
+                          ? 'border-indigo-600 scale-110 shadow-lg'
+                          : 'border-gray-300 dark:border-gray-600 hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Drawing Ready to Convert */}
+              {recognizedShape && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                        ✓ Drawing Ready!
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        Convert your {selectedPreset.name.toLowerCase()} to a 3D mesh
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleConvert}
+                      className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors whitespace-nowrap"
+                    >
+                      <Check className="h-4 w-4" />
+                      <span className="text-xs font-medium">Convert to 3D</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
