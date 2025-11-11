@@ -151,21 +151,9 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   object,
   isSelected,
   onSelect,
-  meshRefsRef,
 }) => {
   const meshRef = useRef<Mesh>(null);
-  const groupRef = useRef<any>(null);
   const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    if (meshRefsRef && (meshRef.current || groupRef.current)) {
-      const ref = meshRef.current || groupRef.current;
-      meshRefsRef.current.set(object.id, ref);
-      return () => {
-        meshRefsRef.current.delete(object.id);
-      };
-    }
-  }, [object.id, meshRefsRef]);
 
   const renderShape = () => {
     const dims = object.dimensions || {};
@@ -280,7 +268,6 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   if (object.type === 'animal') {
     return (
       <group
-        ref={groupRef}
         position={object.position}
         rotation={object.rotation}
         scale={object.scale}

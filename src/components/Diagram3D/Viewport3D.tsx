@@ -16,6 +16,7 @@ interface Viewport3DProps {
   cameraMode: 'perspective' | 'orthographic';
   autoRotate: boolean;
   backgroundColor: string;
+  onDragStateChange?: (isDragging: boolean) => void;
 }
 
 const CanvasResizer: React.FC = () => {
