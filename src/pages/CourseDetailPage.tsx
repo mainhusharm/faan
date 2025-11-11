@@ -599,10 +599,96 @@ const CourseDetailPage: React.FC = () => {
             duration: 25,
             order_index: 2,
             description: 'Calculate molar mass for elements and compounds, and apply these calculations to solve stoichiometric problems.'
+          },
+          {
+            id: 'chem1-4',
+            title: 'Acid Base Full Methods',
+            video_url: 'https://www.youtube.com/embed/n10YHmpzGLs',
+            duration: 32,
+            order_index: 3,
+            description: 'Learn comprehensive acid-base chemistry methods including pH calculations, titrations, and buffer solutions.'
+          },
+          {
+            id: 'chem1-5',
+            title: 'Acid Base Properties Along with How It Works',
+            video_url: 'https://www.youtube.com/embed/ox2qUj-dEUo',
+            duration: 28,
+            order_index: 4,
+            description: 'Understand the properties of acids and bases and how they interact in chemical reactions.'
+          },
+          {
+            id: 'chem1-6',
+            title: 'How Acid Base Works Out',
+            video_url: 'https://www.youtube.com/embed/ik9xKEtPLVE',
+            duration: 26,
+            order_index: 5,
+            description: 'Master the detailed mechanisms of acid-base reactions and their applications in real-world scenarios.'
+          }
+        ],
+        '12': [ // Physics - Electricity & Magnetism
+          {
+            id: 'em-1',
+            title: 'Future Tech and Electromagnetic',
+            video_url: 'https://www.youtube.com/embed/V9ZLS8rlDhA',
+            duration: 28,
+            order_index: 0,
+            description: 'Explore future technology and electromagnetic principles with advanced visualizations.',
+            isPreview: true
+          },
+          {
+            id: 'em-2',
+            title: 'How Energy Gets Converted',
+            video_url: 'https://www.youtube.com/embed/KdHbDn_4vKU',
+            duration: 24,
+            order_index: 1,
+            description: 'Understand energy conversion in electromagnetic systems and real-world applications.'
+          },
+          {
+            id: 'em-3',
+            title: 'Electric Power and Magnetic Current',
+            video_url: 'https://www.youtube.com/embed/nc437pMGLgE',
+            duration: 26,
+            order_index: 2,
+            description: 'Master the relationship between electric power and magnetic current with interactive demonstrations.'
+          },
+          {
+            id: 'em-4',
+            title: 'How Electric Charge Works',
+            video_url: 'https://www.youtube.com/embed/E_-9JygaqK0',
+            duration: 22,
+            order_index: 3,
+            description: 'Learn the fundamentals of electric charge and its behavior in electromagnetic fields.'
+          },
+          {
+            id: 'em-5',
+            title: 'Different Types of Energy',
+            video_url: 'https://www.youtube.com/embed/eqzJ2TOIgAQ',
+            duration: 25,
+            order_index: 4,
+            description: 'Explore different forms of energy and their transformations in electromagnetic systems.'
+          },
+          {
+            id: 'em-6',
+            title: 'How Current in Wire Works',
+            video_url: 'https://www.youtube.com/embed/R4GINCjCjGY',
+            duration: 30,
+            order_index: 5,
+            description: 'Get a comprehensive explanation of how current flows through wires and circuits.'
+          }
+        ],
+        '5': [ // Mathematics Foundation - Algebra & Functions
+          {
+            id: 'algebra-1',
+            title: 'Full Algebra Mathematics',
+            video_url: 'https://www.youtube.com/embed/t-KsAsgarc0',
+            duration: 45,
+            order_index: 0,
+            description: 'Complete algebra fundamentals including equations, functions, and graphing with AI-powered visualizations.',
+            isPreview: true
           }
         ],
         '1': [ // Physics (default)
-      {
+        {
         id: '1',
         title: 'Introduction to Kinematics',
             video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
@@ -610,35 +696,35 @@ const CourseDetailPage: React.FC = () => {
         order_index: 0,
         description: 'Learn the basics of motion, displacement, velocity, and acceleration with AI-powered visualizations.',
         isPreview: true
-      },
-      {
+        },
+        {
         id: '2',
         title: 'Newton\'s Laws of Motion',
             video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
         duration: 20,
         order_index: 1,
         description: 'Explore the three fundamental laws of motion with molecular-level demonstrations and interactive simulations.'
-      },
-      {
+        },
+        {
         id: '3',
         title: 'Energy and Momentum',
             video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
         duration: 25,
         order_index: 2,
         description: 'Understand conservation of energy and momentum through particle animations and real-world examples.'
-      },
-      {
+        },
+        {
         id: '4',
         title: 'Projectile Motion with AI Visualizations',
             video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
         duration: 30,
         order_index: 3,
         description: 'Master projectile motion with advanced AI simulations showing trajectory analysis and optimization.'
-      }
+        }
         ]
-      };
-      
-      return videoSets[courseId] || videoSets['1'];
+        };
+
+        return videoSets[courseId] || videoSets['1'];
     };
 
     const mockVideos = getVideosForCourse(courseId!);
