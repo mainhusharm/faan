@@ -500,3 +500,5 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
 });
 
 Diagram3DContainer.displayName = 'Diagram3DContainer';
+
+export default Diagram3DContainer;

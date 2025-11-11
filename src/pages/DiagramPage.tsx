@@ -33,7 +33,7 @@ import type { Diagram3DHandle } from '../components/Diagram3D';
 import { DrawingOverlay } from '../components/DrawingOverlay';
 
 const Diagram3DContainer = lazy(() => 
-  import('../components/Diagram3D/Diagram3DContainer').then(module => ({ default: module.Diagram3DContainer }))
+  import('../components/Diagram3D/Diagram3DContainer')
 );
 
 type Tool = 'pencil' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'line' | 'text';
