@@ -8,6 +8,7 @@ interface Scene3DObjectsProps {
   selectedObjectId: string | null;
   onObjectSelect: (id: string | null) => void;
   onObjectDrag: (id: string, newPosition: [number, number, number]) => void;
+  onObjectContextMenu?: (id: string, e: React.MouseEvent) => void;
   isDragging: boolean;
   setIsDragging: (dragging: boolean) => void;
   orbitControlsRef: React.RefObject<any>;
@@ -18,6 +19,7 @@ export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
   selectedObjectId,
   onObjectSelect,
   onObjectDrag,
+  onObjectContextMenu,
   isDragging,
   setIsDragging,
   orbitControlsRef,
@@ -77,6 +79,9 @@ export const Scene3DObjects: React.FC<Scene3DObjectsProps> = ({
           object={obj}
           isSelected={obj.id === selectedObjectId}
           onSelect={() => onObjectSelect(obj.id)}
+          onContextMenu={(e: any) => {
+            onObjectContextMenu?.(obj.id, e);
+          }}
         />
       ))}
     </DragControls>
