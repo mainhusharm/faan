@@ -8,15 +8,16 @@ import { Download, Save, FolderOpen } from 'lucide-react';
 import type { Object3DData, MaterialProperties, MoleculeTemplate, AnimalTemplate } from './types';
 import { ELEMENT_COLORS, MOLECULE_TEMPLATES, ANIMAL_TEMPLATES } from './types';
 
-interface Diagram3DContainerProps {
-  onExportImage?: () => void;
-}
-
 export interface Diagram3DHandle {
    createObject: (type: string, color?: string, size?: number, aspectRatio?: number, points?: Array<{ x: number; y: number }>) => void;
    createMolecule: (moleculeName: string) => boolean;
    createAnimal: (animalName: string) => boolean;
  }
+
+interface Diagram3DContainerProps {
+  onExportImage?: () => void;
+  onDragStateChange?: (isDragging: boolean) => void;
+}
 
 const defaultMaterial: MaterialProperties = {
   type: 'standard',
@@ -31,6 +32,7 @@ const defaultMaterial: MaterialProperties = {
 
 export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainerProps>(({
   onExportImage,
+  onDragStateChange,
 }, ref) => {
   const [objects, setObjects] = useState<Object3DData[]>([]);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
@@ -403,6 +405,7 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
             cameraMode={cameraMode}
             autoRotate={autoRotate}
             backgroundColor={backgroundColor}
+            onDragStateChange={onDragStateChange}
           />
         </div>
 

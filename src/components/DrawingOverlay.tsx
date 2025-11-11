@@ -7,6 +7,7 @@ interface DrawingOverlayProps {
   selectedColor: string;
   onColorChange: (color: string) => void;
   onShapeRecognized: (objectType: string, color: string, size: number, shapeName: string, aspectRatio?: number, points?: Point[]) => void;
+  isDragging3D?: boolean;
 }
 
 export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
@@ -14,6 +15,7 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
   selectedColor,
   onColorChange,
   onShapeRecognized,
+  isDragging3D = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -107,7 +109,7 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isActive) return;
+    if (!isActive || isDragging3D) return;
 
     const point = getCanvasPoint(e);
     if (!point) return;
@@ -118,7 +120,7 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || !isActive) return;
+    if (!isDrawing || !isActive || isDragging3D) return;
 
     const point = getCanvasPoint(e);
     if (!point) return;
@@ -138,15 +140,24 @@ export const DrawingOverlay: React.FC<DrawingOverlayProps> = ({
   };
 
   const handleMouseUp = () => {
-    if (!isDrawing || !isActive) return;
+     if (!isActive) return;
 
-    setIsDrawing(false);
+     // If 3D dragging started, cancel drawing
+     if (isDragging3D) {
+       setIsDrawing(false);
+       clearCanvas();
+       return;
+     }
 
-    // Show drawing ready to convert (without recognition)
-    if (points.length > 5) {
-      setRecognizedShape('drawing');
-    }
-  };
+     if (!isDrawing) return;
+
+     setIsDrawing(false);
+
+     // Show drawing ready to convert (without recognition)
+     if (points.length > 5) {
+       setRecognizedShape('drawing');
+     }
+   };
 
   const handleConvert = () => {
     if (points.length === 0) return;

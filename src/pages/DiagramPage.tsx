@@ -91,6 +91,7 @@ const DiagramPage: React.FC = () => {
   // Draw-to-3D state
   const [drawTo3DColor, setDrawTo3DColor] = useState('#0000FF');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDragging3D, setIsDragging3D] = useState(false);
   
   // How-to panel collapse state
   const [isHowToCollapsed, setIsHowToCollapsed] = useState(false);
@@ -1480,7 +1481,7 @@ Return ONLY a valid JSON object with this exact structure:
                       </div>
                     </div>
                   }>
-                    <Diagram3DContainer ref={diagram3DRef} />
+                    <Diagram3DContainer ref={diagram3DRef} onDragStateChange={setIsDragging3D} />
                   </Suspense>
                   
                   {/* Drawing Overlay */}
@@ -1489,6 +1490,7 @@ Return ONLY a valid JSON object with this exact structure:
                     selectedColor={drawTo3DColor}
                     onColorChange={setDrawTo3DColor}
                     onShapeRecognized={handleShapeRecognized}
+                    isDragging3D={isDragging3D}
                   />
                 </div>
               </div>
