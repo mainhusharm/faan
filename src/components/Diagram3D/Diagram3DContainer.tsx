@@ -309,7 +309,6 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
 
   const deleteObject = useCallback(() => {
     if (!selectedObjectId) return;
-    
     setObjects((prevObjects) => prevObjects.filter((obj) => obj.id !== selectedObjectId));
     setSelectedObjectId(null);
   }, [selectedObjectId]);
@@ -317,16 +316,19 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedObjectId && !['input', 'textarea'].includes((e.target as HTMLElement).tagName.toLowerCase())) {
+        const target = e.target as HTMLElement;
+        if (selectedObjectId && !['input', 'textarea'].includes(target.tagName.toLowerCase())) {
           e.preventDefault();
-          deleteObject();
+          // Delete the currently selected object
+          setObjects((prevObjects) => prevObjects.filter((obj) => obj.id !== selectedObjectId));
+          setSelectedObjectId(null);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedObjectId, deleteObject]);
+  }, [selectedObjectId]);
 
   const selectedObject = selectedObjectId
     ? objects.find((obj) => obj.id === selectedObjectId) || null
