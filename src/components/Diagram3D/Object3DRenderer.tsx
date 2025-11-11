@@ -57,7 +57,7 @@ const getMaterial = (material: Object3DData['material'], isHovered?: boolean) =>
 };
 
 const createDrawingGeometryBuffer = (points: Array<{ x: number; y: number }> | undefined) => {
-  if (!points || points.length < 2) {
+  if (!points || points.length < 3) {
     return null;
   }
 
@@ -80,32 +80,48 @@ const createDrawingGeometryBuffer = (points: Array<{ x: number; y: number }> | u
   const vertices = [];
   const indices = [];
 
-  for (let i = 0; i < points.length; i++) {
+  // Create front and back vertices
+  const pointCount = points.length;
+  
+  for (let i = 0; i < pointCount; i++) {
     const normalizedX = (points[i].x - minX) / width - 0.5;
     const normalizedY = (points[i].y - minY) / height - 0.5;
     
-    // Front face (z = depth/2)
+    // Front face vertices (z = depth/2)
     vertices.push(normalizedX * 0.8, normalizedY * 0.8, depth / 2);
-    // Back face (z = -depth/2)
+  }
+  
+  for (let i = 0; i < pointCount; i++) {
+    const normalizedX = (points[i].x - minX) / width - 0.5;
+    const normalizedY = (points[i].y - minY) / height - 0.5;
+    
+    // Back face vertices (z = -depth/2)
     vertices.push(normalizedX * 0.8, normalizedY * 0.8, -depth / 2);
   }
 
-  // Create faces
-  for (let i = 0; i < points.length - 1; i++) {
-    const a = i * 2;
-    const b = i * 2 + 1;
-    const c = (i + 1) * 2;
-    const d = (i + 1) * 2 + 1;
+  // Create side walls connecting front to back
+  for (let i = 0; i < pointCount - 1; i++) {
+    const frontA = i;
+    const frontB = i + 1;
+    const backA = pointCount + i;
+    const backB = pointCount + i + 1;
 
-    // Front and back faces
-    indices.push(a, c, b);
-    indices.push(c, d, b);
-    indices.push(b, c, a);
-    indices.push(b, d, c);
+    // First triangle of quad
+    indices.push(frontA, backA, frontB);
+    // Second triangle of quad
+    indices.push(frontB, backA, backB);
+  }
 
-    // Side walls
-    indices.push(a, b, c);
-    indices.push(b, d, c);
+  // Create front face (with proper winding order)
+  // Triangulate the front face using fan triangulation
+  for (let i = 1; i < pointCount - 1; i++) {
+    indices.push(0, i, i + 1);
+  }
+
+  // Create back face (reverse winding for back face)
+  // Triangulate the back face
+  for (let i = 1; i < pointCount - 1; i++) {
+    indices.push(pointCount, pointCount + i + 1, pointCount + i);
   }
 
   const geometry = new BufferGeometry();
