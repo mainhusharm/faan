@@ -11,6 +11,7 @@ interface Viewport3DProps {
   selectedObjectId: string | null;
   onObjectSelect: (id: string | null) => void;
   onObjectDrag: (id: string, newPosition: [number, number, number]) => void;
+  onObjectContextMenu?: (id: string, e: React.MouseEvent) => void;
   showGrid: boolean;
   showAxes: boolean;
   cameraMode: 'perspective' | 'orthographic';
@@ -63,6 +64,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
   selectedObjectId,
   onObjectSelect,
   onObjectDrag,
+  onObjectContextMenu,
   showGrid,
   showAxes,
   cameraMode,
@@ -121,6 +123,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
             selectedObjectId={selectedObjectId}
             onObjectSelect={onObjectSelect}
             onObjectDrag={onObjectDrag}
+            onObjectContextMenu={onObjectContextMenu}
             isDragging={isDragging}
             setIsDragging={handleDragStateChange}
             orbitControlsRef={orbitControlsRef}

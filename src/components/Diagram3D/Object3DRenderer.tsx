@@ -8,6 +8,7 @@ interface Object3DRendererProps {
   object: Object3DData;
   isSelected: boolean;
   onSelect: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
   meshRefsRef?: React.MutableRefObject<Map<string, any>>;
 }
 
@@ -151,6 +152,7 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
   object,
   isSelected,
   onSelect,
+  onContextMenu,
 }) => {
   const meshRef = useRef<Mesh>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -276,6 +278,12 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
           e.stopPropagation();
           onSelect();
         }}
+        onContextMenu={(e: any) => {
+          e.stopPropagation();
+          if (onContextMenu) {
+            onContextMenu(e);
+          }
+        }}
         onPointerEnter={(e) => {
           e.stopPropagation();
           setIsHovered(true);
@@ -336,6 +344,12 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
             e.stopPropagation();
             onSelect();
           }}
+          onContextMenu={(e: any) => {
+            e.stopPropagation();
+            if (onContextMenu) {
+              onContextMenu(e);
+            }
+          }}
           onPointerEnter={(e) => {
             e.stopPropagation();
             setIsHovered(true);
@@ -368,6 +382,12 @@ export const Object3DRenderer: React.FC<Object3DRendererProps> = ({
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
+      }}
+      onContextMenu={(e: any) => {
+        e.stopPropagation();
+        if (onContextMenu) {
+          onContextMenu(e);
+        }
       }}
       onPointerEnter={(e) => {
         e.stopPropagation();

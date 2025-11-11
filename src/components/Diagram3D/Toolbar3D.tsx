@@ -14,6 +14,7 @@ import {
   Grid3x3,
   Eye,
   Zap,
+  Trash2,
 } from 'lucide-react';
 
 interface Toolbar3DProps {
@@ -28,6 +29,8 @@ interface Toolbar3DProps {
   onToggleCameraMode: () => void;
   autoRotate: boolean;
   onToggleAutoRotate: () => void;
+  hasSelectedObject?: boolean;
+  onDeleteObject?: () => void;
 }
 
 export const Toolbar3D: React.FC<Toolbar3DProps> = ({
@@ -42,6 +45,8 @@ export const Toolbar3D: React.FC<Toolbar3DProps> = ({
   onToggleCameraMode,
   autoRotate,
   onToggleAutoRotate,
+  hasSelectedObject,
+  onDeleteObject,
 }) => {
   const shapeTools = [
     { id: 'cube', icon: Box, label: 'Cube' },
@@ -184,6 +189,16 @@ export const Toolbar3D: React.FC<Toolbar3DProps> = ({
           >
             <Camera className="h-5 w-5" />
           </button>
+
+          {hasSelectedObject && (
+            <button
+              onClick={onDeleteObject}
+              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all"
+              title="Delete Selected Object (Delete/Backspace)"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
     </div>

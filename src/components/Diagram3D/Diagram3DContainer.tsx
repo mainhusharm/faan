@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useCallback, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Viewport3D } from './Viewport3D';
 import { Toolbar3D } from './Toolbar3D';
 import { PropertiesPanel } from './PropertiesPanel';
@@ -314,6 +314,20 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
     setSelectedObjectId(null);
   }, [selectedObjectId]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedObjectId && !['input', 'textarea'].includes((e.target as HTMLElement).tagName.toLowerCase())) {
+          e.preventDefault();
+          deleteObject();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedObjectId, deleteObject]);
+
   const selectedObject = selectedObjectId
     ? objects.find((obj) => obj.id === selectedObjectId) || null
     : null;
@@ -389,6 +403,8 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
         }
         autoRotate={autoRotate}
         onToggleAutoRotate={() => setAutoRotate(!autoRotate)}
+        hasSelectedObject={!!selectedObjectId}
+        onDeleteObject={deleteObject}
       />
 
       {/* Main Content Area */}
@@ -400,6 +416,11 @@ export const Diagram3DContainer = forwardRef<Diagram3DHandle, Diagram3DContainer
             selectedObjectId={selectedObjectId}
             onObjectSelect={setSelectedObjectId}
             onObjectDrag={handleObjectDrag}
+            onObjectContextMenu={(id, e) => {
+              setSelectedObjectId(id);
+              const event = e as any;
+              event.preventDefault?.();
+            }}
             showGrid={showGrid}
             showAxes={showAxes}
             cameraMode={cameraMode}
