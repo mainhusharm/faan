@@ -25,7 +25,8 @@ import {
   Minimize2,
   Wand2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Pointer
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getUserApiKey } from '../lib/userApiKeys';
@@ -36,7 +37,7 @@ const Diagram3DContainer = lazy(() =>
   import('../components/Diagram3D/Diagram3DContainer')
 );
 
-type Tool = 'pencil' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'line' | 'text';
+type Tool = 'select' | 'pencil' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'arrow' | 'line' | 'text';
 type BackgroundType = 'plain' | 'grid' | 'dots' | 'ruled';
 type ProcessingStep = 'idle' | 'analyzing' | 'completed' | 'error';
 type ViewMode = '2d' | '3d' | 'draw-to-3d';
@@ -68,7 +69,7 @@ const DiagramPage: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const diagram3DRef = useRef<Diagram3DHandle>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('3d');
-  const [selectedTool, setSelectedTool] = useState<Tool>('pencil');
+  const [selectedTool, setSelectedTool] = useState<Tool>('select');
   const [color, setColor] = useState('#000000');
   const [thickness, setThickness] = useState(3);
   const [background, setBackground] = useState<BackgroundType>('plain');
@@ -397,10 +398,15 @@ const DiagramPage: React.FC = () => {
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isCanvasReady) return;
-    
+
     try {
       const pos = getMousePos(e);
       if (!pos) return;
+
+      // Don't draw if select tool is active
+      if (selectedTool === 'select') {
+        return;
+      }
 
       if (selectedTool === 'text') {
         const text = prompt('Enter text:');
@@ -935,6 +941,7 @@ Return ONLY a valid JSON object with this exact structure:
   };
 
   const tools = [
+    { id: 'select' as Tool, icon: Pointer, label: 'Select' },
     { id: 'pencil' as Tool, icon: Pencil, label: 'Pencil' },
     { id: 'eraser' as Tool, icon: Eraser, label: 'Eraser' },
     { id: 'rectangle' as Tool, icon: Square, label: 'Rectangle' },
@@ -1185,17 +1192,17 @@ Return ONLY a valid JSON object with this exact structure:
               {/* Canvas */}
               <div className="relative bg-white" style={{ height: isFullscreen ? 'calc(100vh - 180px)' : 'calc(100vh - 250px)', minHeight: '600px' }}>
                 <canvas
-                  ref={canvasRef}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={handleMouseDown}
-                  onTouchMove={handleMouseMove}
-                  onTouchEnd={handleMouseUp}
-                  className="w-full h-full cursor-crosshair touch-none"
-                  style={{ touchAction: 'none' }}
-                />
+                   ref={canvasRef}
+                   onMouseDown={handleMouseDown}
+                   onMouseMove={handleMouseMove}
+                   onMouseUp={handleMouseUp}
+                   onMouseLeave={handleMouseUp}
+                   onTouchStart={handleMouseDown}
+                   onTouchMove={handleMouseMove}
+                   onTouchEnd={handleMouseUp}
+                   className={`w-full h-full touch-none ${selectedTool === 'select' ? 'cursor-default' : 'cursor-crosshair'}`}
+                   style={{ touchAction: 'none' }}
+                 />
               </div>
 
               {/* Analyze Button */}
